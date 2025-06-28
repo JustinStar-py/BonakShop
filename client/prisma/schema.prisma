@@ -1,4 +1,4 @@
-// FILE: prisma/schema.prisma (Updated for new features)
+// FILE: prisma/schema.prisma (Updated with User Roles)
 
 generator client {
   provider = "prisma-client-js"
@@ -9,16 +9,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum OrderStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+// NEW: Enum for User Roles
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
 model Order {
   id           String      @id @default(cuid())
   totalPrice   Float
   createdAt    DateTime    @default(now())
   items        OrderItem[]
-
-  // New fields for Order
   userId       String
   user         User        @relation(fields: [userId], references: [id])
   deliverySlot String
+  status       OrderStatus @default(PENDING)
+  notes        String?
 }
 
 model OrderItem {
@@ -35,12 +48,10 @@ model User {
   phone         String    @unique
   password      String
   createdAt     DateTime  @default(now())
-
-  // Updated fields for User profile
-  name          String?   // User's full name
+  name          String?
   shopName      String?
   shopAddress   String?
   landline      String?
-
-  orders        Order[]   // Relation to user's orders
+  orders        Order[]
+  role          Role      @default(CUSTOMER)
 }

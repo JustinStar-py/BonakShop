@@ -1,4 +1,4 @@
-// FILE: app/api/auth/login/route.ts
+// FILE: app/api/auth/login/route.ts (Corrected)
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
@@ -21,7 +21,6 @@ export async function POST(req: Request) {
 
     const normalizedPhone = normalizePhoneNumber(phone);
 
-    // 1. Find the user by phone number
     const user = await prisma.user.findUnique({
       where: { phone: normalizedPhone },
     });
@@ -30,20 +29,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // 2. Compare the provided password with the stored hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // 3. If credentials are valid, create a session
     const session = await getSession();
     session.isLoggedIn = true;
-    session.user = user;
-    await session.save(); // Save the session to a cookie
+    
+    // *** IMPORTANT FIX HERE ***
+    // Ensure the ENTIRE user object (including role) is saved to the session.
+    session.user = user; 
+    
+    await session.save();
 
-    // 4. Return the user data (without password)
     const { password: _, ...userWithoutPassword } = user;
     return NextResponse.json(userWithoutPassword, { status: 200 });
 

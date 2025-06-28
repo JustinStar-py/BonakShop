@@ -1,9 +1,10 @@
-// FILE: app/api/orders/route.ts (Updated with GET method)
+// FILE: app/api/orders/route.ts (Final and Complete Version)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import type { OrderItem } from "@prisma/client";
 
-// --- This function handles creating new orders ---
+// --- This function handles CREATING new orders ---
 export async function POST(req: Request) {
   try {
     const session = await getSession();
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { cart, totalPrice, deliverySlot } = body;
+    const { cart, totalPrice, deliverySlot, notes } = body;
 
     if (!cart || cart.length === 0 || !totalPrice || !deliverySlot) {
       return NextResponse.json({ error: "Missing required order data" }, { status: 400 });
@@ -23,6 +24,7 @@ export async function POST(req: Request) {
         totalPrice: totalPrice,
         deliverySlot: deliverySlot,
         userId: session.user.id,
+        notes: notes, // Save the optional notes
         items: {
           create: cart.map((item: any) => ({
             productName: item.name,
@@ -31,7 +33,9 @@ export async function POST(req: Request) {
           })),
         },
       },
-      include: { items: true },
+      include: {
+        items: true, // Include items in the response
+      },
     });
 
     return NextResponse.json(newOrder, { status: 201 });
@@ -41,8 +45,7 @@ export async function POST(req: Request) {
   }
 }
 
-
-// --- This NEW function handles fetching the user's order history ---
+// --- This function handles FETCHING the user's order history ---
 export async function GET() {
     try {
         const session = await getSession();
