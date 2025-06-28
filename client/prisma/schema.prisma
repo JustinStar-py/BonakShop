@@ -1,0 +1,46 @@
+// FILE: prisma/schema.prisma (Updated for new features)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  totalPrice   Float
+  createdAt    DateTime    @default(now())
+  items        OrderItem[]
+
+  // New fields for Order
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  deliverySlot String
+}
+
+model OrderItem {
+  id          String @id @default(cuid())
+  orderId     String
+  productName String
+  quantity    Int
+  price       Float
+  order       Order  @relation(fields: [orderId], references: [id])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  phone         String    @unique
+  password      String
+  createdAt     DateTime  @default(now())
+
+  // Updated fields for User profile
+  name          String?   // User's full name
+  shopName      String?
+  shopAddress   String?
+  landline      String?
+
+  orders        Order[]   // Relation to user's orders
+}
