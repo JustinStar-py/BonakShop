@@ -1,8 +1,8 @@
-// FILE: app/api/orders/route.ts (Final and Complete Version)
+// FILE: app/api/orders/route.ts (Final and Corrected Version)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import type { OrderItem } from "@prisma/client";
+import type { CartItem } from "@/types"; // Import CartItem for type safety
 
 // --- This function handles CREATING new orders ---
 export async function POST(req: Request) {
@@ -24,12 +24,13 @@ export async function POST(req: Request) {
         totalPrice: totalPrice,
         deliverySlot: deliverySlot,
         userId: session.user.id,
-        notes: notes, // Save the optional notes
+        notes: notes,
         items: {
-          create: cart.map((item: any) => ({
+          create: cart.map((item: CartItem) => ({
             productName: item.name,
             quantity: item.quantity,
-            price: item.priceNumber,
+            // *** THE FIX IS HERE: We now correctly pass the price for each item ***
+            price: item.price, 
           })),
         },
       },
@@ -41,7 +42,9 @@ export async function POST(req: Request) {
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error) {
     console.error("Failed to create order:", error);
-    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+    // Provide a more specific error message if possible
+    const errorMessage = error instanceof Error ? error.message : "Failed to create order";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -58,10 +61,10 @@ export async function GET() {
                 userId: session.user.id,
             },
             include: {
-                items: true, // Include the items for each order
+                items: true,
             },
             orderBy: {
-                createdAt: 'desc', // Show the newest orders first
+                createdAt: 'desc',
             },
         });
 

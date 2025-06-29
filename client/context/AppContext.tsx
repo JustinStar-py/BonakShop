@@ -1,31 +1,31 @@
-// FILE: context/AppContext.tsx (Final and Complete Version)
+// FILE: context/AppContext.tsx (Final and Corrected Version)
 "use client";
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import type { Product, CartItem } from "@/types";
-import type { User } from "@prisma/client";
+import type { CartItem, OrderWithItems } from "@/types";
+import type { User, Product as PrismaProduct } from "@prisma/client";
 
 // Define the shape of all data and functions in our context
 interface AppContextType {
   // Cart State and Functions
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
-  addToCart: (product: Product, quantity?: number) => void;
-  updateCartQuantity: (productId: number, newQuantity: number) => void;
-  removeFromCart: (productId: number) => void;
+  addToCart: (product: PrismaProduct, quantity?: number) => void;
+  updateCartQuantity: (productId: string, newQuantity: number) => void;
+  removeFromCart: (productId: string) => void;
   getTotalPrice: () => number;
   getTotalItems: () => number;
   
   // Navigation State (for single-page navigation model)
   currentPage: string;
   setCurrentPage: React.Dispatch<React.SetStateAction<string>>;
-  selectedProduct: Product | null;
-  setSelectedProduct: React.Dispatch<React.SetStateAction<Product | null>>;
+  selectedProduct: PrismaProduct | null;
+  setSelectedProduct: React.Dispatch<React.SetStateAction<PrismaProduct | null>>;
 
   // Authentication State
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  isLoadingUser: boolean; // To show a loading state while checking session
+  isLoadingUser: boolean;
 }
 
 // Create the context with an initial undefined value
@@ -36,11 +36,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // --- All our global states are defined here ---
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentPage, setCurrentPage] = useState("home");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<PrismaProduct | null>(null);
   const [user, setUser] = useState<User | null>(null); // Initially, no user is logged in
   const [isLoadingUser, setIsLoadingUser] = useState(true); // Start with loading true
 
-  // This effect runs once when the app loads to check for an existing session
+  // Effect to fetch user session on initial app load
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -54,30 +54,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Failed to fetch user session", error);
       } finally {
-        setIsLoadingUser(false); // Stop loading after the check is complete
+        setIsLoadingUser(false);
       }
     };
-
     fetchUser();
-  }, []); // The empty dependency array ensures this runs only once
+  }, []);
 
   // --- All our global functions are defined here ---
 
-  const addToCart = (product: Product, quantity = 1) => {
+  const addToCart = (product: PrismaProduct, quantity = 1) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
+          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
-      return [...prevCart, { ...product, quantity }];
+      // CORRECT: Create a new CartItem by spreading the product (which has a number price) and adding quantity
+      const newCartItem: CartItem = { ...product, quantity };
+      return [...prevCart, newCartItem];
     });
   };
 
-  const updateCartQuantity = (productId: number, newQuantity: number) => {
+  const updateCartQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
       return;
@@ -89,19 +88,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: string) => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
   };
 
   const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + item.priceNumber * item.quantity, 0);
+    // CORRECT: 'item.price' is now a number, so this calculation works perfectly.
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   const getTotalItems = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  // The value object holds everything we want to expose to our components
   const value: AppContextType = {
     cart,
     setCart,
@@ -122,7 +121,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-// Create a custom hook for easy access to the context in any component
+// Custom hook for easy access to the context
 export function useAppContext() {
   const context = useContext(AppContext);
   if (context === undefined) {

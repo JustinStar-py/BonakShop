@@ -1,4 +1,4 @@
-// FILE: prisma/schema.prisma (Updated with User Roles)
+// FILE: prisma/schema.prisma (Corrected and Final Version)
 
 generator client {
   provider = "prisma-client-js"
@@ -16,22 +16,39 @@ enum OrderStatus {
   CANCELED
 }
 
-// NEW: Enum for User Roles
 enum Role {
   CUSTOMER
   ADMIN
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  icon     String?
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  price       Float
+  image       String?
+  available   Boolean  @default(true)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
 }
 
 model Order {
   id           String      @id @default(cuid())
   totalPrice   Float
   createdAt    DateTime    @default(now())
-  items        OrderItem[]
-  userId       String
-  user         User        @relation(fields: [userId], references: [id])
   deliverySlot String
   status       OrderStatus @default(PENDING)
   notes        String?
+  items        OrderItem[]
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
 }
 
 model OrderItem {
@@ -44,14 +61,14 @@ model OrderItem {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  phone         String    @unique
-  password      String
-  createdAt     DateTime  @default(now())
-  name          String?
-  shopName      String?
-  shopAddress   String?
-  landline      String?
-  orders        Order[]
-  role          Role      @default(CUSTOMER)
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  password    String
+  createdAt   DateTime @default(now())
+  name        String?
+  shopName    String?
+  shopAddress String?
+  landline    String?
+  role        Role     @default(CUSTOMER)
+  orders      Order[]
 }
