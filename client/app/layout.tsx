@@ -1,7 +1,7 @@
-// FILE: app/layout.tsx (Updated)
+// FILE: app/layout.tsx (Reverted to original state)
 import type { Metadata } from "next";
 import "./globals.css";
-import { AppProvider } from "@/context/AppContext"; // Import the provider
+import { AppProvider } from "@/context/AppContext";
 
 export const metadata: Metadata = {
   title: "فروشگاه عمده‌فروشی",
@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body>
-        <AppProvider> {/* Wrap children with the provider */}
+        <AppProvider>
           {children}
         </AppProvider>
       </body>

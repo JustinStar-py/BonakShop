@@ -1,17 +1,20 @@
-// FILE: components/shared/ProductCard.tsx (Upgraded with quantity controls)
+// FILE: components/shared/ProductCard.tsx
+// Updates:
+// - Displays discounted price and original price (strikethrough).
 "use client";
 
-import type { Product, CartItem } from "@/types";
+import type { Product } from "@/types";
+import type { CartItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Tag } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
-  cartItem: CartItem | undefined; // Prop to know if item is in cart
+  cartItem: CartItem | undefined;
   onAddToCart: (product: Product) => void;
   onSelectProduct: (product: Product) => void;
-  onUpdateQuantity: (productId: number, newQuantity: number) => void; // Prop for updating quantity
+  onUpdateQuantity: (productId: string, newQuantity: number) => void;
 }
 
 export default function ProductCard({
@@ -21,11 +24,18 @@ export default function ProductCard({
   onSelectProduct,
   onUpdateQuantity,
 }: ProductCardProps) {
-
   const quantityInCart = cartItem?.quantity || 0;
+  const hasDiscount = product.discountPercentage > 0;
+  const discountedPrice = product.price * (1 - product.discountPercentage / 100);
 
   return (
-    <Card className="overflow-hidden border-2 border-gray-100 hover:border-green-200 transition-colors rounded-2xl flex flex-col justify-between">
+    <Card className="overflow-hidden border-2 border-gray-100 hover:border-green-200 transition-colors rounded-2xl flex flex-col justify-between relative">
+      {hasDiscount && (
+        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+          <Tag className="h-3 w-3" />
+          {product.discountPercentage}%
+        </div>
+      )}
       <CardContent className="p-4 pb-2">
         <div className="cursor-pointer" onClick={() => onSelectProduct(product)}>
           <div className="flex justify-center mb-3">
@@ -39,8 +49,14 @@ export default function ProductCard({
             {product.name}
           </h3>
           <div className="text-green-800 font-bold text-right mb-3">
-            {product.price}
-            <span className="text-xs mr-1 font-normal">ریال</span>
+            {hasDiscount ? (
+              <div className="flex flex-col items-end">
+                <span>{discountedPrice.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
+                <span className="text-xs text-gray-400 line-through">{product.price.toLocaleString("fa-IR")}</span>
+              </div>
+            ) : (
+              <span>{product.price.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
+            )}
           </div>
         </div>
       </CardContent>
@@ -51,7 +67,6 @@ export default function ProductCard({
             ناموجود
           </Button>
         ) : quantityInCart === 0 ? (
-          // If not in cart, show "Add to cart" button
           <Button
             size="sm"
             className="w-full bg-green-600 hover:bg-green-700 h-10 rounded-xl"
@@ -61,7 +76,6 @@ export default function ProductCard({
             افزودن به سبد
           </Button>
         ) : (
-          // If in cart, show quantity controls
           <div className="flex items-center justify-center gap-3">
             <Button
               variant="default"

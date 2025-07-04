@@ -1,4 +1,6 @@
-// FILE: prisma/schema.prisma (Corrected and Final Version)
+// FILE: prisma/schema.prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ENUMS
 enum OrderStatus {
   PENDING
   SHIPPED
@@ -19,6 +22,24 @@ enum OrderStatus {
 enum Role {
   CUSTOMER
   ADMIN
+  WORKER // New role for delivery personnel
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+}
+
+
+// MODELS
+
+// Model for different payment/settlement agreements
+model Settlement {
+  id          String @id @default(cuid())
+  name        String @unique // e.g., "Cash", "1-Month Check"
+  description String?
+  orders      Order[]
 }
 
 model Category {
@@ -29,35 +50,45 @@ model Category {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  price       Float
-  image       String?
-  available   Boolean  @default(true)
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  id                 String  @id @default(cuid())
+  name               String  @unique
+  description        String?
+  price              Float
+  image              String?
+  available          Boolean @default(true)
+  discountPercentage Int     @default(0) // New field for discounts
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
 }
 
 model Order {
-  id           String      @id @default(cuid())
-  totalPrice   Float
-  createdAt    DateTime    @default(now())
-  deliverySlot String
-  status       OrderStatus @default(PENDING)
-  notes        String?
-  items        OrderItem[]
-  userId       String
-  user         User        @relation(fields: [userId], references: [id])
+  id            String      @id @default(cuid())
+  totalPrice    Float
+  createdAt     DateTime    @default(now())
+  deliveryDate  DateTime    // Changed from deliverySlot to a specific date
+  status        OrderStatus @default(PENDING)
+  notes         String?
+
+  user          User       @relation(fields: [userId], references: [id])
+  userId        String
+  items         OrderItem[]
+  returnRequest ReturnRequest?
+
+  settlement   Settlement @relation(fields: [settlementId], references: [id])
+  settlementId String
 }
 
 model OrderItem {
-  id          String @id @default(cuid())
-  orderId     String
+  id          String  @id @default(cuid())
   productName String
   quantity    Int
-  price       Float
-  order       Order  @relation(fields: [orderId], references: [id])
+  price       Float   // Price at the time of order
+
+  order   Order  @relation(fields: [orderId], references: [id])
+  orderId String
+
+  ReturnRequest ReturnRequestItem[]
 }
 
 model User {
@@ -69,6 +100,32 @@ model User {
   shopName    String?
   shopAddress String?
   landline    String?
-  role        Role     @default(CUSTOMER)
-  orders      Order[]
+  latitude    Float? // Optional latitude from Google Maps
+  longitude   Float? // Optional longitude from Google Maps
+
+  role   Role    @default(CUSTOMER)
+  orders Order[]
+}
+
+// Model for handling return requests
+model ReturnRequest {
+  id        String       @id @default(cuid())
+  createdAt DateTime     @default(now())
+  status    ReturnStatus @default(REQUESTED)
+  reason    String?
+
+  order   Order         @relation(fields: [orderId], references: [id])
+  orderId String        @unique
+  items   ReturnRequestItem[]
+}
+
+model ReturnRequestItem {
+  id              String      @id @default(cuid())
+  quantity        Int
+  
+  orderItem       OrderItem   @relation(fields: [orderItemId], references: [id])
+  orderItemId     String
+  
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id])
+  returnRequestId String
 }

@@ -1,4 +1,6 @@
-// FILE: context/AppContext.tsx (Final and Corrected Version)
+// FILE: context/AppContext.tsx
+// Updates:
+// - getTotalPrice now calculates discounts.
 "use client";
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
@@ -7,40 +9,34 @@ import type { User, Product as PrismaProduct } from "@prisma/client";
 
 // Define the shape of all data and functions in our context
 interface AppContextType {
-  // Cart State and Functions
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   addToCart: (product: PrismaProduct, quantity?: number) => void;
   updateCartQuantity: (productId: string, newQuantity: number) => void;
   removeFromCart: (productId: string) => void;
-  getTotalPrice: () => number;
+  getTotalPrice: () => number; // This will now be the discounted price
+  getOriginalTotalPrice: () => number; // Function for the non-discounted price
   getTotalItems: () => number;
   
-  // Navigation State (for single-page navigation model)
   currentPage: string;
   setCurrentPage: React.Dispatch<React.SetStateAction<string>>;
   selectedProduct: PrismaProduct | null;
   setSelectedProduct: React.Dispatch<React.SetStateAction<PrismaProduct | null>>;
 
-  // Authentication State
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isLoadingUser: boolean;
 }
 
-// Create the context with an initial undefined value
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Create the Provider component which will wrap our entire app
 export function AppProvider({ children }: { children: ReactNode }) {
-  // --- All our global states are defined here ---
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentPage, setCurrentPage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState<PrismaProduct | null>(null);
-  const [user, setUser] = useState<User | null>(null); // Initially, no user is logged in
-  const [isLoadingUser, setIsLoadingUser] = useState(true); // Start with loading true
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-  // Effect to fetch user session on initial app load
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -60,8 +56,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetchUser();
   }, []);
 
-  // --- All our global functions are defined here ---
-
   const addToCart = (product: PrismaProduct, quantity = 1) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
@@ -70,7 +64,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
-      // CORRECT: Create a new CartItem by spreading the product (which has a number price) and adding quantity
       const newCartItem: CartItem = { ...product, quantity };
       return [...prevCart, newCartItem];
     });
@@ -91,10 +84,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const removeFromCart = (productId: string) => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
   };
+  
+  const getOriginalTotalPrice = () => {
+      return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  }
 
   const getTotalPrice = () => {
-    // CORRECT: 'item.price' is now a number, so this calculation works perfectly.
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cart.reduce((total, item) => {
+        const discount = item.discountPercentage || 0;
+        const discountedPrice = item.price * (1 - discount / 100);
+        return total + discountedPrice * item.quantity;
+    }, 0);
   };
 
   const getTotalItems = () => {
@@ -108,6 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateCartQuantity,
     removeFromCart,
     getTotalPrice,
+    getOriginalTotalPrice,
     getTotalItems,
     currentPage,
     setCurrentPage,
@@ -121,7 +122,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-// Custom hook for easy access to the context
 export function useAppContext() {
   const context = useContext(AppContext);
   if (context === undefined) {

@@ -1,9 +1,8 @@
-// FILE: app/api/auth/register/route.ts (Corrected)
+// FILE: app/api/auth/register/route.ts
+// Handles new user registration with password confirmation.
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "@/lib/prisma"; // IMPORTANT: Import the shared prisma instance
-
-// IMPORTANT: Ensure there is NO `const prisma = new PrismaClient()` in this file.
+import prisma from "@/lib/prisma";
 
 const normalizePhoneNumber = (phone: string): string => {
   if (phone.startsWith("+98")) return "0" + phone.substring(3);
@@ -14,16 +13,20 @@ const normalizePhoneNumber = (phone: string): string => {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    let { phone, password } = body;
+    const { phone, password, confirmPassword } = body; // Added confirmPassword
 
-    if (!phone || !password) {
-      return NextResponse.json({ error: "Phone and password are required" }, { status: 400 });
+    if (!phone || !password || !confirmPassword) {
+      return NextResponse.json({ error: "Phone and password fields are required" }, { status: 400 });
+    }
+
+    if (password !== confirmPassword) {
+        return NextResponse.json({ error: "Passwords do not match" }, { status: 400 });
     }
     
     const normalizedPhone = normalizePhoneNumber(phone);
     
     if (normalizedPhone.length !== 11) {
-        return NextResponse.json({ error: "Invalid phone number" }, { status: 400 });
+        return NextResponse.json({ error: "Invalid phone number format" }, { status: 400 });
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -31,7 +34,7 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 409 });
+      return NextResponse.json({ error: "A user with this phone number already exists" }, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
