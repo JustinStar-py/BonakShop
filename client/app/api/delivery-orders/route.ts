@@ -7,6 +7,7 @@ import { getSession } from "@/lib/session";
 export async function GET() {
   try {
     const session = await getSession();
+    // Security check: Allow access only for ADMIN or WORKER roles
     if (!session.isLoggedIn || (session.user.role !== 'ADMIN' && session.user.role !== 'WORKER')) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -27,7 +28,7 @@ export async function GET() {
         items: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'desc', // Show the most recent orders first
       },
     });
 
