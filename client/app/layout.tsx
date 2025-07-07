@@ -1,7 +1,10 @@
-// FILE: app/layout.tsx (Reverted to original state)
+// FILE: app/layout.tsx (Updated with Leaflet CSS)
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
+
+// Import Leaflet CSS
+import 'leaflet/dist/leaflet.css';
 
 export const metadata: Metadata = {
   title: "فروشگاه عمده‌فروشی",

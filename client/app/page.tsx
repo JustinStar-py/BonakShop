@@ -1,8 +1,10 @@
-// FILE: app/page.tsx (The final, complete, unified, and bug-fixed version)
+// FILE: app/page.tsx (Final Version with all features, corrected routing, and UI fixes)
 "use client";
 
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
-import { Search, ShoppingCart, Plus, Minus, ArrowRight, Download, Share, Home, List, LogOut, History, Send, Loader2, User as UserIcon, CalendarIcon, RefreshCw } from "lucide-react";
+import dynamic from 'next/dynamic';
+import { useRouter } from "next/navigation";
+import { Search, ShoppingCart, Plus, Minus, ArrowRight, Download, Share, Home, List, LogOut, History, Send, Loader2, User as UserIcon, CalendarIcon, RefreshCw, Truck, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,14 +15,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 
-import type { Product as PrismaProduct, Category as PrismaCategory, Settlement, OrderItem } from "@prisma/client";
+import type { Product as PrismaProduct, Category as PrismaCategory, Settlement, OrderItem, OrderStatus } from "@prisma/client";
 import type { CartItem, OrderWithItems, User } from "@/types";
 import ProductCard from "@/components/shared/ProductCard";
 import BottomNavigation from "@/components/layout/BottomNavigation";
 import { useAppContext } from "@/context/AppContext";
 import { ShamsiCalendar } from "@/components/shared/ShamsiCalendar";
+
+const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
+    ssr: false,
+    loading: () => <div className="h-64 w-full bg-gray-200 animate-pulse rounded-md flex items-center justify-center"><p>در حال بارگذاری نقشه...</p></div>
+});
+
 
 // --- Type definition for props to pass to page components ---
 interface PageProps {
@@ -59,20 +66,26 @@ interface PageProps {
     setCart: (cart: CartItem[]) => void;
 }
 
-// --- Main Controller Component (Top Level) ---
+// --- Main Controller Component (Top Level) with CORRECTED Routing Logic ---
 export default function WholesaleFoodApp() {
   const { user, isLoadingUser } = useAppContext();
-
+  
   if (isLoadingUser) {
     return <div className="flex items-center justify-center min-h-screen bg-gray-50"><p className="text-lg font-medium text-gray-600">در حال بارگذاری...</p></div>;
   }
-
-  if (user) {
-    const isProfileComplete = user.name && user.shopName && user.shopAddress;
-    return isProfileComplete ? <AppContent /> : <CompleteProfilePage />;
+  
+  if (!user) {
+    return <AuthPage />;
   }
   
-  return <AuthPage />;
+  // All roles can now see the main app content.
+  // Specific panels are accessed via navigation, not forced redirection.
+  const isProfileComplete = user.name && user.shopName && user.shopAddress;
+  if (user.role === 'CUSTOMER' && !isProfileComplete) {
+      return <CompleteProfilePage />
+  }
+  
+  return <AppContent />;
 }
 
 // --- Authentication Page Component (Top Level) ---
@@ -107,9 +120,9 @@ function AuthPage() {
         e.preventDefault(); setIsLoading(true); setError("");
         try {
             const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: loginPhone, password: loginPassword }) });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "شماره یا رمز عبور اشتباه است.");
-            setUser(data);
+            const user = await res.json();
+            if (!res.ok) throw new Error(user.error || "شماره یا رمز عبور اشتباه است.");
+            setUser(user);
         } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
     };
 
@@ -120,13 +133,28 @@ function AuthPage() {
     );
 }
 
-// --- Complete Profile Page (Top Level) ---
+// --- Complete Profile Page (Top Level) with Map ---
 function CompleteProfilePage() {
     const { user, setUser } = useAppContext();
-    const [formData, setFormData] = useState({ name: user?.name || "", shopName: user?.shopName || "", shopAddress: user?.shopAddress || "", landline: user?.landline || "" });
+    const [formData, setFormData] = useState({ 
+        name: user?.name || "", 
+        shopName: user?.shopName || "", 
+        shopAddress: user?.shopAddress || "", 
+        landline: user?.landline || "",
+        latitude: user?.latitude,
+        longitude: user?.longitude
+    });
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => { setFormData({ ...formData, [e.target.name]: e.target.value }); };
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { 
+        setFormData({ ...formData, [e.target.name]: e.target.value }); 
+    };
+
+    const handleLocationChange = (lat: number, lng: number) => {
+        setFormData({ ...formData, latitude: lat, longitude: lng });
+    };
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault(); setIsLoading(true); setError("");
         try {
@@ -138,12 +166,20 @@ function CompleteProfilePage() {
     };
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4" dir="rtl">
-            <Card className="w-full max-w-md"><CardHeader className="text-center"><CardTitle>تکمیل پروفایل</CardTitle><CardDescription>برای ثبت فاکتور، لطفاً اطلاعات فروشگاه خود را کامل کنید.</CardDescription></CardHeader><CardContent><form onSubmit={handleSubmit} className="space-y-4"><div className="space-y-2"><Label htmlFor="name">نام و نام خانوادگی</Label><Input id="name" name="name" required value={formData.name} onChange={handleChange} /></div><div className="space-y-2"><Label htmlFor="shopName">نام فروشگاه</Label><Input id="shopName" name="shopName" required value={formData.shopName} onChange={handleChange} /></div><div className="space-y-2"><Label htmlFor="shopAddress">آدرس دقیق فروشگاه</Label><Input id="shopAddress" name="shopAddress" required value={formData.shopAddress} onChange={handleChange} /></div><div className="space-y-2"><Label htmlFor="landline">تلفن ثابت (اختیاری)</Label><Input id="landline" name="landline" value={formData.landline} onChange={handleChange} /></div>{error && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ذخیره...</> : "ذخیره و ادامه"}</Button></form></CardContent></Card>
+            <Card className="w-full max-w-lg"><CardHeader className="text-center"><CardTitle>تکمیل پروفایل</CardTitle><CardDescription>برای ثبت فاکتور، لطفاً اطلاعات فروشگاه خود را کامل کنید.</CardDescription></CardHeader><CardContent><form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2"><Label htmlFor="name">نام و نام خانوادگی</Label><Input id="name" name="name" required value={formData.name} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="shopName">نام فروشگاه</Label><Input id="shopName" name="shopName" required value={formData.shopName} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="shopAddress">آدرس دقیق فروشگاه</Label><Textarea id="shopAddress" name="shopAddress" required value={formData.shopAddress || ''} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="landline">تلفن ثابت (اختیاری)</Label><Input id="landline" name="landline" value={formData.landline || ''} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label>موقعیت مکانی روی نقشه (اختیاری)</Label><MapPicker onLocationChange={handleLocationChange} /></div>
+                {error && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ذخیره...</> : "ذخیره و ادامه"}</Button>
+                </form></CardContent></Card>
         </div>
     );
 }
 
-// --- Main Application Component (Top Level) ---
+
+// --- Main Application Component for All Roles ---
 function AppContent() {
     const { user, setUser, cart, setCart, currentPage, setCurrentPage, ...appContext } = useAppContext();
     const { addToCart, updateCartQuantity, removeFromCart, getTotalPrice, getOriginalTotalPrice, getTotalItems, setSelectedProduct, selectedProduct } = appContext;
@@ -235,7 +271,7 @@ function AppContent() {
     return (
       <div className="min-h-screen bg-gray-50" dir="rtl">
         {renderPage()}
-        <BottomNavigation currentPage={currentPage} totalCartItems={getTotalItems()} onNavigate={setCurrentPage} onNavigateToCategories={handleNavigateToCategories} />
+        <BottomNavigation currentPage={currentPage} totalCartItems={getTotalItems() || 0} onNavigate={setCurrentPage} onNavigateToCategories={handleNavigateToCategories!} />
       </div>
     );
 }
@@ -244,38 +280,44 @@ function AppContent() {
 
 function HomePage(props: PageProps) {
     const { user, handleLogout, orders, isLoadingOrders, handleSelectProduct, handleNavigateToCategories, searchQuery, setSearchQuery, categories, products, cart, addToCart, updateCartQuantity, setCurrentPage } = props;
+    const router = useRouter();
     const mostRecentOrder = orders.length > 0 ? orders[0] : null;
-    const featuredProducts = products.slice(0, 4);
-    const renderProductList = (list: PrismaProduct[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p as any} cartItem={cart.find((ci) => ci.id === p.id)} onAddToCart={addToCart} onSelectProduct={handleSelectProduct} onUpdateQuantity={updateCartQuantity} />)}</div>);
+    const featuredProducts = products!.slice(0, 4);
+    const renderProductList = (list: PrismaProduct[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p as any} cartItem={cart!.find((ci) => ci.id === p.id)} onAddToCart={addToCart!} onSelectProduct={handleSelectProduct!} onUpdateQuantity={updateCartQuantity!} />)}</div>);
+    
     return (
         <div className="pb-20">
             <div className="p-4 flex justify-between items-center bg-gray-50 border-b">
                 <h1 className="font-bold text-lg text-green-800">سلام، {user?.name}!</h1>
-                <div>
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentPage('profile')} className="text-gray-600"><UserIcon className="h-5 w-5" /></Button>
-                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-red-500"><LogOut className="h-5 w-5" /></Button>
+                {/* FIX: Wrapped buttons in a flex container for proper alignment */}
+                <div className="flex items-center">
+                    {user?.role === 'ADMIN' && <Button variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')} className="text-gray-600" title="پنل ادمین"><LayoutDashboard className="h-5 w-5" /></Button>}
+                    {user?.role === 'WORKER' && <Button variant="ghost" size="icon" onClick={() => router.push('/delivery')} className="text-gray-600" title="پنل تحویل"><Truck className="h-5 w-5" /></Button>}
+                    <Button variant="ghost" size="icon" onClick={() => setCurrentPage('profile')} className="text-gray-600" title="پروفایل"><UserIcon className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-red-500" title="خروج"><LogOut className="h-5 w-5" /></Button>
                 </div>
             </div>
-            {!isLoadingOrders && mostRecentOrder && mostRecentOrder.items.length > 0 && (<div className="p-4"><h2 className="text-xl font-bold text-green-800 mb-4">سفارش های اخیر</h2><div className="flex space-x-4 space-x-reverse overflow-x-auto pb-4">{mostRecentOrder.items.map(item => { const productDetails = products.find(p => p.name === item.productName); return (<div key={item.id} className="flex-shrink-0 w-28 text-center cursor-pointer" onClick={() => productDetails && handleSelectProduct(productDetails)}><img src={productDetails?.image || "/placeholder.svg"} className="h-20 w-20 object-cover rounded-lg mx-auto mb-2" alt={item.productName} /><p className="text-xs truncate">{item.productName}</p></div>)})}</div></div>)}
-            <div className="p-4"><div className="relative"><Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" /><Input placeholder="جستجوی محصولات..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-12 pl-4 h-12 text-lg rounded-2xl" /></div></div>
-            <div className="p-4"><h2 className="text-xl font-bold text-green-800 mb-4">دسته‌بندی‌ها</h2><div className="grid grid-cols-2 gap-3">{categories.map(c => <Button key={c.id} variant="outline" className="h-20 flex flex-col items-center justify-center gap-2" onClick={() => { props.setSelectedCategory(c.id); props.setCurrentPage("category"); }}><span className="text-2xl">{c.icon}</span><span className="text-sm">{c.name}</span></Button>)}</div></div>
-            <div className="p-4"><div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold text-green-800">محصولات ویژه</h2><Button variant="ghost" className="text-green-600" onClick={handleNavigateToCategories}>مشاهده همه <ArrowRight className="mr-2 h-4 w-4" /></Button></div>{renderProductList(featuredProducts)}</div>
+            {!isLoadingOrders && mostRecentOrder && mostRecentOrder.items.length > 0 && (<div className="p-4"><h2 className="text-xl font-bold text-green-800 mb-4">سفارش های اخیر</h2><div className="flex space-x-4 space-x-reverse overflow-x-auto pb-4">{mostRecentOrder.items.map(item => { const productDetails = products!.find(p => p.name === item.productName); return (<div key={item.id} className="flex-shrink-0 w-28 text-center cursor-pointer" onClick={() => productDetails && handleSelectProduct!(productDetails)}><img src={productDetails?.image || "/placeholder.svg"} className="h-20 w-20 object-cover rounded-lg mx-auto mb-2" alt={item.productName} /><p className="text-xs truncate">{item.productName}</p></div>)})}</div></div>)}
+            <div className="p-4"><div className="relative"><Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" /><Input placeholder="جستجوی محصولات..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-12 pl-4 h-12 text-lg rounded-2xl" /></div></div>
+            <div className="p-4"><h2 className="text-xl font-bold text-green-800 mb-4">دسته‌بندی‌ها</h2><div className="grid grid-cols-2 gap-3">{categories!.map(c => <Button key={c.id} variant="outline" className="h-20 flex flex-col items-center justify-center gap-2" onClick={() => { props.setSelectedCategory!(c.id); props.setCurrentPage("category"); }}><span className="text-2xl">{c.icon}</span><span className="text-sm">{c.name}</span></Button>)}</div></div>
+            <div className="p-4"><div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold text-green-800">محصولات ویژه</h2><Button variant="ghost" className="text-green-600" onClick={handleNavigateToCategories!}>مشاهده همه <ArrowRight className="mr-2 h-4 w-4" /></Button></div>{renderProductList(featuredProducts)}</div>
         </div>
     );
 }
 
+
 function CategoryPage(props: PageProps) {
     const { selectedCategory, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, updateCartQuantity, setCurrentPage, categories } = props;
-    const filteredProducts = products.filter((p) => (selectedCategory ? p.categoryId === selectedCategory : true) && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    const renderProductList = (list: any[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p} cartItem={cart.find((ci:any) => ci.id === p.id)} onAddToCart={addToCart} onSelectProduct={handleSelectProduct} onUpdateQuantity={updateCartQuantity} />)}</div>);
-    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4 mb-4"><Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-xl font-bold">{selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "همه محصولات"}</h1></div><div className="relative"><Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" /><Input placeholder="جستجو..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-12" /></div></div><div className="p-4">{filteredProducts.length > 0 ? renderProductList(filteredProducts) : <p className="text-center py-10">محصولی یافت نشد.</p>}</div></div>);
+    const filteredProducts = products!.filter((p) => (selectedCategory ? p.categoryId === selectedCategory : true) && p.name.toLowerCase().includes(searchQuery!.toLowerCase()));
+    const renderProductList = (list: any[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p} cartItem={cart!.find((ci:any) => ci.id === p.id)} onAddToCart={addToCart!} onSelectProduct={handleSelectProduct!} onUpdateQuantity={updateCartQuantity!} />)}</div>);
+    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4 mb-4"><Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-xl font-bold">{selectedCategory ? categories!.find(c => c.id === selectedCategory)?.name : "همه محصولات"}</h1></div><div className="relative"><Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" /><Input placeholder="جستجو..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-12" /></div></div><div className="p-4">{filteredProducts.length > 0 ? renderProductList(filteredProducts) : <p className="text-center py-10">محصولی یافت نشد.</p>}</div></div>);
 }
 
 function ProductDetailPage(props: PageProps) {
     const { selectedProduct, addToCart, setCurrentPage, formatPrice } = props;
     const [quantity, setQuantity] = useState(1);
     if (!selectedProduct) { setCurrentPage("home"); return null; }
-    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4"><Button variant="ghost" size="icon" onClick={() => setCurrentPage("category")}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-lg font-bold">جزئیات محصول</h1></div></div><div className="p-4"><div className="text-center mb-6"><img src={selectedProduct.image || "/placeholder.svg"} alt={selectedProduct.name} className="h-48 w-48 object-cover rounded-2xl mx-auto mb-4" /><h2 className="text-2xl font-bold">{selectedProduct.name}</h2><div className="text-2xl font-bold text-green-600">{formatPrice(selectedProduct.price)}</div></div><Card className="mb-6 rounded-2xl"><CardContent className="p-6"><h3 className="font-bold">توضیحات</h3><p>{selectedProduct.description}</p></CardContent></Card>{selectedProduct.available ? <Card><CardContent className="p-6"><div className="flex items-center justify-between mb-6"><span className="text-lg">تعداد:</span><div className="flex items-center gap-4"><Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(1, q - 1))}><Minus/></Button><span className="text-xl font-bold">{quantity}</span><Button variant="outline" size="icon" onClick={() => setQuantity(q => q + 1)}><Plus/></Button></div></div><Button className="w-full h-14" onClick={() => { addToCart(selectedProduct, quantity); setCurrentPage("cart"); }}><ShoppingCart className="ml-2" /> افزودن به سبد</Button></CardContent></Card> : <Card><CardContent><p>این محصول موجود نیست.</p></CardContent></Card>}</div></div>);
+    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4"><Button variant="ghost" size="icon" onClick={() => setCurrentPage("category")}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-lg font-bold">جزئیات محصول</h1></div></div><div className="p-4"><div className="text-center mb-6"><img src={selectedProduct.image || "/placeholder.svg"} alt={selectedProduct.name} className="h-48 w-48 object-cover rounded-2xl mx-auto mb-4" /><h2 className="text-2xl font-bold">{selectedProduct.name}</h2><div className="text-2xl font-bold text-green-600">{formatPrice(selectedProduct.price)}</div></div><Card className="mb-6 rounded-2xl"><CardContent className="p-6"><h3 className="font-bold">توضیحات</h3><p>{selectedProduct.description}</p></CardContent></Card>{selectedProduct.available ? <Card><CardContent className="p-6"><div className="flex items-center justify-between mb-6"><span className="text-lg">تعداد:</span><div className="flex items-center gap-4"><Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(1, q - 1))}><Minus/></Button><span className="text-xl font-bold">{quantity}</span><Button variant="outline" size="icon" onClick={() => setQuantity(q => q + 1)}><Plus/></Button></div></div><Button className="w-full h-14" onClick={() => { addToCart!(selectedProduct, quantity); setCurrentPage("cart"); }}><ShoppingCart className="ml-2" /> افزودن به سبد</Button></CardContent></Card> : <Card><CardContent><p>این محصول موجود نیست.</p></CardContent></Card>}</div></div>);
 }
 
 function ReturnRequestDialog({ order, onOpenChange, onSuccess }: { order: OrderWithItems | null, onOpenChange: () => void, onSuccess: () => void }) {
@@ -376,6 +418,30 @@ function OrderHistoryPage(props: PageProps) {
     const { orders, isLoadingOrders, formatPrice, setCurrentPage, fetchOrders } = props;
     const [selectedOrderForReturn, setSelectedOrderForReturn] = useState<OrderWithItems | null>(null);
 
+    const handleCancelOrder = async (orderId: string) => {
+        if (!confirm("آیا از لغو این سفارش اطمینان دارید؟ این عمل غیرقابل بازگشت است.")) return;
+        try {
+            const res = await fetch(`/api/orders/${orderId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'CANCELED' })
+            });
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "خطا در لغو سفارش");
+            }
+            alert("سفارش با موفقیت لغو شد.");
+            fetchOrders!(); // Refresh the list
+        } catch (e) {
+            alert((e as Error).message);
+        }
+    };
+
+    const getStatusText = (status: OrderStatus) => {
+        const map = { PENDING: "در حال بررسی", SHIPPED: "ارسال شده", DELIVERED: "تحویل داده شد", CANCELED: "لغو شده" };
+        return map[status];
+    }
+
     return (
         <div className="pb-20">
             <div className="sticky top-0 bg-white z-10 p-4 border-b">
@@ -385,15 +451,14 @@ function OrderHistoryPage(props: PageProps) {
                 </div>
             </div>
             <div className="p-4 space-y-4">
-                {isLoadingOrders ? (
-                    <p className="text-center py-10">در حال بارگذاری...</p>
-                ) : orders.length > 0 ? (
+                {isLoadingOrders ? ( <p className="text-center py-10">در حال بارگذاری...</p> ) : 
+                orders.length > 0 ? (
                     orders.map((order: OrderWithItems) => (
                         <Card key={order.id} className="rounded-2xl">
                             <CardHeader>
                                 <div className="flex justify-between items-center">
                                     <CardTitle>سفارش: ...{order.id.substring(18)}</CardTitle>
-                                    <Badge variant={order.status === 'SHIPPED' ? 'default' : 'secondary'}>{order.status === 'PENDING' ? 'در حال بررسی' : 'ارسال شده'}</Badge>
+                                    <Badge variant={order.status === 'SHIPPED' ? 'default' : order.status === 'CANCELED' ? 'destructive' : 'secondary'}>{getStatusText(order.status)}</Badge>
                                 </div>
                                 <CardDescription>تاریخ: {new Date(order.createdAt).toLocaleDateString("fa-IR")} - مجموع: {formatPrice(order.totalPrice)}</CardDescription>
                             </CardHeader>
@@ -405,25 +470,26 @@ function OrderHistoryPage(props: PageProps) {
                                     ))}
                                 </ul>
                                 {order.notes && <p className="text-sm mt-3"><span className="font-semibold">توضیحات:</span> {order.notes}</p>}
-                                <div className="mt-4">
+                                <div className="flex gap-2 mt-4">
                                      <Button variant="outline" size="sm" onClick={() => setSelectedOrderForReturn(order)}>
                                         <RefreshCw className="ml-2 h-4 w-4" />
                                         ثبت مرجوعی
                                     </Button>
+                                    {order.status === 'PENDING' && (
+                                        <Button variant="destructive" size="sm" onClick={() => handleCancelOrder(order.id)}>لغو سفارش</Button>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
                     ))
-                ) : (
-                    <p className="text-center py-10">سفارشی ثبت نشده.</p>
-                )}
+                ) : ( <p className="text-center py-10">سفارشی ثبت نشده.</p> )}
             </div>
             
             <ReturnRequestDialog 
                 order={selectedOrderForReturn} 
                 onOpenChange={() => setSelectedOrderForReturn(null)}
                 onSuccess={() => {
-                    fetchOrders(); 
+                    fetchOrders!(); 
                     setSelectedOrderForReturn(null);
                 }}
             />
@@ -435,12 +501,12 @@ function CartPage(props: PageProps) {
     const { cart, updateCartQuantity, removeFromCart, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, setCurrentPage, products, settlements } = props;
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     
-    const originalTotal = getOriginalTotalPrice();
-    const finalTotal = getTotalPrice();
+    const originalTotal = getOriginalTotalPrice!();
+    const finalTotal = getTotalPrice!();
     const totalDiscount = originalTotal - finalTotal;
 
     const handleDateSelect = (date: Date) => {
-        setDeliveryDate(date);
+        setDeliveryDate!(date);
         setIsCalendarOpen(false);
     };
 
@@ -453,11 +519,11 @@ function CartPage(props: PageProps) {
                 </div>
             </div>
             <div className="p-4">
-                {cart.length > 0 ? (
+                {cart!.length > 0 ? (
                     <>
                         <div className="space-y-4 mb-6">
-                            {cart.map((item: CartItem) => {
-                                const productDetail = products.find(p => p.id === item.id);
+                            {cart!.map((item: CartItem) => {
+                                const productDetail = products!.find(p => p.id === item.id);
                                 return (
                                     <Card key={item.id}>
                                         <CardContent className="p-4">
@@ -468,11 +534,11 @@ function CartPage(props: PageProps) {
                                                     <div className="text-green-600 font-bold mb-3">{formatPrice(item.price)}</div>
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-3">
-                                                            <Button variant="outline" size="icon" onClick={() => updateCartQuantity(item.id, item.quantity - 1)}><Minus className="h-3 w-3" /></Button>
+                                                            <Button variant="outline" size="icon" onClick={() => updateCartQuantity!(item.id, item.quantity - 1)}><Minus className="h-3 w-3" /></Button>
                                                             <span>{item.quantity}</span>
-                                                            <Button variant="outline" size="icon" onClick={() => updateCartQuantity(item.id, item.quantity + 1)}><Plus className="h-3 w-3" /></Button>
+                                                            <Button variant="outline" size="icon" onClick={() => updateCartQuantity!(item.id, item.quantity + 1)}><Plus className="h-3 w-3" /></Button>
                                                         </div>
-                                                        <Button variant="destructive" size="sm" onClick={() => removeFromCart(item.id)}>حذف</Button>
+                                                        <Button variant="destructive" size="sm" onClick={() => removeFromCart!(item.id)}>حذف</Button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -499,7 +565,7 @@ function CartPage(props: PageProps) {
                                                     {deliveryDate ? deliveryDate.toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }) : <span>یک روز را انتخاب کنید</span>}
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent className="w-[340px] sm:max-w-md p-0">
+                                            <DialogContent className="w-auto p-0">
                                                 <ShamsiCalendar onDateSelect={handleDateSelect} initialDate={deliveryDate} minDate={new Date(Date.now() + 86400000)} />
                                             </DialogContent>
                                         </Dialog>
@@ -508,12 +574,12 @@ function CartPage(props: PageProps) {
                                         <Label>توافق تسویه</Label>
                                         <Select onValueChange={setSelectedSettlement} value={selectedSettlement} dir="rtl">
                                             <SelectTrigger><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
-                                            <SelectContent>{settlements.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                            <SelectContent>{settlements!.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </div>
                                     <div>
                                         <Label htmlFor="notes">توضیحات سفارش (اختیاری)</Label>
-                                        <Textarea id="notes" placeholder="مثلاً: فاکتور رسمی نیاز است." value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} />
+                                        <Textarea id="notes" placeholder="مثلاً: فاکتور رسمی نیاز است." value={orderNotes} onChange={(e) => setOrderNotes!(e.target.value)} />
                                     </div>
                                 </div>
                                 <Button className="w-full h-14 text-lg" onClick={handleOrderSubmit} disabled={!deliveryDate || !selectedSettlement || isSubmitting}>
@@ -535,24 +601,92 @@ function CartPage(props: PageProps) {
 }
 
 function InvoicePage(props: PageProps) {
-    const { user, orders, formatPrice, setCart, setCurrentPage } = props;
+    const { user, orders, formatPrice, settlements, setCart, setCurrentPage } = props;
     const [invoiceNumber, setInvoiceNumber] = useState("");
     const lastSubmittedOrder = orders.length > 0 ? orders[0] : null;
+    
+    const settlementMethod = settlements.find(s => s.id === lastSubmittedOrder?.settlementId)?.name;
+
     useEffect(() => { setInvoiceNumber("BONAK-" + Math.random().toString(36).substring(2, 9).toUpperCase()); }, []);
-    const handleNewOrder = () => { setCart([]); setCurrentPage("home"); };
-    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4"><Button variant="ghost" size="icon" onClick={handleNewOrder}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-xl font-bold">فاکتور</h1></div></div><div className="p-4"><Card className="mb-6"><CardContent className="p-6"><div className="text-center mb-6"><div className="text-4xl mb-2">✅</div><h2>سفارش ثبت شد</h2></div><div className="space-y-4 mb-6"><div className="flex justify-between"><span>شماره فاکتور:</span><span className="font-bold">{invoiceNumber}</span></div><div className="flex justify-between"><span>تاریخ:</span><span className="font-bold">{new Date().toLocaleDateString("fa-IR")}</span></div><div className="flex justify-between"><span>مشتری:</span><span className="font-bold">{user?.name} ({user?.shopName})</span></div><div className="flex justify-between"><span>آدرس:</span><span className="font-bold">{user?.shopAddress}</span></div></div><Separator className="my-6" /><h3 className="font-bold mb-3">اقلام:</h3><div className="space-y-3 mb-6">{lastSubmittedOrder?.items.map((item:any) => <div key={item.id} className="flex justify-between"><span>{item.productName} (×{item.quantity})</span><span>{formatPrice(item.price*item.quantity)}</span></div>)}</div><Separator className="my-6" /><div className="flex justify-between font-bold text-xl"><span>مجموع:</span><span>{formatPrice(lastSubmittedOrder?.totalPrice || 0)}</span></div></CardContent></Card><div className="grid grid-cols-2 gap-4"><Button variant="outline"><Download className="ml-2 h-4 w-4" />دانلود</Button><Button variant="outline"><Share className="ml-2 h-4 w-4" />اشتراک</Button></div><Button onClick={handleNewOrder} className="w-full mt-4">سفارش جدید</Button></div></div>);
+    
+    const handleNewOrder = () => { setCart!([]); setCurrentPage("home"); };
+    
+    if (!lastSubmittedOrder) {
+        // A simple fallback if no order is found
+        useEffect(() => { setCurrentPage("home"); }, []);
+        return <div className="p-4 text-center">اطلاعات فاکتور یافت نشد. در حال بازگشت به صفحه اصلی...</div>;
+    }
+
+    const originalTotal = lastSubmittedOrder.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const totalDiscount = originalTotal - lastSubmittedOrder.totalPrice;
+
+    return (
+        <div className="pb-20">
+            <div className="sticky top-0 bg-white z-10 p-4 border-b flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={handleNewOrder}><ArrowRight className="h-6 w-6" /></Button>
+                <h1 className="text-xl font-bold">فاکتور نهایی</h1>
+            </div>
+            <div className="p-4">
+                <Card className="mb-6">
+                    <CardHeader className="text-center bg-gray-50 rounded-t-xl py-4">
+                        <CardTitle>سفارش شما با موفقیت ثبت شد ✅</CardTitle>
+                        <CardDescription>شماره فاکتور: {invoiceNumber}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 md:p-6">
+                        <div className="grid grid-cols-2 gap-4 text-sm mb-6 border-b pb-4">
+                            <div><p className="text-muted-foreground">مشتری:</p><p className="font-semibold">{user?.name}</p></div>
+                            <div><p className="text-muted-foreground">فروشگاه:</p><p className="font-semibold">{user?.shopName}</p></div>
+                            <div className="col-span-2"><p className="text-muted-foreground">آدرس:</p><p className="font-semibold">{user?.shopAddress}</p></div>
+                            <div><p className="text-muted-foreground">تاریخ تحویل:</p><p className="font-semibold">{new Date(lastSubmittedOrder.deliveryDate).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' })}</p></div>
+                            <div><p className="text-muted-foreground">روش تسویه:</p><p className="font-semibold">{settlementMethod || 'نامشخص'}</p></div>
+                        </div>
+                        
+                        <h3 className="font-bold mb-3">اقلام سفارش:</h3>
+                        <div className="space-y-3 mb-6 text-sm">
+                            {lastSubmittedOrder.items.map((item:any) => 
+                                <div key={item.id} className="flex justify-between items-baseline">
+                                    <span>{item.productName} <span className="text-xs text-muted-foreground">(×{item.quantity})</span></span>
+                                    <span className="font-mono">{formatPrice(item.price*item.quantity)}</span>
+                                </div>
+                            )}
+                        </div>
+                        <Separator className="my-4" />
+                        <div className="space-y-2 text-sm">
+                             <div className="flex justify-between"><span>جمع کل (قبل از تخفیف):</span><span className="font-mono">{formatPrice(originalTotal)}</span></div>
+                             {totalDiscount > 0 && <div className="flex justify-between text-red-600"><span>مجموع تخفیف:</span><span className="font-mono">- {formatPrice(totalDiscount)}</span></div>}
+                             <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
+                                 <span>مبلغ نهایی قابل پرداخت:</span>
+                                 <span className="font-mono">{formatPrice(lastSubmittedOrder.totalPrice)}</span>
+                            </div>
+                        </div>
+                         {lastSubmittedOrder.notes && <div className="text-sm mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"><span className="font-semibold">توضیحات شما:</span> {lastSubmittedOrder.notes}</div>}
+                    </CardContent>
+                </Card>
+                <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline"><Download className="ml-2 h-4 w-4" />دانلود PDF</Button>
+                    <Button onClick={handleNewOrder} className="w-full col-span-2">ثبت سفارش جدید</Button>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 function ProfilePage(props: PageProps) {
-    const { user, setUser, setCurrentPage } = useAppContext();
-    const [formData, setFormData] = useState({ name: user?.name || "", shopName: user?.shopName || "", shopAddress: user?.shopAddress || "", landline: user?.landline || "" });
+    const { user, setCurrentPage } = props;
+    const { setUser } = useAppContext();
+    const [formData, setFormData] = useState({ name: user?.name || "", shopName: user?.shopName || "", shopAddress: user?.shopAddress || "", landline: user?.landline || "", latitude: user?.latitude, longitude: user?.longitude });
     const [passwordData, setPasswordData] = useState({ oldPassword: "", newPassword: "", confirmNewPassword: "" });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const initialMapPosition = (user?.latitude && user?.longitude) ? [user.latitude, user.longitude] as [number, number] : undefined;
 
     const handleInfoChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+    
+    const handleLocationChange = (lat: number, lng: number) => {
+        setFormData({ ...formData, latitude: lat, longitude: lng });
     };
 
     const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -566,7 +700,7 @@ function ProfilePage(props: PageProps) {
             const res = await fetch('/api/user/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
-            setUser(data) // Update user in context
+            setUser(data)
             setSuccess("اطلاعات با موفقیت به‌روز شد.");
         } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
     };
@@ -602,8 +736,9 @@ function ProfilePage(props: PageProps) {
                                 <div className="space-y-2"><Label htmlFor="name">نام و نام خانوادگی</Label><Input id="name" name="name" value={formData.name} onChange={handleInfoChange} /></div>
                                 <div className="space-y-2"><Label htmlFor="shopName">نام فروشگاه</Label><Input id="shopName" name="shopName" value={formData.shopName} onChange={handleInfoChange} /></div>
                             </div>
-                            <div className="space-y-2"><Label htmlFor="shopAddress">آدرس</Label><Textarea id="shopAddress" name="shopAddress" value={formData.shopAddress} onChange={handleInfoChange} /></div>
-                            <div className="space-y-2"><Label htmlFor="landline">تلفن ثابت</Label><Input id="landline" name="landline" value={formData.landline} onChange={handleInfoChange} /></div>
+                            <div className="space-y-2"><Label htmlFor="shopAddress">آدرس</Label><Textarea id="shopAddress" name="shopAddress" value={formData.shopAddress || ''} onChange={handleInfoChange} /></div>
+                            <div className="space-y-2"><Label htmlFor="landline">تلفن ثابت</Label><Input id="landline" name="landline" value={formData.landline || ''} onChange={handleInfoChange} /></div>
+                             <div className="space-y-2"><Label>موقعیت مکانی روی نقشه (اختیاری)</Label><MapPicker onLocationChange={handleLocationChange} initialPosition={initialMapPosition} /></div>
                             <Button type="submit" disabled={isLoading}>{isLoading ? "در حال ذخیره..." : "ذخیره اطلاعات"}</Button>
                         </form>
                     </CardContent>
@@ -625,3 +760,4 @@ function ProfilePage(props: PageProps) {
         </div>
     );
 }
+

@@ -1,4 +1,5 @@
 // FILE: app/api/user/profile/route.ts
+// Updated to handle optional latitude and longitude
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -12,7 +13,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { name, shopName, shopAddress, landline } = body;
+    const { name, shopName, shopAddress, landline, latitude, longitude } = body;
 
     if (!name || !shopName || !shopAddress) {
       return NextResponse.json(
@@ -30,6 +31,8 @@ export async function PUT(req: Request) {
         shopName,
         shopAddress,
         landline,
+        latitude,   // Save latitude
+        longitude,  // Save longitude
       },
     });
 

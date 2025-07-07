@@ -1,7 +1,9 @@
-// FILE: app/api/orders/[id]/status/route.ts (Secured)
+// FILE: app/api/orders/[id]/status/route.ts
+// Updated to handle status changes by ADMIN, WORKER, and CUSTOMER with proper permissions.
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { OrderStatus } from "@prisma/client";
 
 export async function PATCH(
   req: Request,
@@ -9,22 +11,36 @@ export async function PATCH(
 ) {
   try {
     const session = await getSession();
-
-    // 1. Check if user is logged in AND is an ADMIN
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!session.isLoggedIn) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const orderId = params.id;
     const { status } = await req.json();
+    const userRole = session.user.role;
 
-    if (!status) {
-      return NextResponse.json({ error: "Status is required" }, { status: 400 });
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) {
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
+
+    // Permission checks
+    if (userRole === 'CUSTOMER') {
+        // Customers can only cancel their own PENDING orders.
+        if (order.userId !== session.user.id || status !== 'CANCELED' || order.status !== 'PENDING') {
+            return NextResponse.json({ error: "Action not allowed" }, { status: 403 });
+        }
+    } else if (userRole === 'WORKER') {
+        // Workers can only manage SHIPPED or DELIVERED statuses
+        if (![OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(order.status) && status !== 'DELIVERED') {
+            return NextResponse.json({ error: "Workers can only confirm delivery for shipped orders" }, { status: 403 });
+        }
+    }
+    // ADMIN has full control, no extra checks needed.
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: status },
+      data: { status: status as OrderStatus },
     });
 
     return NextResponse.json(updatedOrder, { status: 200 });
