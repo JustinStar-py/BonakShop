@@ -1,4 +1,5 @@
 // FILE: app/api/products/[id]/route.ts
+// FINAL VERSION: Handles discountPercentage in PUT requests.
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -10,21 +11,18 @@ export async function PUT(
 ) {
   try {
     const session = await getSession();
-    // Security check: Only admins can update products
     if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     
     const productId = params.id;
     const body = await req.json();
-    const { name, price, description, image, categoryId, available } = body;
+    const { name, price, description, image, categoryId, available, discountPercentage } = body;
 
-    // Validate required fields
-    if (!name || !price || !categoryId) {
+    if (!name || price === undefined || !categoryId) {
         return NextResponse.json({ error: "Name, price, and category are required" }, { status: 400 });
     }
 
-    // Update the product in the database with all provided fields
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
       data: {
@@ -33,7 +31,8 @@ export async function PUT(
         description,
         image,
         categoryId,
-        available
+        available,
+        discountPercentage: parseInt(discountPercentage, 10) || 0 // Save the discount
       },
     });
 
@@ -45,14 +44,13 @@ export async function PUT(
   }
 }
 
-// --- This function handles PARTIALLY updating a product (e.g., just the availability status) ---
+// --- This function handles PARTIALLY updating a product ---
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getSession();
-    // Security check: Only admins can perform partial updates
     if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -60,8 +58,6 @@ export async function PATCH(
     const productId = params.id;
     const body = await req.json();
 
-    // Update only the fields that are sent in the request body
-    // This makes it flexible for updating just 'available' or any other single field
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
       data: body,

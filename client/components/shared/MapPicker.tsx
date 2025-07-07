@@ -1,15 +1,14 @@
 // FILE: components/shared/MapPicker.tsx
-// FINAL VERSION: Added missing 'useMapEvents' import.
+// FINAL VERSION: Fixed map centering issue in readOnly mode.
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'; // <-- FIX: useMapEvents added here
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { LatLngExpression, Icon, LatLngTuple } from 'leaflet';
 import { useEffect, useState } from 'react';
 import { LocateFixed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import "leaflet/dist/images/marker-shadow.png";
-// You need to copy 'marker-icon.png' to your /public folder for this to work.
 const DefaultIcon = new Icon({
     iconUrl: "/marker-icon.png",
     shadowUrl: "/marker-shadow.png",
@@ -20,14 +19,19 @@ const DefaultIcon = new Icon({
 interface MapPickerProps {
     onLocationChange?: (lat: number, lng: number) => void;
     initialPosition?: LatLngTuple;
-    markers?: { position: LatLngTuple; popupText: string }[];
+    marker?: { position: LatLngTuple; popupText: string };
     readOnly?: boolean;
     height?: string;
 }
 
 function DraggableMarker({ onLocationChange, initialPosition }: Pick<MapPickerProps, 'onLocationChange' | 'initialPosition'>) {
     const [position, setPosition] = useState<LatLngExpression | null>(initialPosition || null);
+    const map = useMap();
     
+    useEffect(() => {
+        if(initialPosition) map.flyTo(initialPosition, 15);
+    }, [initialPosition, map]);
+
     useMapEvents({
         click(e) {
             setPosition(e.latlng);
@@ -65,23 +69,24 @@ function GoToCurrentLocationButton() {
 
 export default function MapPicker({ 
     onLocationChange, 
-    initialPosition = [35.6892, 51.3890], // Default to Tehran
-    markers,
+    initialPosition = [35.6892, 51.3890],
+    marker,
     readOnly = false,
     height = 'h-64'
 }: MapPickerProps) {
+    // FIX: If a marker is provided in readOnly mode, center the map on it.
+    const mapCenter = readOnly && marker ? marker.position : initialPosition;
+
     const map = (
-        <MapContainer center={initialPosition} zoom={readOnly ? 10 : 13} style={{ height: '100%', width: '100%' }}>
+        <MapContainer center={mapCenter} zoom={readOnly ? 15 : 13} style={{ height: '100%', width: '100%' }}>
             <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
-            {readOnly ? (
-                markers?.map((marker, idx) => (
-                    <Marker key={idx} position={marker.position} icon={DefaultIcon}>
-                        <Popup>{marker.popupText}</Popup>
-                    </Marker>
-                ))
+            {readOnly && marker ? (
+                <Marker position={marker.position} icon={DefaultIcon}>
+                    <Popup>{marker.popupText}</Popup>
+                </Marker>
             ) : (
                 <>
                     <DraggableMarker onLocationChange={onLocationChange} initialPosition={initialPosition} />
