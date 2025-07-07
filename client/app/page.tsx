@@ -565,7 +565,7 @@ function CartPage(props: PageProps) {
                                                     {deliveryDate ? deliveryDate.toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }) : <span>یک روز را انتخاب کنید</span>}
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent className="w-auto p-0">
+                                            <DialogContent className="w-[340px] p-0">
                                                 <ShamsiCalendar onDateSelect={handleDateSelect} initialDate={deliveryDate} minDate={new Date(Date.now() + 86400000)} />
                                             </DialogContent>
                                         </Dialog>
