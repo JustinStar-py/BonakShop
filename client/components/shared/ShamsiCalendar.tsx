@@ -45,16 +45,18 @@ function toGregorian(jy: number, jm: number, jd: number): Date {
         gy += Math.floor((days - 1) / 365);
         days = (days - 1) % 365;
     }
-    const gd = days + 1;
-    const g_m_o = [0, 31, (gy % 4 === 0 && gy % 100 !== 0 || gy % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let gd = days + 1;
+    const g_m_o = [31, (gy % 4 === 0 && gy % 100 !== 0 || gy % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     let gm = 0;
-    for (let i = 0; i < 13; i++) {
-        const v = g_m_o[i];
-        if (gd <= v) break;
-        gm++;
+    for (let i = 0; i < 12; i++) {
+        if (gd > g_m_o[i]) {
+            gd -= g_m_o[i];
+        } else {
+            gm = i + 1;
+            break;
+        }
     }
-    const date = new Date(gy, gm, gd - g_m_o.slice(0, gm + 1).reduce((a, b) => a + b, 0));
-    return new Date(date.valueOf() + date.getTimezoneOffset() * 60000);
+    return new Date(gy, gm - 1, gd + 1);
 }
 
 

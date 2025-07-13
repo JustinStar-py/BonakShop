@@ -69,7 +69,7 @@ function GoToCurrentLocationButton() {
 
 export default function MapPicker({ 
     onLocationChange, 
-    initialPosition = [35.6892, 51.3890],
+    initialPosition = [32.2355764, 54.090075],
     marker,
     readOnly = false,
     height = 'h-64'
