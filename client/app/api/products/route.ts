@@ -24,10 +24,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, price, description, image, categoryId, available } = body;
+    const { name, price, description, image, categoryId, available, unit, stock, discountPercentage } = body;
 
-    if (!name || !price || !categoryId) {
-        return NextResponse.json({ error: "Name, price, and category are required" }, { status: 400 });
+    if (!name || !price || !categoryId || !unit || stock === undefined) {
+        return NextResponse.json({ error: "Name, price, category, unit, and stock are required" }, { status: 400 });
     }
 
     const newProduct = await prisma.product.create({
@@ -37,7 +37,10 @@ export async function POST(req: Request) {
         description,
         image,
         categoryId,
-        available
+        available,
+        unit,
+        stock: Number(stock),
+        discountPercentage: Number(discountPercentage) || 0
       },
     });
     return NextResponse.json(newProduct, { status: 201 });

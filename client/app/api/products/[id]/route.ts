@@ -7,20 +7,22 @@ import { getSession } from "@/lib/session";
 // --- This function handles UPDATING a full product record ---
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
+  const productId = params.id;
+
   try {
     const session = await getSession();
     if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     
-    const productId = params.id;
     const body = await req.json();
-    const { name, price, description, image, categoryId, available, discountPercentage } = body;
+    const { name, price, description, image, categoryId, available, discountPercentage, unit, stock } = body;
 
-    if (!name || price === undefined || !categoryId) {
-        return NextResponse.json({ error: "Name, price, and category are required" }, { status: 400 });
+    if (!name || price === undefined || !categoryId || !unit || stock === undefined) {
+        return NextResponse.json({ error: "Name, price, category, unit, and stock are required" }, { status: 400 });
     }
 
     const updatedProduct = await prisma.product.update({
@@ -32,7 +34,9 @@ export async function PUT(
         image,
         categoryId,
         available,
-        discountPercentage: parseInt(discountPercentage, 10) || 0 // Save the discount
+        discountPercentage: parseInt(discountPercentage, 10) || 0,
+        unit,
+        stock: Number(stock)
       },
     });
 
@@ -47,15 +51,17 @@ export async function PUT(
 // --- This function handles PARTIALLY updating a product ---
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
+  const productId = params.id;
+
   try {
     const session = await getSession();
     if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     
-    const productId = params.id;
     const body = await req.json();
 
     const updatedProduct = await prisma.product.update({
@@ -68,5 +74,26 @@ export async function PATCH(
   } catch (error) {
     console.error("Product patch error:", error);
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+  }
+}
+
+// DELETE a product (Admin only)
+export async function DELETE(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  const params = await context.params;
+  const productId = params.id;
+
+  try {
+    const session = await getSession();
+    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    await prisma.product.delete({ where: { id: productId } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Product delete error:", error);
+    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
   }
 }

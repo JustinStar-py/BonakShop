@@ -40,12 +40,72 @@ async function main() {
   console.log("Seeding products...");
   await prisma.product.createMany({
     data: [
-      { name: "سوسیس آلمانی درجه یک", price: 1250000, image: "https://jamkharid.ir/uploads/products/500015.jpg?m=crop&w=500&h=500&q=high", categoryId: categoryMap.get("سوسیس و کالباس")!, description: "سوسیس آلمانی با کیفیت بالا و طعم عالی", available: true, discountPercentage: 0 },
-      { name: "سبزی خورشت قورمه", price: 850000, image: "https://sabziman.com/images/%D9%82%D9%88%D8%B1%D9%85%D9%87-%D8%AA%D9%87%D8%B1%D8%A7%D9%86%DB%8C-%D8%AE%D8%B1%D8%AF-%D8%B4%D8%AF%D9%87-1.jpg", categoryId: categoryMap.get("سبزی خورشتی")!, description: "سبزی تازه و پاک شده برای خورشت قورمه", available: true, discountPercentage: 10 },
-      { name: "خیارشور ممتاز", price: 950000, image: "https://bamomarket.com/images/1660901452322.jpg", categoryId: categoryMap.get("خیارشور و ترشی")!, description: "خیارشور ترش و خوشمزه", available: true, discountPercentage: 0 },
-      { name: "قارچ بسته‌ای تازه", price: 750000, image: "https://amirarsalanmushroom.com/wp-content/uploads/2023/04/%DB%B4%DB%B0%DB%B0-%DA%AF%D8%B1%D9%85%DB%8C-400x400.jpg", categoryId: categoryMap.get("قارچ")!, description: "قارچ تازه و پاک شده", available: false, discountPercentage: 0 },
-      { name: "پنیر پیتزا موزارلا", price: 2100000, image: "https://img.beroozmart.com/unsafe/files/shop/product/661c44bfac8045bfb5fcfe380213a0a9.jpg", categoryId: categoryMap.get("لبنیات")!, description: "پنیر موزارلا مخصوص پیتزا", available: true, discountPercentage: 5 },
-      { name: "برنج هاشمی درجه یک", price: 3200000, image: "https://berangeirani.com/wp-content/uploads/2022/10/hashemi-rice.webp", categoryId: categoryMap.get("برنج و حبوبات")!, description: "برنج هاشمی عطری و باکیفیت", available: true, discountPercentage: 0 },
+      {
+        name: "سوسیس آلمانی درجه یک",
+        price: 1250000,
+        image: "https://jamkharid.ir/uploads/products/500015.jpg?m=crop&w=500&h=500&q=high",
+        categoryId: categoryMap.get("سوسیس و کالباس")!,
+        description: "سوسیس آلمانی با کیفیت بالا و طعم عالی",
+        available: true,
+        discountPercentage: 0,
+        unit: "عدد",
+        stock: 120
+      },
+      {
+        name: "سبزی خورشت قورمه",
+        price: 850000,
+        image: "https://sabziman.com/images/%D9%82%D9%88%D8%B1%D9%85%D9%87-%D8%AA%D9%87%D8%B1%D8%A7%D9%86%DB%8C-%D8%AE%D8%B1%D8%AF-%D8%B4%D8%AF%D9%87-1.jpg",
+        categoryId: categoryMap.get("سبزی خورشتی")!,
+        description: "سبزی تازه و پاک شده برای خورشت قورمه",
+        available: true,
+        discountPercentage: 10,
+        unit: "بسته",
+        stock: 50
+      },
+      {
+        name: "خیارشور ممتاز",
+        price: 950000,
+        image: "https://bamomarket.com/images/1660901452322.jpg",
+        categoryId: categoryMap.get("خیارشور و ترشی")!,
+        description: "خیارشور ترش و خوشمزه",
+        available: true,
+        discountPercentage: 0,
+        unit: "دبه",
+        stock: 30
+      },
+      {
+        name: "قارچ بسته‌ای تازه",
+        price: 750000,
+        image: "https://amirarsalanmushroom.com/wp-content/uploads/2023/04/%DB%B4%DB%B0%DB%B0-%DA%AF%D8%B1%D9%85%DB%8C-400x400.jpg",
+        categoryId: categoryMap.get("قارچ")!,
+        description: "قارچ تازه و پاک شده",
+        available: false,
+        discountPercentage: 0,
+        unit: "بسته",
+        stock: 0
+      },
+      {
+        name: "پنیر پیتزا موزارلا",
+        price: 2100000,
+        image: "https://img.beroozmart.com/unsafe/files/shop/product/661c44bfac8045bfb5fcfe380213a0a9.jpg",
+        categoryId: categoryMap.get("لبنیات")!,
+        description: "پنیر موزارلا مخصوص پیتزا",
+        available: true,
+        discountPercentage: 5,
+        unit: "کیلوگرم",
+        stock: 20
+      },
+      {
+        name: "برنج هاشمی درجه یک",
+        price: 3200000,
+        image: "https://berangeirani.com/wp-content/uploads/2022/10/hashemi-rice.webp",
+        categoryId: categoryMap.get("برنج و حبوبات")!,
+        description: "برنج هاشمی عطری و باکیفیت",
+        available: true,
+        discountPercentage: 0,
+        unit: "کیلوگرم",
+        stock: 200
+      },
     ]
   });
   console.log("6 products seeded.");

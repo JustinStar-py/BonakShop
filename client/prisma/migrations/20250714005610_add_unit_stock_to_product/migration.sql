@@ -21,6 +21,7 @@ CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "icon" TEXT,
+    "image" TEXT,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
@@ -34,6 +35,8 @@ CREATE TABLE "Product" (
     "image" TEXT,
     "available" BOOLEAN NOT NULL DEFAULT true,
     "discountPercentage" INTEGER NOT NULL DEFAULT 0,
+    "unit" TEXT NOT NULL DEFAULT 'عدد',
+    "stock" INTEGER NOT NULL DEFAULT 0,
     "categoryId" TEXT NOT NULL,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")

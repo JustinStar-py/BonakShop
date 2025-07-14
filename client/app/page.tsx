@@ -628,7 +628,7 @@ function InvoicePage(props: PageProps) {
             </div>
             <div className="p-4">
                 <Card className="mb-6">
-                    <CardHeader className="text-center bg-gray-50 rounded-t-xl py-4">
+                    <CardHeader className="teclient/componentsxt-center bg-gray-50 rounded-t-xl py-4">
                         <CardTitle>سفارش شما با موفقیت ثبت شد ✅</CardTitle>
                         <CardDescription>شماره فاکتور: {invoiceNumber}</CardDescription>
                     </CardHeader>
