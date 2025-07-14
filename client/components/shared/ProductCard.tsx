@@ -1,16 +1,19 @@
+// justinstar-py/bonakshop/BonakShop-e6b838d87bef95729686f4e3b951e4072eed623d/client/components/shared/ProductCard.tsx
 // FILE: components/shared/ProductCard.tsx
 // Updates:
 // - Displays discounted price and original price (strikethrough).
+// - Displays supplier name.
 "use client";
 
-import type { Product } from "@/types";
+import type { Product, Supplier } from "@/types";
 import type { CartItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Minus, Tag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Minus, Tag, Building } from "lucide-react";
 
 interface ProductCardProps {
-  product: Product;
+  product: Product & { supplier: Supplier };
   cartItem: CartItem | undefined;
   onAddToCart: (product: Product) => void;
   onSelectProduct: (product: Product) => void;
@@ -36,9 +39,15 @@ export default function ProductCard({
           {product.discountPercentage}%
         </div>
       )}
+       <div className="absolute top-2 right-2">
+         <Badge variant="secondary" className="flex items-center gap-1">
+           <Building className="h-3 w-3"/>
+           {product.supplier.name}
+         </Badge>
+       </div>
       <CardContent className="p-4 pb-2">
         <div className="cursor-pointer" onClick={() => onSelectProduct(product)}>
-          <div className="flex justify-center mb-3">
+          <div className="flex justify-center mb-3 pt-6">
             <img
               src={product.image || "/placeholder.svg"}
               alt={product.name}

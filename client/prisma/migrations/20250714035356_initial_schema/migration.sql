@@ -8,6 +8,24 @@ CREATE TYPE "Role" AS ENUM ('CUSTOMER', 'ADMIN', 'WORKER');
 CREATE TYPE "ReturnStatus" AS ENUM ('REQUESTED', 'APPROVED', 'REJECTED');
 
 -- CreateTable
+CREATE TABLE "Supplier" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "logo" TEXT,
+
+    CONSTRAINT "Supplier_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Distributor" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "logo" TEXT,
+
+    CONSTRAINT "Distributor_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Settlement" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -38,6 +56,8 @@ CREATE TABLE "Product" (
     "unit" TEXT NOT NULL DEFAULT 'عدد',
     "stock" INTEGER NOT NULL DEFAULT 0,
     "categoryId" TEXT NOT NULL,
+    "supplierId" TEXT NOT NULL,
+    "distributorId" TEXT NOT NULL,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
 );
@@ -106,13 +126,19 @@ CREATE TABLE "ReturnRequestItem" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Supplier_name_key" ON "Supplier"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Distributor_name_key" ON "Distributor"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Settlement_name_key" ON "Settlement"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_name_key" ON "Product"("name");
+CREATE UNIQUE INDEX "Product_name_supplierId_key" ON "Product"("name", "supplierId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
@@ -122,6 +148,12 @@ CREATE UNIQUE INDEX "ReturnRequest_orderId_key" ON "ReturnRequest"("orderId");
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Product" ADD CONSTRAINT "Product_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Product" ADD CONSTRAINT "Product_distributorId_fkey" FOREIGN KEY ("distributorId") REFERENCES "Distributor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

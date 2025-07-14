@@ -1,10 +1,10 @@
 // FILE: app/page.tsx (Final Version with all features, corrected routing, and UI fixes)
 "use client";
 
-import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, Plus, Minus, ArrowRight, Download, Share, Home, List, LogOut, History, Send, Loader2, User as UserIcon, CalendarIcon, RefreshCw, Truck, LayoutDashboard } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, ArrowRight, Download, Share, Home, List, LogOut, History, Send, Loader2, User as UserIcon, CalendarIcon, RefreshCw, Truck, LayoutDashboard, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 
 import type { Product as PrismaProduct, Category as PrismaCategory, Settlement, OrderItem, OrderStatus } from "@prisma/client";
 import type { CartItem, OrderWithItems, User } from "@/types";
@@ -308,9 +310,68 @@ function HomePage(props: PageProps) {
 
 function CategoryPage(props: PageProps) {
     const { selectedCategory, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, updateCartQuantity, setCurrentPage, categories } = props;
-    const filteredProducts = products!.filter((p) => (selectedCategory ? p.categoryId === selectedCategory : true) && p.name.toLowerCase().includes(searchQuery!.toLowerCase()));
+    
+    // NEW: State for selected supplier
+    const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
+
+    const filteredProducts = products!.filter((p) => 
+        (selectedCategory ? p.categoryId === selectedCategory : true) && 
+        (selectedSupplier ? p.supplierId === selectedSupplier : true) &&
+        p.name.toLowerCase().includes(searchQuery!.toLowerCase())
+    );
+
+    // NEW: Get unique suppliers for the selected category
+    const availableSuppliers = useMemo(() => {
+        if (!selectedCategory) return [];
+        const supplierIds = new Set(products.filter(p => p.categoryId === selectedCategory).map(p => p.supplierId));
+        return products
+            .filter(p => supplierIds.has(p.supplierId))
+            .map(p => p.supplier)
+            .filter((s, index, self) => self.findIndex(t => t.id === s.id) === index);
+    }, [selectedCategory, products]);
+    
     const renderProductList = (list: any[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p} cartItem={cart!.find((ci:any) => ci.id === p.id)} onAddToCart={addToCart!} onSelectProduct={handleSelectProduct!} onUpdateQuantity={updateCartQuantity!} />)}</div>);
-    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4 mb-4"><Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-xl font-bold">{selectedCategory ? categories!.find(c => c.id === selectedCategory)?.name : "همه محصولات"}</h1></div><div className="relative"><Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" /><Input placeholder="جستجو..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-12" /></div></div><div className="p-4">{filteredProducts.length > 0 ? renderProductList(filteredProducts) : <p className="text-center py-10">محصولی یافت نشد.</p>}</div></div>);
+
+    return (
+        <div className="pb-20">
+            <div className="sticky top-0 bg-white z-10 p-4 border-b">
+                <div className="flex items-center gap-4 mb-4">
+                    <Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button>
+                    <h1 className="text-xl font-bold">{selectedCategory ? categories!.find(c => c.id === selectedCategory)?.name : "همه محصولات"}</h1>
+                </div>
+                <div className="flex gap-2">
+                    <div className="relative flex-grow"><Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" /><Input placeholder="جستجو در محصولات..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-10" /></div>
+                    {/* NEW: Supplier Filter Dropdown */}
+                    {availableSuppliers.length > 0 && (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-[150px] justify-between">
+                                    {selectedSupplier ? availableSuppliers.find(s => s.id === selectedSupplier)?.name : "انتخاب شرکت"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[150px] p-0">
+                                <Command>
+                                    <CommandList>
+                                        <CommandEmpty>شرکتی یافت نشد.</CommandEmpty>
+                                        <CommandGroup>
+                                            <CommandItem onSelect={() => setSelectedSupplier(null)}>همه شرکت‌ها</CommandItem>
+                                            {availableSuppliers.map((supplier) => (
+                                                <CommandItem key={supplier.id} onSelect={() => setSelectedSupplier(supplier.id)}>
+                                                    {supplier.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                    )}
+                </div>
+            </div>
+            <div className="p-4">{filteredProducts.length > 0 ? renderProductList(filteredProducts) : <p className="text-center py-10">محصولی یافت نشد.</p>}</div>
+        </div>
+    );
 }
 
 function ProductDetailPage(props: PageProps) {
@@ -760,4 +821,3 @@ function ProfilePage(props: PageProps) {
         </div>
     );
 }
-

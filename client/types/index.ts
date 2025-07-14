@@ -1,3 +1,4 @@
+// justinstar-py/bonakshop/BonakShop-e6b838d87bef95729686f4e3b951e4072eed623d/client/types/index.ts
 // FILE: types/index.ts
 // Contains all custom TypeScript types for the application.
 
@@ -9,7 +10,9 @@ import type {
   User as PrismaUser,
   Settlement as PrismaSettlement,
   ReturnRequest as PrismaReturnRequest,
-  ReturnRequestItem as PrismaReturnRequestItem
+  ReturnRequestItem as PrismaReturnRequestItem,
+  Supplier as PrismaSupplier,
+  Distributor as PrismaDistributor
 } from '@prisma/client';
 
 // A product item in the shopping cart, extending the base product with quantity
@@ -46,5 +49,7 @@ export type {
   PrismaUser as User,
   PrismaSettlement as Settlement,
   PrismaReturnRequest as ReturnRequest,
-  PrismaReturnRequestItem as ReturnRequestItem
+  PrismaReturnRequestItem as ReturnRequestItem,
+  PrismaSupplier as Supplier,
+  PrismaDistributor as Distributor
 }
