@@ -1,22 +1,25 @@
 "use client";
 
 // Import necessary hooks and components from React and other libraries
-import { useState, useEffect, useMemo, FormEvent } from "react";
+import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from "react";
 import { 
     DollarSign, ShoppingCart, Users, LogOut, Package, ListPlus, 
-    PlusCircle, Pencil, Loader2, Send, Building, Truck as TruckIcon, Upload
+    PlusCircle, Pencil, Loader2, Send, Building, Truck as TruckIcon, Upload, Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { 
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "@/context/AppContext";
 import type { Category, Product, Order, User, Supplier, Distributor, OrderItem, OrderStatus } from "@prisma/client";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
@@ -305,25 +308,56 @@ function CategoryManagementPage() {
     useEffect(() => { fetchCategories(); }, []);
 
     const handleOpenDialog = (category: any | null = null) => {
-        setEditingCategory(category || { name: "", icon: "" });
+        setEditingCategory(category || { name: "", icon: "", image: "" });
         setIsDialogOpen(true);
     };
 
+    // FIX: Define handleFormChange for category editing
+    const handleFormChange = (field: string, value: any) => {
+        setEditingCategory((prev: any) => ({ ...prev, [field]: value }));
+    };
+    
+    const handleImageUpload = async (file: File) => {
+        if (!file || !editingCategory) return;
+        setActionLoading(true);
+        const formData = new FormData();
+        formData.append("image", file);
+        try {
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`, { method: "POST", body: formData });
+            const data = await res.json();
+            if (data.success) {
+                handleFormChange('image', data.data.url);
+            } else { alert("آپلود عکس موفق نبود."); }
+        } catch (err) { alert("خطا در آپلود عکس"); } 
+        finally { setActionLoading(false); }
+    };
+    
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!editingCategory) return;
         setActionLoading(true);
-
         const isEditing = !!editingCategory.id;
         const url = isEditing ? `/api/categories/${editingCategory.id}` : '/api/categories';
         const method = isEditing ? 'PUT' : 'POST';
-        
         try {
             const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editingCategory) });
             if (!res.ok) throw new Error(await res.text());
             await fetchCategories();
             setIsDialogOpen(false);
-        } catch (e) { alert("خطا در ذخیره دسته‌بندی"); } 
+        } catch (e) { alert(`خطا در ذخیره دسته‌بندی: ${e}`); } 
+        finally { setActionLoading(false); }
+    };
+    
+    const handleDelete = async (categoryId: string) => {
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/categories/${categoryId}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const { error } = await res.json();
+                throw new Error(error);
+            }
+            await fetchCategories();
+        } catch (error) { alert(`خطا در حذف: ${error}`); } 
         finally { setActionLoading(false); }
     };
 
@@ -338,17 +372,48 @@ function CategoryManagementPage() {
             <Card>
                 <CardContent className="pt-6">
                     <Table>
-                        <TableHeader><TableRow><TableHead className="w-[80px] text-right">آیکون</TableHead><TableHead className="text-right">نام</TableHead><TableHead className="text-center w-[100px]">عملیات</TableHead></TableRow></TableHeader>
-                        <TableBody>{categories.map(c => (<TableRow key={c.id}><TableCell className="text-right"><span className="text-2xl">{c.icon}</span></TableCell><TableCell className="font-medium text-right">{c.name}</TableCell><TableCell className="text-center"><Button size="sm" variant="outline" onClick={() => handleOpenDialog(c)}><Pencil className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody>
+                        <TableHeader><TableRow><TableHead className="w-[80px] text-right">تصویر</TableHead><TableHead className="w-[80px] text-right">آیکون</TableHead><TableHead className="text-right">نام</TableHead><TableHead className="text-center w-[120px]">عملیات</TableHead></TableRow></TableHeader>
+                        <TableBody>{categories.map(c => (<TableRow key={c.id}>
+                            <TableCell className="text-right"><img src={c.image || "/placeholder.svg"} alt={c.name} className="h-12 w-12 rounded-md object-cover" /></TableCell>
+                            <TableCell className="text-right"><span className="text-2xl">{c.icon}</span></TableCell>
+                            <TableCell className="font-medium text-right">{c.name}</TableCell>
+                            <TableCell className="text-center">
+                                <div className="flex justify-center gap-2">
+                                    <Button size="sm" variant="outline" onClick={() => handleOpenDialog(c)}><Pencil className="h-4 w-4" /></Button>
+                                    <Dialog>
+                                        <DialogTrigger asChild><Button size="sm" variant="destructive"><Trash2 className="h-4 w-4" /></Button></DialogTrigger>
+                                        <DialogContent dir="rtl">
+                                            <DialogHeader><DialogTitle>حذف دسته‌بندی</DialogTitle></DialogHeader>
+                                            <p>آیا مطمئن هستید که می‌خواهید دسته‌بندی "{c.name}" را حذف کنید؟ این عملیات غیرقابل بازگشت است.</p>
+                                            <DialogFooter>
+                                                <DialogClose asChild><Button variant="secondary">انصراف</Button></DialogClose>
+                                                <Button variant="destructive" onClick={() => handleDelete(c.id)} disabled={actionLoading}>
+                                                    {actionLoading ? <Loader2 className="animate-spin" /> : "تایید حذف"}
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
+                            </TableCell>
+                        </TableRow>))}</TableBody>
                     </Table>
                 </CardContent>
             </Card>
+            
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent dir="rtl">
                     <DialogHeader><DialogTitle>{editingCategory?.id ? 'ویرایش' : 'افزودن'} دسته‌بندی</DialogTitle></DialogHeader>
                     {editingCategory && <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                        <div><Label>نام دسته‌بندی</Label><Input value={editingCategory.name} onChange={e => setEditingCategory({...editingCategory, name: e.target.value})} required/></div>
-                        <div><Label>آیکون (Emoji)</Label><Input value={editingCategory.icon || ""} onChange={e => setEditingCategory({...editingCategory, icon: e.target.value})} /></div>
+                        <div><Label>نام دسته‌بندی</Label><Input value={editingCategory.name} onChange={e => handleFormChange('name', e.target.value)} required/></div>
+                        <div><Label>آیکون (Emoji)</Label><Input value={editingCategory.icon || ""} onChange={e => handleFormChange('icon', e.target.value)} /></div>
+                        <div>
+                            <Label>تصویر</Label>
+                            <div className="flex items-center gap-2">
+                                <Input value={editingCategory.image || ''} onChange={e => handleFormChange('image', e.target.value)} placeholder="آدرس را وارد یا آپلود کنید"/>
+                                <input type="file" accept="image/*" id="category-image-upload" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && handleImageUpload(e.target.files[0])}/>
+                                <Button type="button" variant="outline" size="icon" onClick={() => document.getElementById('category-image-upload')?.click()} disabled={actionLoading}><Upload className="h-4 w-4"/></Button>
+                            </div>
+                        </div>
                         <DialogFooter>
                             <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>انصراف</Button>
                             <Button type="submit" disabled={actionLoading}>{actionLoading ? <Loader2 className="animate-spin" /> : "ذخیره"}</Button>
@@ -389,6 +454,7 @@ function ProductManagementPage() {
         setIsDialogOpen(true);
     };
 
+    // FIX: Define handleFormChange for product editing
     const handleFormChange = (field: string, value: any) => {
         setEditingProduct((prev: any) => ({ ...prev, [field]: value }));
     };
@@ -403,33 +469,34 @@ function ProductManagementPage() {
             const data = await res.json();
             if (data.success) {
                 handleFormChange('image', data.data.url);
-                alert("آپلود موفقیت‌آمیز بود!");
-            } else {
-                alert("آپلود عکس موفق نبود.");
-            }
-        } catch (err) {
-            alert("خطا در آپلود عکس");
-        } finally {
-            setActionLoading(false);
-        }
+            } else { alert("آپلود عکس موفق نبود."); }
+        } catch (err) { alert("خطا در آپلود عکس"); } 
+        finally { setActionLoading(false); }
     };
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!editingProduct) return;
         setActionLoading(true);
-        
         const isEditing = !!editingProduct.id;
         const url = isEditing ? `/api/products/${editingProduct.id}` : '/api/products';
         const method = isEditing ? 'PUT' : 'POST';
         const body = { ...editingProduct, price: parseFloat(editingProduct.price) || 0, stock: Number(editingProduct.stock) || 0, discountPercentage: Number(editingProduct.discountPercentage) || 0 };
-
         try {
             const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (!res.ok) throw new Error(await res.text());
             await fetchAllData();
             setIsDialogOpen(false);
         } catch (error) { alert(`خطا در ذخیره محصول: ${error}`); } 
+        finally { setActionLoading(false); }
+    };
+
+    const handleDelete = async (productId: string) => {
+        setActionLoading(true);
+        try {
+            await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+            await fetchAllData();
+        } catch (error) { alert(`خطا در حذف محصول: ${error}`); } 
         finally { setActionLoading(false); }
     };
     
@@ -445,7 +512,7 @@ function ProductManagementPage() {
             <Card>
                 <CardContent className="pt-6">
                     <Table>
-                        <TableHeader><TableRow><TableHead className="w-[60px] text-right">تصویر</TableHead><TableHead className="text-right">نام محصول</TableHead><TableHead className="text-right">تولیدکننده</TableHead><TableHead className="text-right">قیمت</TableHead><TableHead className="text-right">موجودی</TableHead><TableHead className="text-right">وضعیت</TableHead><TableHead className="text-center w-[100px]">عملیات</TableHead></TableRow></TableHeader>
+                        <TableHeader><TableRow><TableHead className="w-[60px] text-right">تصویر</TableHead><TableHead className="text-right">نام محصول</TableHead><TableHead className="text-right">تولیدکننده</TableHead><TableHead className="text-right">قیمت</TableHead><TableHead className="text-right">موجودی</TableHead><TableHead className="text-right">وضعیت</TableHead><TableHead className="text-center w-[120px]">عملیات</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {products.map(p => (
                                 <TableRow key={p.id}>
@@ -455,7 +522,24 @@ function ProductManagementPage() {
                                     <TableCell className="text-right">{formatPrice(p.price)}</TableCell>
                                     <TableCell className="text-right">{p.stock.toLocaleString('fa-IR')} {p.unit}</TableCell>
                                     <TableCell className="text-right"><Badge variant={p.available ? 'default' : 'destructive'}>{p.available ? "موجود" : "ناموجود"}</Badge></TableCell>
-                                    <TableCell className="text-center"><Button size="sm" variant="outline" onClick={() => handleOpenDialog(p)}><Pencil className="h-4 w-4" /></Button></TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex justify-center gap-2">
+                                            <Button size="sm" variant="outline" onClick={() => handleOpenDialog(p)}><Pencil className="h-4 w-4" /></Button>
+                                            <Dialog>
+                                                <DialogTrigger asChild><Button size="sm" variant="destructive"><Trash2 className="h-4 w-4" /></Button></DialogTrigger>
+                                                <DialogContent dir="rtl">
+                                                    <DialogHeader><DialogTitle>حذف محصول</DialogTitle></DialogHeader>
+                                                    <p>آیا مطمئن هستید که می‌خواهید محصول "{p.name}" را حذف کنید؟ این عملیات غیرقابل بازگشت است.</p>
+                                                    <DialogFooter>
+                                                        <DialogClose asChild><Button variant="secondary">انصراف</Button></DialogClose>
+                                                        <Button variant="destructive" onClick={() => handleDelete(p.id)} disabled={actionLoading}>
+                                                            {actionLoading ? <Loader2 className="animate-spin" /> : "تایید حذف"}
+                                                        </Button>
+                                                    </DialogFooter>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -482,7 +566,7 @@ function ProductManagementPage() {
                                 <Label>آدرس تصویر</Label>
                                 <div className="flex items-center gap-2">
                                     <Input value={editingProduct.image || ''} onChange={e => handleFormChange('image', e.target.value)} placeholder="آدرس را وارد یا آپلود کنید"/>
-                                    <input type="file" accept="image/*" id="product-image-upload" className="hidden" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0])}/>
+                                    <input type="file" accept="image/*" id="product-image-upload" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && handleImageUpload(e.target.files[0])}/>
                                     <Button type="button" variant="outline" size="icon" onClick={() => document.getElementById('product-image-upload')?.click()} disabled={actionLoading}><Upload className="h-4 w-4"/></Button>
                                 </div>
                             </div>
