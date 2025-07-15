@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && prisma migrate reset --force && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -33,6 +33,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.59.0",
     "react-leaflet": "^5.0.0",
+    "react-zoom-pan-pinch": "^3.7.0",
     "recharts": "^3.0.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",

@@ -1,14 +1,11 @@
-// justinstar-py/bonakshop/BonakShop-e6b838d87bef95729686f4e3b951e4072eed623d/client/components/shared/ProductCard.tsx
 // FILE: components/shared/ProductCard.tsx
-// Updates:
-// - Displays discounted price and original price (strikethrough).
-// - Displays supplier name.
+// FINAL VERSION: Aggressively reduced vertical spacing based on user feedback image.
 "use client";
 
 import type { Product, Supplier } from "@/types";
 import type { CartItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Minus, Tag, Building } from "lucide-react";
 
@@ -32,73 +29,85 @@ export default function ProductCard({
   const discountedPrice = product.price * (1 - product.discountPercentage / 100);
 
   return (
-    <Card className="overflow-hidden border-2 border-gray-100 hover:border-green-200 transition-colors rounded-2xl flex flex-col justify-between relative">
+    // The main card is a flex container, directing content vertically.
+    // Padding is adjusted to `p-2` for a tighter look.
+    <Card className={`overflow-hidden gap-3 border-2 border-gray-100 hover:border-green-200 transition-colors rounded-2xl flex flex-col justify-between relative p-2`}>
+      {/* Badges for discount and supplier are absolutely positioned */}
       {hasDiscount && (
-        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 z-10">
           <Tag className="h-3 w-3" />
           {product.discountPercentage}%
         </div>
       )}
-       <div className="absolute top-2 right-2">
+       <div className="absolute top-2 right-2 z-10">
          <Badge variant="secondary" className="flex items-center gap-1">
            <Building className="h-3 w-3"/>
            {product.supplier.name}
          </Badge>
        </div>
-      <CardContent className="p-4 pb-2">
-        <div className="cursor-pointer" onClick={() => onSelectProduct(product)}>
-          <div className="flex justify-center mb-3 pt-6">
+       
+      {/* This div now acts as the main content area that grows and pushes the button down */}
+      <div className="flex-grow flex flex-col cursor-pointer" onClick={() => onSelectProduct(product)}>
+          {/* Container for the image, with top margin to avoid badges */}
+          <div className="flex justify-center mt-8 mb-1">
             <img
               src={product.image || "/placeholder.svg"}
               alt={product.name}
-              className="h-24 w-24 object-cover rounded-xl"
+              className="h-20 w-20 object-cover rounded-xl"
             />
           </div>
-          <h3 className="font-medium text-right mb-2 text-sm leading-relaxed h-10">
-            {product.name}
-          </h3>
-          <div className="text-green-800 font-bold text-right mb-3">
-            {hasDiscount ? (
-              <div className="flex flex-col items-end">
-                <span>{discountedPrice.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
-                <span className="text-xs text-gray-400 line-through">{product.price.toLocaleString("fa-IR")}</span>
-              </div>
-            ) : (
-              <span>{product.price.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
-            )}
+          
+          {/* This div will take up the remaining space and align content to the bottom */}
+          <div className="flex-grow flex flex-col justify-end">
+            {/* Product name with minimum height for consistency and a small bottom margin */}
+            <h3 className={`font-medium text-right text-sm leading-tight min-h-[1.5rem] px-1`}>
+              {product.name}
+            </h3>
+            
+            {/* Price section - no vertical margin */}
+            <div className="text-green-800 font-bold text-right px-1">
+              {hasDiscount ? (
+                <div className="flex flex-col items-end">
+                  <span>{discountedPrice.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
+                  <span className="text-xs text-gray-400 line-through">{product.price.toLocaleString("fa-IR")}</span>
+                </div>
+              ) : (
+                <span>{product.price.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
+              )}
+            </div>
           </div>
-        </div>
-      </CardContent>
+      </div>
 
-      <div className="p-4 pt-0 mt-auto">
+      {/* Action button container - minimal top margin to bring it closer to the price */}
+      <div className="pt-2">
         {!product.available ? (
-          <Button size="sm" variant="outline" className="w-full h-10 rounded-xl" disabled>
+          <Button size="sm" variant="outline" className="w-full h-9 rounded-xl font-bold" disabled>
             ناموجود
           </Button>
         ) : quantityInCart === 0 ? (
           <Button
             size="sm"
-            className="w-full bg-green-600 hover:bg-green-700 h-10 rounded-xl"
+            className="w-full bg-green-600 hover:bg-green-700 h-9 rounded-xl font-bold"
             onClick={() => onAddToCart(product)}
           >
             <Plus className="ml-2 h-4 w-4" />
-            افزودن به سبد
+            افزودن
           </Button>
         ) : (
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-2">
             <Button
               variant="default"
               size="icon"
-              className="h-10 w-10 rounded-full bg-green-600 hover:bg-green-700"
+              className="h-9 w-9 rounded-full bg-green-600 hover:bg-green-700"
               onClick={() => onUpdateQuantity(product.id, quantityInCart + 1)}
             >
               <Plus className="h-4 w-4" />
             </Button>
-            <span className="font-bold text-lg w-10 text-center">{quantityInCart}</span>
+            <span className="font-bold text-lg w-8 text-center">{quantityInCart}</span>
             <Button
               variant="outline"
               size="icon"
-              className="h-10 w-10 rounded-full"
+              className="h-9 w-9 rounded-full"
               onClick={() => onUpdateQuantity(product.id, quantityInCart - 1)}
             >
               <Minus className="h-4 w-4" />

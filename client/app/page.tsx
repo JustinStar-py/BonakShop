@@ -130,7 +130,7 @@ function AuthPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4" dir="rtl">
-            <Card className="w-full max-w-md"><CardHeader className="text-center"><CardTitle>به بنک‌شاپ خوش آمدید</CardTitle><CardDescription>برای ادامه وارد شوید یا ثبت‌نام کنید</CardDescription></CardHeader><CardContent><Tabs value={activeTab} onValueChange={setActiveTab} className="w-full"><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="login">ورود</TabsTrigger><TabsTrigger value="register">ثبت نام</TabsTrigger></TabsList><TabsContent value="login"><form onSubmit={handleLogin} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="login-phone">شماره تلفن</Label><Input id="login-phone" type="tel" placeholder="09123456789" required value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="login-password">رمز عبور</Label><Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>{error && activeTab === 'login' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ورود...</> : "ورود"}</Button></form></TabsContent><TabsContent value="register"><form onSubmit={handleRegister} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="register-phone">شماره تلفن</Label><Input id="register-phone" type="tel" placeholder="09123456789" required value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="register-password">رمز عبور</Label><Input id="register-password" type="password" required value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="confirm-password">تکرار رمز عبور</Label><Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>{error && activeTab === 'register' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت نام...</> : "ثبت نام"}</Button></form></TabsContent></Tabs></CardContent></Card>
+            <Card className="w-full max-w-md"><CardHeader className="text-center"><CardTitle>به بنک‌شاپ خوش آمدید</CardTitle><CardDescription>برای ادامه وارد شوید یا ثبت‌نام کنید</CardDescription></CardHeader><CardContent><Tabs value={activeTab} onValueChange={setActiveTab} className="w-full"><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="login">ورود</TabsTrigger><TabsTrigger value="register">ثبت نام</TabsTrigger></TabsList><TabsContent value="login"><form onSubmit={handleLogin} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="login-phone">شماره تلفن</Label><Input id="login-phone" type="tel" placeholder="مثال: 09130000000" required value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="login-password">رمز عبور</Label><Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>{error && activeTab === 'login' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ورود...</> : "ورود"}</Button></form></TabsContent><TabsContent value="register"><form onSubmit={handleRegister} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="register-phone">شماره تلفن</Label><Input id="register-phone" type="tel" placeholder="09123456789" required value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="register-password">رمز عبور</Label><Input id="register-password" type="password" required value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="confirm-password">تکرار رمز عبور</Label><Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>{error && activeTab === 'register' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت نام...</> : "ثبت نام"}</Button></form></TabsContent></Tabs></CardContent></Card>
         </div>
     );
 }
@@ -284,14 +284,36 @@ function HomePage(props: PageProps) {
     const { user, handleLogout, orders, isLoadingOrders, handleSelectProduct, handleNavigateToCategories, searchQuery, setSearchQuery, categories, products, cart, addToCart, updateCartQuantity, setCurrentPage } = props;
     const router = useRouter();
     const mostRecentOrder = orders.length > 0 ? orders[0] : null;
-    const featuredProducts = products!.slice(0, 4);
-    const renderProductList = (list: PrismaProduct[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p as any} cartItem={cart!.find((ci) => ci.id === p.id)} onAddToCart={addToCart!} onSelectProduct={handleSelectProduct!} onUpdateQuantity={updateCartQuantity!} />)}</div>);
+
+    const productsToShow = useMemo(() => {
+        if (!products) return [];
+        if (searchQuery) {
+            return products.filter(p => 
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        return products.slice(0, 4);
+    }, [products, searchQuery]);
+
+    const renderProductList = (list: any[]) => (
+        <div className="grid grid-cols-2 gap-4">
+            {list.map(p => 
+                <ProductCard 
+                    key={p.id} 
+                    product={p as any} 
+                    cartItem={cart!.find((ci) => ci.id === p.id)} 
+                    onAddToCart={addToCart!} 
+                    onSelectProduct={handleSelectProduct!} 
+                    onUpdateQuantity={updateCartQuantity!} 
+                />
+            )}
+        </div>
+    );
     
     return (
         <div className="pb-20">
             <div className="p-4 flex justify-between items-center bg-gray-50 border-b">
                 <h1 className="font-bold text-lg text-green-800">سلام، {user?.name}!</h1>
-                {/* FIX: Wrapped buttons in a flex container for proper alignment */}
                 <div className="flex items-center">
                     {user?.role === 'ADMIN' && <Button variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')} className="text-gray-600" title="پنل ادمین"><LayoutDashboard className="h-5 w-5" /></Button>}
                     {user?.role === 'WORKER' && <Button variant="ghost" size="icon" onClick={() => router.push('/delivery')} className="text-gray-600" title="پنل تحویل"><Truck className="h-5 w-5" /></Button>}
@@ -299,10 +321,67 @@ function HomePage(props: PageProps) {
                     <Button variant="ghost" size="icon" onClick={handleLogout} className="text-red-500" title="خروج"><LogOut className="h-5 w-5" /></Button>
                 </div>
             </div>
-            {!isLoadingOrders && mostRecentOrder && mostRecentOrder.items.length > 0 && (<div className="p-4"><h2 className="text-xl font-bold text-green-800 mb-4">سفارش های اخیر</h2><div className="flex space-x-4 space-x-reverse overflow-x-auto pb-4">{mostRecentOrder.items.map(item => { const productDetails = products!.find(p => p.name === item.productName); return (<div key={item.id} className="flex-shrink-0 w-28 text-center cursor-pointer" onClick={() => productDetails && handleSelectProduct!(productDetails)}><img src={productDetails?.image || "/placeholder.svg"} className="h-20 w-20 object-cover rounded-lg mx-auto mb-2" alt={item.productName} /><p className="text-xs truncate">{item.productName}</p></div>)})}</div></div>)}
-            <div className="p-4"><div className="relative"><Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" /><Input placeholder="جستجوی محصولات..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-12 pl-4 h-12 text-lg rounded-2xl" /></div></div>
-            <div className="p-4"><h2 className="text-xl font-bold text-green-800 mb-4">دسته‌بندی‌ها</h2><div className="grid grid-cols-2 gap-3">{categories!.map(c => <Button key={c.id} variant="outline" className="h-20 flex flex-col items-center justify-center gap-2" onClick={() => { props.setSelectedCategory!(c.id); props.setCurrentPage("category"); }}><span className="text-2xl">{c.icon}</span><span className="text-sm">{c.name}</span></Button>)}</div></div>
-            <div className="p-4"><div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold text-green-800">محصولات ویژه</h2><Button variant="ghost" className="text-green-600" onClick={handleNavigateToCategories!}>مشاهده همه <ArrowRight className="mr-2 h-4 w-4" /></Button></div>{renderProductList(featuredProducts)}</div>
+            {!isLoadingOrders && mostRecentOrder && mostRecentOrder.items.length > 0 && !searchQuery && (
+                <div className="p-4">
+                    <h2 className="text-xl font-bold text-green-800 mb-4">سفارش های اخیر</h2>
+                    <div className="flex space-x-4 space-x-reverse overflow-x-auto pb-4">
+                        {mostRecentOrder.items.map(item => { 
+                            const productDetails = products!.find(p => p.name === item.productName); 
+                            return (
+                                <div key={item.id} className="flex-shrink-0 w-28 text-center cursor-pointer" onClick={() => productDetails && handleSelectProduct!(productDetails)}>
+                                    <img src={productDetails?.image || "/placeholder.svg"} className="h-20 w-20 object-cover rounded-lg mx-auto mb-2" alt={item.productName} />
+                                    <p className="text-xs truncate">{item.productName}</p>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
+            <div className="p-4">
+                <div className="relative">
+                    <Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" />
+                    <Input placeholder="جستجوی محصولات..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-12 pl-4 h-12 text-lg rounded-2xl" />
+                </div>
+            </div>
+
+            {searchQuery ? (
+                <div className="p-4">
+                    <h2 className="text-xl font-bold text-green-800 mb-4">نتایج جستجو برای: "{searchQuery}"</h2>
+                    {productsToShow.length > 0 ? renderProductList(productsToShow) : <p className="text-center text-muted-foreground py-10">محصولی یافت نشد.</p>}
+                </div>
+            ) : (
+                <>
+                    <div className="p-4">
+                        <h2 className="text-xl font-bold text-green-800 mb-4">دسته‌بندی‌ها</h2>
+                        <div className="grid grid-cols-2 gap-3">
+                            {categories!.map(c => 
+                                <Button 
+                                    key={c.id} 
+                                    variant="outline" 
+                                    className="h-20 flex flex-col items-center justify-center gap-2" 
+                                    onClick={() => { props.setSelectedCategory!(c.id); props.setCurrentPage("category"); }}
+                                >
+                                    {c.image ? (
+                                        <img src={c.image} alt={c.name} className="h-10 w-10 object-contain rounded-md" />
+                                    ) : (
+                                        <span className="text-2xl">{c.icon}</span>
+                                    )}
+                                    <span className="text-sm">{c.name}</span>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                    <div className="p-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-green-800">محصولات ویژه</h2>
+                            <Button variant="ghost" className="text-green-600" onClick={handleNavigateToCategories!}>
+                                مشاهده همه <ArrowRight className="mr-2 h-4 w-4" />
+                            </Button>
+                        </div>
+                        {renderProductList(productsToShow)}
+                    </div>
+                </>
+            )}
         </div>
     );
 }
@@ -311,7 +390,6 @@ function HomePage(props: PageProps) {
 function CategoryPage(props: PageProps) {
     const { selectedCategory, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, updateCartQuantity, setCurrentPage, categories } = props;
     
-    // NEW: State for selected supplier
     const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
 
     const filteredProducts = products!.filter((p) => 
@@ -320,7 +398,6 @@ function CategoryPage(props: PageProps) {
         p.name.toLowerCase().includes(searchQuery!.toLowerCase())
     );
 
-    // NEW: Get unique suppliers for the selected category
     const availableSuppliers = useMemo(() => {
         if (!selectedCategory) return [];
         const supplierIds = new Set(products.filter(p => p.categoryId === selectedCategory).map(p => p.supplierId));
@@ -334,14 +411,13 @@ function CategoryPage(props: PageProps) {
 
     return (
         <div className="pb-20">
-            <div className="sticky top-0 bg-white z-10 p-4 border-b">
+            <div className="sticky top-0 bg-white z-10 p-4 border-b z-99">
                 <div className="flex items-center gap-4 mb-4">
                     <Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button>
                     <h1 className="text-xl font-bold">{selectedCategory ? categories!.find(c => c.id === selectedCategory)?.name : "همه محصولات"}</h1>
                 </div>
                 <div className="flex gap-2">
                     <div className="relative flex-grow"><Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" /><Input placeholder="جستجو در محصولات..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-10" /></div>
-                    {/* NEW: Supplier Filter Dropdown */}
                     {availableSuppliers.length > 0 && (
                         <Popover>
                             <PopoverTrigger asChild>
@@ -377,8 +453,115 @@ function CategoryPage(props: PageProps) {
 function ProductDetailPage(props: PageProps) {
     const { selectedProduct, addToCart, setCurrentPage, formatPrice } = props;
     const [quantity, setQuantity] = useState(1);
-    if (!selectedProduct) { setCurrentPage("home"); return null; }
-    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4"><Button variant="ghost" size="icon" onClick={() => setCurrentPage("category")}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-lg font-bold">جزئیات محصول</h1></div></div><div className="p-4"><div className="text-center mb-6"><img src={selectedProduct.image || "/placeholder.svg"} alt={selectedProduct.name} className="h-48 w-48 object-cover rounded-2xl mx-auto mb-4" /><h2 className="text-2xl font-bold">{selectedProduct.name}</h2><div className="text-2xl font-bold text-green-600">{formatPrice(selectedProduct.price)}</div></div><Card className="mb-6 rounded-2xl"><CardContent className="p-6"><h3 className="font-bold">توضیحات</h3><p>{selectedProduct.description}</p></CardContent></Card>{selectedProduct.available ? <Card><CardContent className="p-6"><div className="flex items-center justify-between mb-6"><span className="text-lg">تعداد:</span><div className="flex items-center gap-4"><Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(1, q - 1))}><Minus/></Button><span className="text-xl font-bold">{quantity}</span><Button variant="outline" size="icon" onClick={() => setQuantity(q => q + 1)}><Plus/></Button></div></div><Button className="w-full h-14" onClick={() => { addToCart!(selectedProduct, quantity); setCurrentPage("cart"); }}><ShoppingCart className="ml-2" /> افزودن به سبد</Button></CardContent></Card> : <Card><CardContent><p>این محصول موجود نیست.</p></CardContent></Card>}</div></div>);
+    
+    // State variables to manage the zoom scale and the last distance between fingers.
+    const [scale, setScale] = useState(1);
+    const [lastDistance, setLastDistance] = useState(0);
+
+    // This useEffect handles the case where the page is loaded without a selected product,
+    // redirecting to the home page to prevent errors.
+    if (!selectedProduct) {
+        useEffect(() => { setCurrentPage("home"); }, [setCurrentPage]);
+        return null;
+    }
+
+    // Helper function to calculate the distance between two touch points.
+    const getDistance = (touches: React.TouchEvent<HTMLDivElement>['touches']) => {
+        const [touch1, touch2] = touches;
+        return Math.sqrt(
+            Math.pow(touch2.pageX - touch1.pageX, 2) +
+            Math.pow(touch2.pageY - touch1.pageY, 2)
+        );
+    };
+
+    // This handler is triggered when the user starts touching the image with two fingers.
+    // It prevents the default browser scroll and records the initial distance.
+    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (e.touches.length === 2) {
+            e.preventDefault(); 
+            setLastDistance(getDistance(e.touches));
+        }
+    };
+
+    // This handler is triggered when the user moves their fingers while touching the image.
+    // It calculates the new scale based on the change in distance.
+    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const newDistance = getDistance(e.touches);
+            // Calculate the new scale and clamp it between 1x (original) and 3x (max zoom).
+            const newScale = scale * (newDistance / lastDistance);
+            setScale(Math.min(Math.max(1, newScale), 3)); 
+            setLastDistance(newDistance);
+        }
+    };
+
+    // This handler resets the zoom level when the user lifts their fingers.
+    const handleTouchEnd = () => {
+        // A small timeout provides a smoother transition back to the original scale.
+        if (scale > 1) {
+            setTimeout(() => setScale(1), 100);
+        }
+    };
+
+    return (
+        <div className="pb-20">
+            <div className="sticky top-0 bg-white z-10 p-4 border-b">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => setCurrentPage("category")}><ArrowRight className="h-6 w-6" /></Button>
+                    <h1 className="text-lg font-bold">جزئیات محصول</h1>
+                </div>
+            </div>
+            <div className="p-4">
+                <div className="text-center mb-6">
+                    {/* The image container now has touch event handlers for zooming. */}
+                    <div 
+                        className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden"
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        <img 
+                            src={selectedProduct.image || "/placeholder.svg"} 
+                            alt={selectedProduct.name} 
+                            // The image's scale is controlled by the `scale` state.
+                            className="h-full w-full object-contain rounded-2xl transition-transform duration-100 ease-out"
+                            style={{ transform: `scale(${scale})` }}
+                        />
+                    </div>
+                    <h2 className="text-2xl font-bold">{selectedProduct.name}</h2>
+                    <div className="text-2xl font-bold text-green-600">{formatPrice(selectedProduct.price)}</div>
+                </div>
+                <Card className="mb-6 rounded-2xl p-1">
+                    <CardContent className="py-2 px-4">
+                        <h3 className="font-bold py-1">توضیحات</h3>
+                        <p>{selectedProduct.description}</p>
+                    </CardContent>
+                </Card>
+                {selectedProduct.available ? (
+                    <Card>
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <span className="text-lg">تعداد:</span>
+                                <div className="flex items-center gap-4">
+                                    <Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(1, q - 1))}><Minus/></Button>
+                                    <span className="text-xl font-bold">{quantity}</span>
+                                    <Button variant="outline" size="icon" onClick={() => setQuantity(q => q + 1)}><Plus/></Button>
+                                </div>
+                            </div>
+                            <Button className="w-full h-14" onClick={() => { addToCart!(selectedProduct, quantity); setCurrentPage("cart"); }}>
+                                <ShoppingCart className="ml-2" /> افزودن به سبد
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card>
+                        <CardContent><p>این محصول موجود نیست.</p></CardContent>
+                    </Card>
+                )}
+            </div>
+        </div>
+    );
 }
 
 function ReturnRequestDialog({ order, onOpenChange, onSuccess }: { order: OrderWithItems | null, onOpenChange: () => void, onSuccess: () => void }) {
