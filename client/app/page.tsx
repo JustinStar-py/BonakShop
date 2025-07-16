@@ -102,7 +102,8 @@ export default function WholesaleFoodApp() {
   return <AppContent />;
 }
 
-// --- Authentication Page Component ---
+// This replaces ONLY the AuthPage function inside app/page.tsx
+
 function AuthPage() {
     const { setUser } = useAppContext();
     const [loginPhone, setLoginPhone] = useState("");
@@ -111,38 +112,115 @@ function AuthPage() {
     const [registerPassword, setRegisterPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("login");
 
+    const handleTabChange = (tab: string) => {
+      setError("");
+      setSuccessMessage("");
+      setActiveTab(tab);
+    }
+
     const handleRegister = async (e: FormEvent) => {
-        e.preventDefault(); setIsLoading(true); setError("");
+        e.preventDefault(); 
+        setIsLoading(true); 
+        setError("");
+        setSuccessMessage("");
+
+        // ADDED: Client-side check for password length
+        if (registerPassword.length < 6) {
+            setError("رمز عبور باید حداقل ۶ کاراکتر باشد.");
+            setIsLoading(false);
+            return;
+        }
+
         if (registerPassword !== confirmPassword) {
             setError("رمزهای عبور با یکدیگر مطابقت ندارند.");
             setIsLoading(false);
             return;
         }
         try {
-            const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: registerPhone, password: registerPassword, confirmPassword }) });
+            const res = await fetch('/api/auth/register', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ phone: registerPhone, password: registerPassword, confirmPassword }) 
+            });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "خطایی رخ داده است.");
-            alert("ثبت نام با موفقیت انجام شد! لطفاً از تب ورود، وارد شوید.");
-            setActiveTab("login");
-        } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
+            if (!res.ok) throw new Error(data.error || "خطایی در هنگام ثبت‌نام رخ داد.");
+            
+            setSuccessMessage("ثبت نام با موفقیت انجام شد! لطفاً وارد شوید.");
+            setActiveTab("login"); // Switch to login tab on success
+        } catch (err: any) { 
+            setError(err.message); 
+        } finally { 
+            setIsLoading(false); 
+        }
     };
 
     const handleLogin = async (e: FormEvent) => {
-        e.preventDefault(); setIsLoading(true); setError("");
+        e.preventDefault(); 
+        setIsLoading(true); 
+        setError("");
+        setSuccessMessage("");
         try {
-            const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: loginPhone, password: loginPassword }) });
+            const res = await fetch('/api/auth/login', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ phone: loginPhone, password: loginPassword }) 
+            });
             const user = await res.json();
-            if (!res.ok) throw new Error(user.error || "شماره یا رمز عبور اشتباه است.");
+            if (!res.ok) throw new Error(user.error || "خطا در ورود. لطفاً دوباره تلاش کنید.");
             setUser(user);
-        } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
+        } catch (err: any) { 
+            setError(err.message); 
+        } finally { 
+            setIsLoading(false); 
+        }
     };
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4" dir="rtl">
-            <Card className="w-full max-w-md"><CardHeader className="text-center"><CardTitle>به بنک‌شاپ خوش آمدید</CardTitle><CardDescription>برای ادامه وارد شوید یا ثبت‌نام کنید</CardDescription></CardHeader><CardContent><Tabs value={activeTab} onValueChange={setActiveTab} className="w-full"><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="login">ورود</TabsTrigger><TabsTrigger value="register">ثبت نام</TabsTrigger></TabsList><TabsContent value="login"><form onSubmit={handleLogin} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="login-phone">شماره تلفن</Label><Input id="login-phone" type="tel" placeholder="09123456789" required value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="login-password">رمز عبور</Label><Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>{error && activeTab === 'login' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ورود...</> : "ورود"}</Button></form></TabsContent><TabsContent value="register"><form onSubmit={handleRegister} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="register-phone">شماره تلفن</Label><Input id="register-phone" type="tel" placeholder="09123456789" required value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="register-password">رمز عبور</Label><Input id="register-password" type="password" required value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="confirm-password">تکرار رمز عبور</Label><Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>{error && activeTab === 'register' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت نام...</> : "ثبت نام"}</Button></form></TabsContent></Tabs></CardContent></Card>
+            <Card className="w-full max-w-md">
+                <CardHeader className="text-center">
+                    <CardTitle>به بنک‌شاپ خوش آمدید</CardTitle>
+                    <CardDescription>برای ادامه وارد شوید یا ثبت‌نام کنید</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="login">ورود</TabsTrigger>
+                            <TabsTrigger value="register">ثبت نام</TabsTrigger>
+                        </TabsList>
+                        
+                        {/* Login Tab */}
+                        <TabsContent value="login">
+                            <form onSubmit={handleLogin} className="space-y-4 pt-4">
+                                <div className="space-y-2"><Label htmlFor="login-phone">شماره تلفن</Label><Input id="login-phone" type="tel" placeholder="مثال: 09130000000" required value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} /></div>
+                                <div className="space-y-2"><Label htmlFor="login-password">رمز عبور</Label><Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>
+                                
+                                {error && activeTab === 'login' && <p className="text-sm text-red-500 text-center">{error}</p>}
+                                {successMessage && <p className="text-sm text-green-600 text-center">{successMessage}</p>}
+
+                                <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ورود...</> : "ورود"}</Button>
+                            </form>
+                        </TabsContent>
+
+                        {/* Register Tab */}
+                        <TabsContent value="register">
+                            <form onSubmit={handleRegister} className="space-y-4 pt-4">
+                                <div className="space-y-2"><Label htmlFor="register-phone">شماره تلفن</Label><Input id="register-phone" type="tel" placeholder="09123456789 مثال" required value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} /></div>
+                                <div className="space-y-2"><Label htmlFor="register-password">رمز عبور (حداقل ۶ کاراکتر)</Label><Input id="register-password" type="password" required value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} /></div>
+                                <div className="space-y-2"><Label htmlFor="confirm-password">تکرار رمز عبور</Label><Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
+                                
+                                {error && activeTab === 'register' && <p className="text-sm text-red-500 text-center">{error}</p>}
+                                
+                                <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت نام...</> : "ثبت نام"}</Button>
+                            </form>
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+            </Card>
         </div>
     );
 }

@@ -22,16 +22,17 @@ export default function BottomNavigation({
 
   // Helper function to determine button style based on the current page
   const getButtonClass = (page: string) => {
-    const baseClass = "flex flex-col items-center h-16 px-6 rounded-2xl";
-    const activeClass = "bg-green-600 text-white";
-    const inactiveClass = "text-green-700";
+    const baseClass = "flex flex-col items-center h-16 px-6 rounded-2xl transition-all duration-300";
+    // add 0.5 secends of transition for smooth animation
+    const activeClass = "bg-green-600 text-white w-[30vw]";
+    const inactiveClass = "text-green-700 w-[15vw]";
     return `${baseClass} ${currentPage === page ? activeClass : inactiveClass}`;
   };
 
   const getVariant = (page: string) => (currentPage === page ? 'default' : 'ghost');
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-green-100 p-2 flex justify-around shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-green-100 p-2 flex justify-around shadow-lg z-99">
       
       {/* Home Button */}
       <Button

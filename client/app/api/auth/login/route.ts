@@ -1,4 +1,4 @@
-// FILE: app/api/auth/login/route.ts (Corrected)
+// FILE: app/api/auth/login/route.ts (Corrected with Persian Errors)
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const { phone, password } = body;
 
     if (!phone || !password) {
-      return NextResponse.json({ error: "Phone and password are required" }, { status: 400 });
+      return NextResponse.json({ error: "شماره تلفن و رمز عبور الزامی است." }, { status: 400 });
     }
 
     const normalizedPhone = normalizePhoneNumber(phone);
@@ -26,22 +26,18 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "شماره تلفن یا رمز عبور اشتباه است." }, { status: 401 });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "شماره تلفن یا رمز عبور اشتباه است." }, { status: 401 });
     }
 
     const session = await getSession();
     session.isLoggedIn = true;
-    
-    // *** IMPORTANT FIX HERE ***
-    // Ensure the ENTIRE user object (including role) is saved to the session.
-    session.user = user; 
-    
+    session.user = user;
     await session.save();
 
     const { password: _, ...userWithoutPassword } = user;
@@ -49,6 +45,6 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error("Login error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "خطایی در سرور رخ داده است. لطفاً بعداً تلاش کنید." }, { status: 500 });
   }
 }
