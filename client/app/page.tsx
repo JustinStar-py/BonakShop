@@ -1,4 +1,4 @@
-// FILE: app/page.tsx (Final Version with all features, corrected routing, and UI fixes)
+// FILE: app/page.tsx (Final Version with Image Dialog functionality)
 "use client";
 
 import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
@@ -30,6 +30,18 @@ const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
     loading: () => <div className="h-64 w-full bg-gray-200 animate-pulse rounded-md flex items-center justify-center"><p>در حال بارگذاری نقشه...</p></div>
 });
 
+// --- New Component for displaying the image in a dialog ---
+function ImageDialog({ imageUrl, onClose }: { imageUrl: string | null; onClose: () => void }) {
+    if (!imageUrl) return null;
+    return (
+        <Dialog open={true} onOpenChange={onClose}>
+            {/* The className is updated to have a white background, padding, and shadow */}
+            <DialogContent className="p-2 bg-white shadow-lg rounded-lg max-w-lg w-full">
+                <img src={imageUrl} alt="نمایش بزرگتر محصول" className="w-full h-auto rounded-lg object-contain" />
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 // --- Type definition for props to pass to page components ---
 interface PageProps {
@@ -66,9 +78,11 @@ interface PageProps {
     selectedProduct: (PrismaProduct & { category: PrismaCategory }) | null;
     setCurrentPage: (p: string) => void;
     setCart: (cart: CartItem[]) => void;
+    // New prop to handle opening the image dialog
+    setViewingImage: (url: string | null) => void;
 }
 
-// --- Main Controller Component (Top Level) with CORRECTED Routing Logic ---
+// --- Main Controller Component (Top Level) ---
 export default function WholesaleFoodApp() {
   const { user, isLoadingUser } = useAppContext();
   
@@ -80,8 +94,6 @@ export default function WholesaleFoodApp() {
     return <AuthPage />;
   }
   
-  // All roles can now see the main app content.
-  // Specific panels are accessed via navigation, not forced redirection.
   const isProfileComplete = user.name && user.shopName && user.shopAddress;
   if (user.role === 'CUSTOMER' && !isProfileComplete) {
       return <CompleteProfilePage />
@@ -90,7 +102,7 @@ export default function WholesaleFoodApp() {
   return <AppContent />;
 }
 
-// --- Authentication Page Component (Top Level) ---
+// --- Authentication Page Component ---
 function AuthPage() {
     const { setUser } = useAppContext();
     const [loginPhone, setLoginPhone] = useState("");
@@ -130,12 +142,12 @@ function AuthPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4" dir="rtl">
-            <Card className="w-full max-w-md"><CardHeader className="text-center"><CardTitle>به بنک‌شاپ خوش آمدید</CardTitle><CardDescription>برای ادامه وارد شوید یا ثبت‌نام کنید</CardDescription></CardHeader><CardContent><Tabs value={activeTab} onValueChange={setActiveTab} className="w-full"><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="login">ورود</TabsTrigger><TabsTrigger value="register">ثبت نام</TabsTrigger></TabsList><TabsContent value="login"><form onSubmit={handleLogin} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="login-phone">شماره تلفن</Label><Input id="login-phone" type="tel" placeholder="مثال: 09130000000" required value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="login-password">رمز عبور</Label><Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>{error && activeTab === 'login' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ورود...</> : "ورود"}</Button></form></TabsContent><TabsContent value="register"><form onSubmit={handleRegister} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="register-phone">شماره تلفن</Label><Input id="register-phone" type="tel" placeholder="09123456789" required value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="register-password">رمز عبور</Label><Input id="register-password" type="password" required value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="confirm-password">تکرار رمز عبور</Label><Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>{error && activeTab === 'register' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت نام...</> : "ثبت نام"}</Button></form></TabsContent></Tabs></CardContent></Card>
+            <Card className="w-full max-w-md"><CardHeader className="text-center"><CardTitle>به بنک‌شاپ خوش آمدید</CardTitle><CardDescription>برای ادامه وارد شوید یا ثبت‌نام کنید</CardDescription></CardHeader><CardContent><Tabs value={activeTab} onValueChange={setActiveTab} className="w-full"><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="login">ورود</TabsTrigger><TabsTrigger value="register">ثبت نام</TabsTrigger></TabsList><TabsContent value="login"><form onSubmit={handleLogin} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="login-phone">شماره تلفن</Label><Input id="login-phone" type="tel" placeholder="09123456789" required value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="login-password">رمز عبور</Label><Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>{error && activeTab === 'login' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ورود...</> : "ورود"}</Button></form></TabsContent><TabsContent value="register"><form onSubmit={handleRegister} className="space-y-4 pt-4"><div className="space-y-2"><Label htmlFor="register-phone">شماره تلفن</Label><Input id="register-phone" type="tel" placeholder="09123456789" required value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="register-password">رمز عبور</Label><Input id="register-password" type="password" required value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="confirm-password">تکرار رمز عبور</Label><Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>{error && activeTab === 'register' && <p className="text-sm text-red-500 text-center">{error}</p>}<Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت نام...</> : "ثبت نام"}</Button></form></TabsContent></Tabs></CardContent></Card>
         </div>
     );
 }
 
-// --- Complete Profile Page (Top Level) with Map ---
+// --- Complete Profile Page ---
 function CompleteProfilePage() {
     const { user, setUser } = useAppContext();
     const [formData, setFormData] = useState({ 
@@ -180,8 +192,7 @@ function CompleteProfilePage() {
     );
 }
 
-
-// --- Main Application Component for All Roles ---
+// --- Main Application Component ---
 function AppContent() {
     const { user, setUser, cart, setCart, currentPage, setCurrentPage, ...appContext } = useAppContext();
     const { addToCart, updateCartQuantity, removeFromCart, getTotalPrice, getOriginalTotalPrice, getTotalItems, setSelectedProduct, selectedProduct } = appContext;
@@ -197,6 +208,7 @@ function AppContent() {
     const [orderNotes, setOrderNotes] = useState("");
     const [orders, setOrders] = useState<OrderWithItems[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [viewingImage, setViewingImage] = useState<string | null>(null);
 
     const fetchOrders = async () => {
         try {
@@ -252,7 +264,7 @@ function AppContent() {
         finally { setIsSubmitting(false); }
     };
 
-    const props: PageProps = { user, handleLogout, orders, fetchOrders, isLoadingOrders: isLoadingContent, handleSelectProduct, handleNavigateToCategories, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, products, categories, settlements, cart, addToCart, updateCartQuantity, removeFromCart, getTotalItems, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, selectedProduct, setCurrentPage, setCart };
+    const props: PageProps = { user, handleLogout, orders, fetchOrders, isLoadingOrders: isLoadingContent, handleSelectProduct, handleNavigateToCategories, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, products, categories, settlements, cart, addToCart, updateCartQuantity, removeFromCart, getTotalItems, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, selectedProduct, setCurrentPage, setCart, setViewingImage };
 
     const renderPage = () => {
         if (isLoadingContent) {
@@ -274,14 +286,15 @@ function AppContent() {
       <div className="min-h-screen bg-gray-50" dir="rtl">
         {renderPage()}
         <BottomNavigation currentPage={currentPage} totalCartItems={getTotalItems() || 0} onNavigate={setCurrentPage} onNavigateToCategories={handleNavigateToCategories!} />
+        <ImageDialog imageUrl={viewingImage} onClose={() => setViewingImage(null)} />
       </div>
     );
 }
 
-// --- Page Components (Top-Level) ---
+// --- Page Components ---
 
 function HomePage(props: PageProps) {
-    const { user, handleLogout, orders, isLoadingOrders, handleSelectProduct, handleNavigateToCategories, searchQuery, setSearchQuery, categories, products, cart, addToCart, updateCartQuantity, setCurrentPage } = props;
+    const { user, handleLogout, orders, isLoadingOrders, handleSelectProduct, handleNavigateToCategories, searchQuery, setSearchQuery, categories, products, cart, addToCart, updateCartQuantity, setCurrentPage, setViewingImage } = props;
     const router = useRouter();
     const mostRecentOrder = orders.length > 0 ? orders[0] : null;
 
@@ -305,6 +318,7 @@ function HomePage(props: PageProps) {
                     onAddToCart={addToCart!} 
                     onSelectProduct={handleSelectProduct!} 
                     onUpdateQuantity={updateCartQuantity!} 
+                    onImageClick={setViewingImage}
                 />
             )}
         </div>
@@ -388,7 +402,7 @@ function HomePage(props: PageProps) {
 
 
 function CategoryPage(props: PageProps) {
-    const { selectedCategory, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, updateCartQuantity, setCurrentPage, categories } = props;
+    const { selectedCategory, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, updateCartQuantity, setCurrentPage, categories, setViewingImage } = props;
     
     const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
 
@@ -407,11 +421,11 @@ function CategoryPage(props: PageProps) {
             .filter((s, index, self) => self.findIndex(t => t.id === s.id) === index);
     }, [selectedCategory, products]);
     
-    const renderProductList = (list: any[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p} cartItem={cart!.find((ci:any) => ci.id === p.id)} onAddToCart={addToCart!} onSelectProduct={handleSelectProduct!} onUpdateQuantity={updateCartQuantity!} />)}</div>);
+    const renderProductList = (list: any[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p} cartItem={cart!.find((ci:any) => ci.id === p.id)} onAddToCart={addToCart!} onSelectProduct={handleSelectProduct!} onUpdateQuantity={updateCartQuantity!} onImageClick={setViewingImage} />)}</div>);
 
     return (
         <div className="pb-20">
-            <div className="sticky top-0 bg-white z-10 p-4 border-b z-99">
+            <div className="sticky top-0 bg-white z-99 p-4 border-b">
                 <div className="flex items-center gap-4 mb-4">
                     <Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button>
                     <h1 className="text-xl font-bold">{selectedCategory ? categories!.find(c => c.id === selectedCategory)?.name : "همه محصولات"}</h1>
@@ -451,58 +465,13 @@ function CategoryPage(props: PageProps) {
 }
 
 function ProductDetailPage(props: PageProps) {
-    const { selectedProduct, addToCart, setCurrentPage, formatPrice } = props;
+    const { selectedProduct, addToCart, setCurrentPage, formatPrice, setViewingImage } = props;
     const [quantity, setQuantity] = useState(1);
     
-    // State variables to manage the zoom scale and the last distance between fingers.
-    const [scale, setScale] = useState(1);
-    const [lastDistance, setLastDistance] = useState(0);
-
-    // This useEffect handles the case where the page is loaded without a selected product,
-    // redirecting to the home page to prevent errors.
     if (!selectedProduct) {
         useEffect(() => { setCurrentPage("home"); }, [setCurrentPage]);
         return null;
     }
-
-    // Helper function to calculate the distance between two touch points.
-    const getDistance = (touches: React.TouchEvent<HTMLDivElement>['touches']) => {
-        const [touch1, touch2] = touches;
-        return Math.sqrt(
-            Math.pow(touch2.pageX - touch1.pageX, 2) +
-            Math.pow(touch2.pageY - touch1.pageY, 2)
-        );
-    };
-
-    // This handler is triggered when the user starts touching the image with two fingers.
-    // It prevents the default browser scroll and records the initial distance.
-    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-        if (e.touches.length === 2) {
-            e.preventDefault(); 
-            setLastDistance(getDistance(e.touches));
-        }
-    };
-
-    // This handler is triggered when the user moves their fingers while touching the image.
-    // It calculates the new scale based on the change in distance.
-    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            const newDistance = getDistance(e.touches);
-            // Calculate the new scale and clamp it between 1x (original) and 3x (max zoom).
-            const newScale = scale * (newDistance / lastDistance);
-            setScale(Math.min(Math.max(1, newScale), 3)); 
-            setLastDistance(newDistance);
-        }
-    };
-
-    // This handler resets the zoom level when the user lifts their fingers.
-    const handleTouchEnd = () => {
-        // A small timeout provides a smoother transition back to the original scale.
-        if (scale > 1) {
-            setTimeout(() => setScale(1), 100);
-        }
-    };
 
     return (
         <div className="pb-20">
@@ -514,27 +483,22 @@ function ProductDetailPage(props: PageProps) {
             </div>
             <div className="p-4">
                 <div className="text-center mb-6">
-                    {/* The image container now has touch event handlers for zooming. */}
                     <div 
-                        className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden"
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
+                        className="w-full h-48 mb-4 flex items-center justify-center cursor-pointer"
+                        onClick={() => selectedProduct.image && setViewingImage(selectedProduct.image)}
                     >
                         <img 
                             src={selectedProduct.image || "/placeholder.svg"} 
                             alt={selectedProduct.name} 
-                            // The image's scale is controlled by the `scale` state.
-                            className="h-full w-full object-contain rounded-2xl transition-transform duration-100 ease-out"
-                            style={{ transform: `scale(${scale})` }}
+                            className="h-full w-full object-contain rounded-2xl"
                         />
                     </div>
                     <h2 className="text-2xl font-bold">{selectedProduct.name}</h2>
                     <div className="text-2xl font-bold text-green-600">{formatPrice(selectedProduct.price)}</div>
                 </div>
-                <Card className="mb-6 rounded-2xl p-1">
-                    <CardContent className="py-2 px-4">
-                        <h3 className="font-bold py-1">توضیحات</h3>
+                <Card className="mb-6 rounded-2xl">
+                    <CardContent className="p-6">
+                        <h3 className="font-bold">توضیحات</h3>
                         <p>{selectedProduct.description}</p>
                     </CardContent>
                 </Card>
@@ -856,8 +820,7 @@ function InvoicePage(props: PageProps) {
     const handleNewOrder = () => { setCart!([]); setCurrentPage("home"); };
     
     if (!lastSubmittedOrder) {
-        // A simple fallback if no order is found
-        useEffect(() => { setCurrentPage("home"); }, []);
+        useEffect(() => { setCurrentPage("home"); }, [setCurrentPage]);
         return <div className="p-4 text-center">اطلاعات فاکتور یافت نشد. در حال بازگشت به صفحه اصلی...</div>;
     }
 

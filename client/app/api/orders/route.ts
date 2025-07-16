@@ -1,11 +1,10 @@
-// FILE: app/api/orders/route.ts
-// Handles creating new orders and fetching user's order history.
+// FILE: app/api/orders/route.ts (Updated for Stock Management)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import type { CartItem } from "@/types";
 
-// --- Handles CREATING new orders ---
+// --- Handles CREATING new orders with stock management ---
 export async function POST(req: Request) {
   try {
     const session = await getSession();
@@ -16,32 +15,64 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { cart, totalPrice, deliveryDate, settlementId, notes } = body;
 
-    // Validate incoming data
     if (!cart || cart.length === 0 || !totalPrice || !deliveryDate || !settlementId) {
       return NextResponse.json({ error: "Missing required order data" }, { status: 400 });
     }
 
-    const newOrder = await prisma.order.create({
-      data: {
-        totalPrice: totalPrice,
-        deliveryDate: new Date(deliveryDate), // Ensure it's a Date object
-        settlementId: settlementId,
-        userId: session.user.id,
-        notes: notes,
-        items: {
-          create: cart.map((item: CartItem) => ({
-            productName: item.name,
-            quantity: item.quantity,
-            price: item.price,
-          })),
+    // Use a transaction to ensure both stock update and order creation are successful
+    const newOrder = await prisma.$transaction(async (tx) => {
+      // 1. Check stock and prepare updates for all items in the cart
+      for (const item of cart) {
+        const product = await tx.product.findUnique({
+          where: { id: item.id },
+        });
+
+        if (!product) {
+          throw new Error(`محصول ${item.name} یافت نشد.`);
+        }
+        if (product.stock < item.quantity) {
+          throw new Error(`موجودی محصول ${item.name} کافی نیست.`);
+        }
+      }
+      
+      // 2. Create the new order
+      const order = await tx.order.create({
+        data: {
+          totalPrice: totalPrice,
+          deliveryDate: new Date(deliveryDate),
+          settlementId: settlementId,
+          userId: session.user.id,
+          notes: notes,
+          items: {
+            create: cart.map((item: CartItem) => ({
+              productName: item.name,
+              quantity: item.quantity,
+              price: item.price,
+            })),
+          },
         },
-      },
-      include: {
-        items: true,
-      },
+        include: {
+          items: true,
+        },
+      });
+
+      // 3. Update the stock for each product
+      for (const item of cart) {
+          await tx.product.update({
+              where: { id: item.id },
+              data: {
+                  stock: {
+                      decrement: item.quantity,
+                  },
+              },
+          });
+      }
+
+      return order;
     });
 
     return NextResponse.json(newOrder, { status: 201 });
+
   } catch (error) {
     console.error("Failed to create order:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to create order";
