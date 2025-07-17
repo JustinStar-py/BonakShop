@@ -1,5 +1,4 @@
 // FILE: app/delivery/page.tsx
-// FINAL VERSION: Redesigned button layout to be vertical and more user-friendly.
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -37,20 +36,20 @@ const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
 const formatPrice = (p: number) => p.toLocaleString("fa-IR", { useGrouping: false }) + " ریال";
 
 const getOrderStatusInfo = (status: OrderStatus): { text: string; variant: "default" | "secondary" | "destructive" } => {
-    const map = { 
-        PENDING: { text: "در حال بررسی", variant: "secondary" as "secondary" }, 
-        SHIPPED: { text: "ارسال شده", variant: "default" as "default" }, 
-        DELIVERED: { text: "تحویل داده شد", variant: "default" as "default" }, 
-        CANCELED: { text: "لغو شده", variant: "destructive" as "destructive" } 
+    const map = {
+        PENDING: { text: "در حال بررسی", variant: "secondary" as "secondary" },
+        SHIPPED: { text: "ارسال شده", variant: "default" as "default" },
+        DELIVERED: { text: "تحویل داده شد", variant: "default" as "default" },
+        CANCELED: { text: "لغو شده", variant: "destructive" as "destructive" }
     };
     return map[status];
 };
 
 const getReturnStatusInfo = (status: ReturnStatus): { text: string; variant: "default" | "secondary" | "destructive" } => {
-    const map = { 
-        REQUESTED: { text: "درخواست شده", variant: "secondary" as "secondary" }, 
-        APPROVED: { text: "تایید شده", variant: "default" as "default" }, 
-        REJECTED: { text: "رد شده", variant: "destructive" as "destructive" } 
+    const map = {
+        REQUESTED: { text: "درخواست شده", variant: "secondary" as "secondary" },
+        APPROVED: { text: "تایید شده", variant: "default" as "default" },
+        REJECTED: { text: "رد شده", variant: "destructive" as "destructive" }
     };
     return map[status];
 };
@@ -63,7 +62,7 @@ export default function DeliveryPage() {
     const [allOrders, setAllOrders] = useState<OrderForDelivery[]>([]);
     const [allReturns, setAllReturns] = useState<ReturnForDelivery[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     const fetchData = async () => {
         setIsLoading(true);
         try {
@@ -75,13 +74,13 @@ export default function DeliveryPage() {
             else handleLogout();
             if (returnsRes.ok) setAllReturns(await returnsRes.json());
             else handleLogout();
-        } catch (error) { 
+        } catch (error) {
             console.error("Failed to fetch data", error);
-        } finally { 
-            setIsLoading(false); 
+        } finally {
+            setIsLoading(false);
         }
     };
-    
+
     useEffect(() => {
         if (!isLoadingUser && (!user || (user.role !== 'WORKER' && user.role !== 'ADMIN'))) router.replace('/');
         if(user && (user.role === 'WORKER' || user.role === 'ADMIN')) fetchData();
@@ -94,7 +93,7 @@ export default function DeliveryPage() {
             router.push('/');
         } catch(e) { console.error(e) }
     };
-    
+
     if (isLoadingUser || !user) {
         return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
     }
@@ -142,7 +141,7 @@ function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery
                 body: JSON.stringify({ status })
             });
             if (!res.ok) throw new Error("خطا در به‌روزرسانی وضعیت");
-            await refreshData(); 
+            await refreshData();
         } catch (error) {
             alert((error as Error).message);
         } finally {
@@ -164,6 +163,9 @@ function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery
                     <CardTitle className="text-base font-bold">{order.user.shopName || order.user.name}</CardTitle>
                     <Badge variant={getOrderStatusInfo(order.status).variant}>{getOrderStatusInfo(order.status).text}</Badge>
                 </div>
+                <CardDescription>
+                  {new Date(order.createdAt).toLocaleDateString('fa-IR')}
+                </CardDescription>
                 <div className="space-y-1.5 text-sm text-muted-foreground pt-2">
                     <p className="flex items-center gap-2"><UserIcon className="h-4 w-4" />{order.user.name}</p>
                     <p className="flex items-start gap-2"><Building className="h-4 w-4 mt-1 shrink-0" />{order.user.shopAddress}</p>
@@ -211,14 +213,14 @@ function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDeli
                 body: JSON.stringify({ status })
             });
             if (!res.ok) throw new Error("خطا در به‌روزرسانی وضعیت مرجوعی");
-            await refreshData(); 
+            await refreshData();
         } catch (error) {
             alert((error as Error).message);
         } finally {
             setActionLoading(null);
         }
     };
-    
+
     if (isLoading) return <div className="text-center pt-10"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>;
     if (returns.length === 0) return <div className="text-center pt-10 text-gray-500"><RefreshCw className="mx-auto h-12 w-12" /><p className="mt-4">هیچ درخواست مرجوعی یافت نشد.</p></div>;
 
@@ -229,7 +231,9 @@ function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDeli
                     <CardTitle className="text-base font-bold">{ret.order.user.shopName || ret.order.user.name}</CardTitle>
                     <Badge variant={getReturnStatusInfo(ret.status).variant}>{getReturnStatusInfo(ret.status).text}</Badge>
                 </div>
-                <CardDescription>فروشنده: {ret.order.user.name}</CardDescription>
+                <CardDescription>
+                    شماره: ...{ret.id.slice(-6)} | تاریخ: {new Date(ret.createdAt).toLocaleDateString('fa-IR')}
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="text-sm space-y-2">
