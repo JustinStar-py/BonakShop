@@ -5,13 +5,13 @@ import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from "react";
 import {
     DollarSign, ShoppingCart, Users, LogOut, Package, ListPlus,
     PlusCircle, Pencil, Loader2, Send, Building, Truck as TruckIcon, Upload, Trash2,
-    FileText, ArrowRight, MapPin, Phone, User as UserIconLucide, RefreshCw
+    FileText, ArrowRight, MapPin, Phone, User as UserIconLucide, RefreshCw, Filter, X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
@@ -29,15 +29,26 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import dynamic from 'next/dynamic';
 import { LatLngTuple } from "leaflet";
 
-// --- Type Definitions for Delivery Page ---
-type OrderForDelivery = Order & {
-  user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; latitude: number | null; longitude: number | null; };
-  items: OrderItem[];
+// --- Type Definitions for Delivery & Procurement Pages ---
+type OrderWithRelations = Order & {
+    user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; latitude: number | null; longitude: number | null; };
+    items: OrderItem[];
 };
 
 type ReturnForDelivery = ReturnRequest & {
-    order: { user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; }};
+    order: { user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; } };
     items: (ReturnRequestItem & { orderItem: { productName: string } })[];
+}
+
+interface ProcurementDetail {
+    customerName: string;
+    quantity: number;
+}
+
+interface ProcurementItem extends Product {
+    neededDate: string;
+    neededQuantity: number;
+    details: ProcurementDetail[];
 }
 
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
@@ -54,21 +65,12 @@ function formatPrice(price: number) {
 
 // --- Status Info Helpers ---
 const getOrderStatusInfo = (status: OrderStatus): { text: string; variant: "default" | "secondary" | "destructive" } => {
-    const map = {
-        PENDING: { text: "در حال بررسی", variant: "secondary" as "secondary" },
-        SHIPPED: { text: "ارسال شده", variant: "default" as "default" },
-        DELIVERED: { text: "تحویل داده شد", variant: "default" as "default" },
-        CANCELED: { text: "لغو شده", variant: "destructive" as "destructive" }
-    };
+    const map = { PENDING: { text: "در حال بررسی", variant: "secondary" as "secondary" }, SHIPPED: { text: "ارسال شده", variant: "default" as "default" }, DELIVERED: { text: "تحویل داده شد", variant: "default" as "default" }, CANCELED: { text: "لغو شده", variant: "destructive" as "destructive" } };
     return map[status];
 };
 
 const getReturnStatusInfo = (status: ReturnStatus): { text: string; variant: "default" | "secondary" | "destructive" } => {
-    const map = {
-        REQUESTED: { text: "درخواست شده", variant: "secondary" as "secondary" },
-        APPROVED: { text: "تایید شده", variant: "default" as "default" },
-        REJECTED: { text: "رد شده", variant: "destructive" as "destructive" }
-    };
+    const map = { REQUESTED: { text: "درخواست شده", variant: "secondary" as "secondary" }, APPROVED: { text: "تایید شده", variant: "default" as "default" }, REJECTED: { text: "رد شده", variant: "destructive" as "destructive" } };
     return map[status];
 };
 
@@ -94,12 +96,12 @@ export default function AdminDashboardLayout() {
 
     const renderActivePage = () => {
         switch (activePage) {
-            case 'products':    return <ProductManagementPage />;
-            case 'categories':  return <CategoryManagementPage />;
-            case 'companies':   return <CompanyManagementPage />;
+            case 'products': return <ProductManagementPage />;
+            case 'categories': return <CategoryManagementPage />;
+            case 'companies': return <CompanyManagementPage />;
             case 'procurement': return <ProcurementPage />;
-            case 'delivery':    return <DeliveryManagementPage />; // New page
-            default:            return <DashboardHomePage />;
+            case 'delivery': return <DeliveryManagementPage />;
+            default: return <DashboardHomePage />;
         }
     };
 
@@ -124,9 +126,247 @@ export default function AdminDashboardLayout() {
     );
 }
 
-// --- Delivery Management Page (New Component) ---
+// --- Procurement Page (Updated with Filters and Details) ---
+function ProcurementPage() {
+    const [rawProcurementList, setRawProcurementList] = useState<ProcurementItem[]>([]);
+    const [allDistributors, setAllDistributors] = useState<Distributor[]>([]);
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const [filterDistributor, setFilterDistributor] = useState<string>('all');
+    const [filterProduct, setFilterProduct] = useState<string>('all');
+    const [filterDate, setFilterDate] = useState<string>('all');
+
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [selectedItemDetails, setSelectedItemDetails] = useState<ProcurementItem | null>(null);
+
+    useEffect(() => {
+        const calculateProcurement = async () => {
+            setIsLoading(true);
+            try {
+                const [productsRes, ordersRes, distributorsRes] = await Promise.all([
+                    fetch('/api/products'),
+                    fetch('/api/admin/orders'),
+                    fetch('/api/distributors')
+                ]);
+                if (!productsRes.ok || !ordersRes.ok || !distributorsRes.ok) throw new Error("Failed to fetch data");
+
+                const products: (Product & { supplier: Supplier, distributor: Distributor })[] = await productsRes.json();
+                const allOrders: OrderWithRelations[] = await ordersRes.json();
+                const distributors: Distributor[] = await distributorsRes.json();
+
+                setAllProducts(products);
+                setAllDistributors(distributors);
+
+                const pendingOrders = allOrders.filter(o => o.status === 'PENDING' || o.status === 'SHIPPED');
+
+                const productDemand: Record<string, { product: any, details: ProcurementDetail[] }> = {};
+
+                pendingOrders.forEach(order => {
+                    const deliveryDateStr = new Date(order.deliveryDate).toISOString().split('T')[0];
+                    order.items.forEach(item => {
+                        const product = products.find((p: Product) => p.name === item.productName);
+                        if (product) {
+                            const key = `${product.id}-${deliveryDateStr}`;
+                            if (!productDemand[key]) {
+                                productDemand[key] = { product, details: [] };
+                            }
+                            productDemand[key].details.push({
+                                customerName: order.user.shopName || order.user.name || 'نامشخص',
+                                quantity: item.quantity
+                            });
+                        }
+                    });
+                });
+                
+                const procurementList = Object.entries(productDemand).map(([key, { product, details }]) => {
+                    const neededDate = key.split(product.id + '-')[1];
+                    return {
+                        ...product,
+                        neededDate,
+                        neededQuantity: details.reduce((sum, d) => sum + d.quantity, 0),
+                        details
+                    };
+                });
+
+
+                setRawProcurementList(procurementList);
+
+            } catch (error) { console.error("Failed to calculate procurement list:", error); }
+            finally { setIsLoading(false); }
+        };
+        calculateProcurement();
+    }, []);
+
+    const filteredAndGroupedList = useMemo(() => {
+        let items = rawProcurementList;
+        if (filterDistributor !== 'all') {
+            items = items.filter(item => item.distributorId === filterDistributor);
+        }
+        if (filterProduct !== 'all') {
+            items = items.filter(item => item.id === filterProduct);
+        }
+        if (filterDate !== 'all') {
+            items = items.filter(item => item.neededDate === filterDate);
+        }
+
+        const grouped = items.reduce((acc, item) => {
+            const distributorName = item.distributor.name;
+            if (!acc[distributorName]) acc[distributorName] = [];
+            acc[distributorName].push(item);
+            return acc;
+        }, {} as Record<string, ProcurementItem[]>);
+
+        Object.keys(grouped).forEach(distributor => {
+            grouped[distributor].sort((a, b) => new Date(a.neededDate).getTime() - new Date(b.neededDate).getTime());
+        });
+
+        return Object.entries(grouped);
+    }, [rawProcurementList, filterDistributor, filterProduct, filterDate]);
+    
+    const uniqueDates = useMemo(() => {
+        const dates = new Set(rawProcurementList.map(item => item.neededDate));
+        return Array.from(dates).sort((a,b) => new Date(a).getTime() - new Date(b).getTime());
+    }, [rawProcurementList]);
+
+    const handleOpenDetails = (item: ProcurementItem) => {
+        setSelectedItemDetails(item);
+        setIsDetailsModalOpen(true);
+    };
+
+    if (isLoading) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+
+    return (
+        <div className="space-y-6">
+            <h1 className="text-3xl font-bold">تدارکات و سفارش از پخش‌کننده‌ها</h1>
+            <p className="text-muted-foreground">لیست هوشمند محصولات مورد نیاز برای ارسال‌های پیش رو، گروه‌بندی شده بر اساس شرکت پخش‌کننده و تاریخ.</p>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5"/> فیلترها</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-1.5">
+                        <Label>شرکت پخش</Label>
+                        <Select value={filterDistributor} onValueChange={setFilterDistributor} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه شرکت‌ها</SelectItem>{allDistributors.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label>محصول</Label>
+                        <Select value={filterProduct} onValueChange={setFilterProduct} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه محصولات</SelectItem>{allProducts.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select>
+                    </div>
+                     <div className="space-y-1.5">
+                        <Label>تاریخ نیاز</Label>
+                        <Select value={filterDate} onValueChange={setFilterDate} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه تاریخ‌ها</SelectItem>{uniqueDates.map(d=><SelectItem key={d} value={d}>{new Date(d).toLocaleDateString('fa-IR')}</SelectItem>)}</SelectContent></Select>
+                    </div>
+                    <div className="flex items-end">
+                       <Button variant="outline" onClick={() => { setFilterDistributor('all'); setFilterProduct('all'); setFilterDate('all'); }} className="w-full"><X className="ml-2 h-4 w-4"/>پاک کردن فیلترها</Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+
+            {filteredAndGroupedList.length === 0 ? (
+                <Card><CardContent className="pt-6 text-center text-muted-foreground">با توجه به فیلترها، موردی برای تدارکات یافت نشد.</CardContent></Card>
+            ) : (
+                filteredAndGroupedList.map(([distributorName, products]) => (
+                    <Card key={distributorName}>
+                        <CardHeader><CardTitle>شرکت پخش: {distributorName}</CardTitle></CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader><TableRow><TableHead className="text-right">تاریخ نیاز</TableHead><TableHead className="text-right">محصول (تولیدکننده)</TableHead><TableHead className="text-right">تعداد مورد نیاز</TableHead><TableHead className="text-center">عملیات</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {products.map(p => (
+                                        <TableRow key={`${p.id}-${p.neededDate}`}>
+                                            <TableCell className="text-right">{new Date(p.neededDate).toLocaleDateString('fa-IR')}</TableCell>
+                                            <TableCell className="font-medium text-right">{p.name} <span className="text-muted-foreground text-xs">({p.supplier.name})</span></TableCell>
+                                            <TableCell className="font-bold text-right">{p.neededQuantity.toLocaleString('fa-IR')} {p.unit}</TableCell>
+                                            <TableCell className="text-center">
+                                                <Button variant="ghost" size="sm" onClick={() => handleOpenDetails(p)}>جزئیات</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                ))
+            )}
+
+            <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>جزئیات نیاز محصول</DialogTitle>
+                        <DialogDescription>{selectedItemDetails?.name} برای تاریخ {new Date(selectedItemDetails?.neededDate || '').toLocaleDateString('fa-IR')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="max-h-80 overflow-y-auto">
+                        <Table>
+                            <TableHeader><TableRow><TableHead className="text-right">نام فروشگاه</TableHead><TableHead className="text-center">تعداد سفارش</TableHead></TableRow></TableHeader>
+                            <TableBody>
+                                {selectedItemDetails?.details.map((detail, index) => (
+                                    <TableRow key={index}><TableCell className="text-right">{detail.customerName}</TableCell><TableCell className="text-center">{detail.quantity}</TableCell></TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsDetailsModalOpen(false)}>بستن</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+        </div>
+    );
+}
+
+
+// --- Dashboard Home Page ---
+function DashboardHomePage() {
+    const [stats, setStats] = useState<any>({});
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            setIsLoading(true);
+            try {
+                const res = await fetch('/api/admin/dashboard');
+                if (res.ok) setStats(await res.json());
+            } catch (e) { console.error("Failed to fetch dashboard data", e); }
+            finally { setIsLoading(false); }
+        };
+        fetchDashboardData();
+    }, []);
+
+    if (isLoading) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+
+    return (
+        <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-foreground">داشبورد اصلی</h1>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card><CardHeader><CardTitle className="text-sm font-medium">مجموع فروش</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatPrice(stats.kpiData?.totalRevenue || 0)}</div></CardContent></Card>
+                <Card><CardHeader><CardTitle className="text-sm font-medium">تعداد کل سفارشات</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{(stats.kpiData?.totalOrders || 0).toLocaleString('fa-IR')}</div></CardContent></Card>
+                <Card><CardHeader><CardTitle className="text-sm font-medium">تعداد مشتریان</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{(stats.kpiData?.totalCustomers || 0).toLocaleString('fa-IR')}</div></CardContent></Card>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2">
+                    <CardHeader><CardTitle>گزارش فروش ۷ روز اخیر</CardTitle></CardHeader>
+                    <CardContent className="h-80 w-full">
+                        <ResponsiveContainer width="100%" height="100%"><BarChart data={stats.dailySalesData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" fontSize={12} /><YAxis fontSize={12} tickFormatter={(v) => `${(v / 1000000).toLocaleString('fa-IR')}م`} /><Tooltip formatter={(v: number) => [formatPrice(v), "فروش"]} /><Legend /><Bar dataKey="فروش" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader><CardTitle>مشتریان برتر</CardTitle></CardHeader>
+                    <CardContent>
+                        <ul className="space-y-4">{stats.customerStats?.map((stat: any) => (<li key={stat.name} className="flex items-center justify-between"><div><p className="font-semibold">{stat.name}</p><p className="text-xs text-muted-foreground">{stat.count} سفارش</p></div><p className="font-mono text-primary">{formatPrice(stat.total)}</p></li>))}</ul>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}
+
+// --- Delivery Management Page ---
 function DeliveryManagementPage() {
-    const [allOrders, setAllOrders] = useState<OrderForDelivery[]>([]);
+    const [allOrders, setAllOrders] = useState<OrderWithRelations[]>([]);
     const [allReturns, setAllReturns] = useState<ReturnForDelivery[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -170,7 +410,7 @@ function DeliveryManagementPage() {
 }
 
 // --- Orders Panel Component for Delivery ---
-function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery[], isLoading: boolean, refreshData: () => void}) {
+function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderWithRelations[], isLoading: boolean, refreshData: () => void}) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const handleStatusChange = async (orderId: string, status: OrderStatus) => {
@@ -191,14 +431,14 @@ function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery
     };
 
     const ordersByStatus = useMemo(() => {
-        const shipped = orders.filter((o: OrderForDelivery) => o.status === 'SHIPPED');
-        const delivered = orders.filter((o: OrderForDelivery) => o.status === 'DELIVERED');
-        const others = orders.filter((o: OrderForDelivery) => o.status !== 'SHIPPED' && o.status !== 'DELIVERED');
+        const shipped = orders.filter((o) => o.status === 'SHIPPED');
+        const delivered = orders.filter((o) => o.status === 'DELIVERED');
+        const others = orders.filter((o) => o.status !== 'SHIPPED' && o.status !== 'DELIVERED');
         return { shipped, delivered, others };
     }, [orders]);
 
-    const OrderCard = ({ order }: { order: OrderForDelivery }) => (
-        <Card className="flex flex-col">
+    const OrderCard = ({ order }: { order: OrderWithRelations }) => (
+        <Card className="flex flex-col" dir="rtl">
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <CardTitle className="text-base font-bold">{order.user.shopName || order.user.name}</CardTitle>
@@ -273,7 +513,7 @@ function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDeli
                     <Badge variant={getReturnStatusInfo(ret.status).variant}>{getReturnStatusInfo(ret.status).text}</Badge>
                 </div>
                 <CardDescription>
-                    تاریخ: {new Date(ret.createdAt).toLocaleDateString('fa-IR')}
+                   {new Date(ret.createdAt).toLocaleDateString('fa-IR')}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -293,146 +533,6 @@ function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDeli
     );
 
     return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{returns.map((ret: ReturnForDelivery) => <ReturnCard key={ret.id} ret={ret} />)}</div>;
-}
-
-// --- Dashboard Home Page ---
-function DashboardHomePage() {
-    const [stats, setStats] = useState<any>({});
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            setIsLoading(true);
-            try {
-                const res = await fetch('/api/admin/dashboard');
-                if (res.ok) setStats(await res.json());
-            } catch (e) { console.error("Failed to fetch dashboard data", e); } 
-            finally { setIsLoading(false); }
-        };
-        fetchDashboardData();
-    }, []);
-
-    if (isLoading) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-
-    return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-foreground">داشبورد اصلی</h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card><CardHeader><CardTitle className="text-sm font-medium">مجموع فروش</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatPrice(stats.kpiData?.totalRevenue || 0)}</div></CardContent></Card>
-                <Card><CardHeader><CardTitle className="text-sm font-medium">تعداد کل سفارشات</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{(stats.kpiData?.totalOrders || 0).toLocaleString('fa-IR')}</div></CardContent></Card>
-                <Card><CardHeader><CardTitle className="text-sm font-medium">تعداد مشتریان</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{(stats.kpiData?.totalCustomers || 0).toLocaleString('fa-IR')}</div></CardContent></Card>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-2">
-                    <CardHeader><CardTitle>گزارش فروش ۷ روز اخیر</CardTitle></CardHeader>
-                    <CardContent className="h-80 w-full">
-                        <ResponsiveContainer width="100%" height="100%"><BarChart data={stats.dailySalesData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" fontSize={12} /><YAxis fontSize={12} tickFormatter={(v) => `${(v / 1000000).toLocaleString('fa-IR')}م`} /><Tooltip formatter={(v: number) => [formatPrice(v), "فروش"]} /><Legend /><Bar dataKey="فروش" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader><CardTitle>مشتریان برتر</CardTitle></CardHeader>
-                    <CardContent>
-                        <ul className="space-y-4">{stats.customerStats?.map((stat: any) => (<li key={stat.name} className="flex items-center justify-between"><div><p className="font-semibold">{stat.name}</p><p className="text-xs text-muted-foreground">{stat.count} سفارش</p></div><p className="font-mono text-primary">{formatPrice(stat.total)}</p></li>))}</ul>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
-}
-
-// --- Procurement Page ---
-function ProcurementPage() {
-    const [procurementList, setProcurementList] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const calculateProcurement = async () => {
-            setIsLoading(true);
-            try {
-                const [productsRes, ordersRes] = await Promise.all([ fetch('/api/products'), fetch('/api/admin/orders') ]);
-                if (!productsRes.ok || !ordersRes.ok) throw new Error("Failed to fetch data");
-                
-                const products = await productsRes.json();
-                const allOrders: (Order & { items: OrderItem[] })[] = await ordersRes.json();
-                
-                const pendingOrders = allOrders.filter(o => o.status === 'PENDING' || o.status === 'SHIPPED');
-                
-                const productDemand: Record<string, { product: any, byDate: Record<string, number> }> = {};
-
-                pendingOrders.forEach(order => {
-                    const deliveryDateStr = new Date(order.deliveryDate).toISOString().split('T')[0];
-                    order.items.forEach(item => {
-                        const product = products.find((p: Product) => p.name === item.productName);
-                        if (product) {
-                            if (!productDemand[product.id]) productDemand[product.id] = { product, byDate: {} };
-                            if (!productDemand[product.id].byDate[deliveryDateStr]) productDemand[product.id].byDate[deliveryDateStr] = 0;
-                            productDemand[product.id].byDate[deliveryDateStr] += item.quantity;
-                        }
-                    });
-                });
-
-                const groupedByDistributor = Object.values(productDemand).reduce((acc, { product, byDate }) => {
-                    if (!product || !product.distributor) return acc;
-                    const distributorName = product.distributor.name;
-                    if (!acc[distributorName]) acc[distributorName] = [];
-                    Object.entries(byDate).forEach(([date, quantity]) => {
-                        acc[distributorName].push({ ...product, neededDate: date, neededQuantity: quantity });
-                    });
-                    return acc;
-                }, {} as Record<string, any[]>);
-                
-                Object.keys(groupedByDistributor).forEach(distributor => {
-                    groupedByDistributor[distributor].sort((a, b) => new Date(a.neededDate).getTime() - new Date(b.neededDate).getTime());
-                });
-
-                setProcurementList(Object.entries(groupedByDistributor));
-            } catch (error) { console.error("Failed to calculate procurement list:", error); } 
-            finally { setIsLoading(false); }
-        };
-        calculateProcurement();
-    }, []);
-
-    const getDateLabel = (dateStr: string) => {
-        const today = new Date(); today.setHours(0,0,0,0);
-        const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-        const date = new Date(dateStr);
-        if (date.getTime() === today.getTime()) return <Badge variant="default">امروز</Badge>;
-        if (date.getTime() === tomorrow.getTime()) return <Badge variant="secondary">فردا</Badge>;
-        return <Badge variant="outline">{new Date(dateStr).toLocaleDateString('fa-IR')}</Badge>;
-    };
-
-    if (isLoading) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-
-    return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold">تدارکات و سفارش از پخش‌کننده‌ها</h1>
-            <p className="text-muted-foreground">لیست هوشمند محصولات مورد نیاز برای ارسال‌های پیش رو، گروه‌بندی شده بر اساس شرکت پخش‌کننده و تاریخ.</p>
-            {procurementList.length === 0 ? (
-                <Card><CardContent className="pt-6 text-center text-muted-foreground">موردی برای تدارکات یافت نشد.</CardContent></Card>
-            ) : (
-                procurementList.map(([distributorName, products]) => (
-                    <Card key={distributorName}>
-                        <CardHeader><CardTitle>شرکت پخش: {distributorName}</CardTitle></CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader><TableRow><TableHead className="w-[120px] text-right">تاریخ نیاز</TableHead><TableHead className="text-right">محصول (تولیدکننده)</TableHead><TableHead className="text-right">قیمت واحد</TableHead><TableHead className="text-right">تعداد مورد نیاز</TableHead></TableRow></TableHeader>
-                                <TableBody>
-                                    {(products as any[]).map(p => (
-                                        <TableRow key={`${p.id}-${p.neededDate}`}>
-                                            <TableCell className="text-right">{getDateLabel(p.neededDate)}</TableCell>
-                                            <TableCell className="font-medium text-right">{p.name} <span className="text-muted-foreground">({p.supplier.name})</span></TableCell>
-                                            <TableCell className="text-right">{formatPrice(p.price)}</TableCell>
-                                            <TableCell className="font-bold text-right">{p.neededQuantity.toLocaleString('fa-IR')} {p.unit}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                ))
-            )}
-        </div>
-    );
 }
 
 // --- Company Management Page ---
@@ -528,7 +628,6 @@ function CategoryManagementPage() {
         setIsDialogOpen(true);
     };
 
-    // FIX: Define handleFormChange for category editing
     const handleFormChange = (field: string, value: any) => {
         setEditingCategory((prev: any) => ({ ...prev, [field]: value }));
     };
@@ -670,7 +769,6 @@ function ProductManagementPage() {
         setIsDialogOpen(true);
     };
 
-    // FIX: Define handleFormChange for product editing
     const handleFormChange = (field: string, value: any) => {
         setEditingProduct((prev: any) => ({ ...prev, [field]: value }));
     };

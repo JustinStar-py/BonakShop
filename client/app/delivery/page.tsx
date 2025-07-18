@@ -157,14 +157,14 @@ function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery
     }, [orders]);
 
     const OrderCard = ({ order }: { order: OrderForDelivery }) => (
-        <Card className="flex flex-col">
+        <Card className="flex flex-col" dir="rtl">
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <CardTitle className="text-base font-bold">{order.user.shopName || order.user.name}</CardTitle>
                     <Badge variant={getOrderStatusInfo(order.status).variant}>{getOrderStatusInfo(order.status).text}</Badge>
                 </div>
                 <CardDescription>
-                  {new Date(order.createdAt).toLocaleDateString('fa-IR')}
+                   {new Date(order.createdAt).toLocaleDateString('fa-IR')}
                 </CardDescription>
                 <div className="space-y-1.5 text-sm text-muted-foreground pt-2">
                     <p className="flex items-center gap-2"><UserIcon className="h-4 w-4" />{order.user.name}</p>
