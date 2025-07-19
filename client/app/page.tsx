@@ -480,7 +480,7 @@ function HomePage(props: PageProps) {
 
 
 function CategoryPage(props: PageProps) {
-    const { selectedCategory, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, updateCartQuantity, setCurrentPage, categories, setViewingImage } = props;
+    const { selectedCategory, setSelectedCategory, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, updateCartQuantity, setCurrentPage, categories, setViewingImage } = props;
     
     const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
 
@@ -498,18 +498,62 @@ function CategoryPage(props: PageProps) {
             .map(p => p.supplier)
             .filter((s, index, self) => self.findIndex(t => t.id === s.id) === index);
     }, [selectedCategory, products]);
-    
-    const renderProductList = (list: any[]) => (<div className="grid grid-cols-2 gap-4">{list.map(p => <ProductCard key={p.id} product={p} cartItem={cart!.find((ci:any) => ci.id === p.id)} onAddToCart={addToCart!} onSelectProduct={handleSelectProduct!} onUpdateQuantity={updateCartQuantity!} onImageClick={setViewingImage} />)}</div>);
+
+    const availableCategories = useMemo(() => {
+        return categories;
+    }, [categories]);
+
+    const renderProductList = (list: any[]) => (
+        <div className="grid grid-cols-2 gap-4">
+            {list.map(p => 
+                <ProductCard 
+                    key={p.id} 
+                    product={p} 
+                    cartItem={cart!.find((ci:any) => ci.id === p.id)} 
+                    onAddToCart={addToCart!} 
+                    onSelectProduct={handleSelectProduct!} 
+                    onUpdateQuantity={updateCartQuantity!} 
+                    onImageClick={setViewingImage} 
+                />
+            )}
+        </div>
+    );
 
     return (
         <div className="pb-20">
-            <div className="sticky top-0 bg-white z-99 p-4 border-b">
+            <div className="sticky top-0 bg-white z-10 p-4 border-b">
                 <div className="flex items-center gap-4 mb-4">
                     <Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button>
                     <h1 className="text-xl font-bold">{selectedCategory ? categories!.find(c => c.id === selectedCategory)?.name : "همه محصولات"}</h1>
                 </div>
-                <div className="flex gap-2">
-                    <div className="relative flex-grow"><Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" /><Input placeholder="جستجو در محصولات..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-10" /></div>
+                <div className="flex gap-2 flex-wrap mb-2">
+                    <div className="relative flex-grow">
+                        <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+                        <Input placeholder="جستجو در محصولات..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-10" />
+                    </div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-[150px] justify-between">
+                                {selectedCategory ? categories!.find(c => c.id === selectedCategory)?.name : "انتخاب دسته‌بندی"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[150px] p-0">
+                            <Command>
+                                <CommandList>
+                                    <CommandEmpty>دسته‌بندی یافت نشد.</CommandEmpty>
+                                    <CommandGroup>
+                                        <CommandItem onSelect={() => setSelectedCategory("")}>همه دسته‌بندی‌ها</CommandItem>
+                                        {availableCategories.map((cat) => (
+                                            <CommandItem key={cat.id} onSelect={() => setSelectedCategory(cat.id)}>
+                                                {cat.name}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                     {availableSuppliers.length > 0 && (
                         <Popover>
                             <PopoverTrigger asChild>
@@ -665,7 +709,7 @@ function ReturnRequestDialog({ order, onOpenChange, onSuccess }: { order: OrderW
 
     return (
         <Dialog open={!!order} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="z-60">
                 <DialogHeader>
                     <DialogTitle>ثبت مرجوعی برای سفارش ...{order?.id.slice(-6)}</DialogTitle>
                 </DialogHeader>

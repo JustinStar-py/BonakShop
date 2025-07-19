@@ -45,12 +45,12 @@ export default function ProductCard({
     <Card className={`overflow-hidden gap-1.5 border-2 border-gray-100 hover:border-green-200 transition-colors rounded-2xl flex flex-col justify-between relative p-2`}>
       {/* Badges for discount and supplier are absolutely positioned */}
       {hasDiscount && (
-        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 z-10">
+        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 z-5">
           <Tag className="h-3 w-3" />
           {product.discountPercentage}%
         </div>
       )}
-       <div className="absolute top-2 right-2 z-10">
+       <div className="absolute top-2 right-2 z-5">
          <Badge variant="secondary" className="flex items-center gap-1">
            <Building className="h-3 w-3"/>
            {product.supplier.name}
