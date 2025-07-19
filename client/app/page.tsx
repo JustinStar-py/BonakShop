@@ -1,10 +1,9 @@
-// FILE: app/page.tsx
 "use client";
 
 import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, Plus, Minus, ArrowRight, Download, Share, Home, List, LogOut, History, Send, Loader2, User as UserIcon, CalendarIcon, RefreshCw, Truck, LayoutDashboard, ChevronsUpDown } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, ArrowRight, Download, Share, Home, List, LogOut, History, Send, Loader2, User as UserIcon, CalendarIcon, RefreshCw, Truck, LayoutDashboard, ChevronsUpDown, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -87,20 +86,20 @@ interface PageProps {
 // --- Main Controller Component (Top Level) ---
 export default function WholesaleFoodApp() {
   const { user, isLoadingUser } = useAppContext();
-  
+
   if (isLoadingUser) {
     return <div className="flex items-center justify-center min-h-screen bg-gray-50"><p className="text-lg font-medium text-gray-600">در حال بارگذاری...</p></div>;
   }
-  
+
   if (!user) {
     return <AuthPage />;
   }
-  
+
   const isProfileComplete = user.name && user.shopName && user.shopAddress;
   if (user.role === 'CUSTOMER' && !isProfileComplete) {
       return <CompleteProfilePage />
   }
-  
+
   return <AppContent />;
 }
 
@@ -124,8 +123,8 @@ function AuthPage() {
     }
 
     const handleRegister = async (e: FormEvent) => {
-        e.preventDefault(); 
-        setIsLoading(true); 
+        e.preventDefault();
+        setIsLoading(true);
         setError("");
         setSuccessMessage("");
 
@@ -141,41 +140,41 @@ function AuthPage() {
             return;
         }
         try {
-            const res = await fetch('/api/auth/register', { 
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify({ phone: registerPhone, password: registerPassword, confirmPassword }) 
+            const res = await fetch('/api/auth/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phone: registerPhone, password: registerPassword, confirmPassword })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "خطایی در هنگام ثبت‌نام رخ داد.");
-            
+
             setSuccessMessage("ثبت نام با موفقیت انجام شد! لطفاً وارد شوید.");
             setActiveTab("login");
-        } catch (err: any) { 
-            setError(err.message); 
-        } finally { 
-            setIsLoading(false); 
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleLogin = async (e: FormEvent) => {
-        e.preventDefault(); 
-        setIsLoading(true); 
+        e.preventDefault();
+        setIsLoading(true);
         setError("");
         setSuccessMessage("");
         try {
-            const res = await fetch('/api/auth/login', { 
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify({ phone: loginPhone, password: loginPassword }) 
+            const res = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phone: loginPhone, password: loginPassword })
             });
             const user = await res.json();
             if (!res.ok) throw new Error(user.error || "خطا در ورود. لطفاً دوباره تلاش کنید.");
             setUser(user);
-        } catch (err: any) { 
-            setError(err.message); 
-        } finally { 
-            setIsLoading(false); 
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -192,7 +191,7 @@ function AuthPage() {
                             <TabsTrigger value="login">ورود</TabsTrigger>
                             <TabsTrigger value="register">ثبت نام</TabsTrigger>
                         </TabsList>
-                        
+
                         <TabsContent value="login">
                             <form onSubmit={handleLogin} className="space-y-4 pt-4">
                                 <div className="space-y-2"><Label htmlFor="login-phone">شماره تلفن</Label><Input id="login-phone" type="tel" placeholder="مثال: 09130000000" required value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} /></div>
@@ -222,10 +221,10 @@ function AuthPage() {
 // --- Complete Profile Page ---
 function CompleteProfilePage() {
     const { user, setUser } = useAppContext();
-    const [formData, setFormData] = useState({ 
-        name: user?.name || "", 
-        shopName: user?.shopName || "", 
-        shopAddress: user?.shopAddress || "", 
+    const [formData, setFormData] = useState({
+        name: user?.name || "",
+        shopName: user?.shopName || "",
+        shopAddress: user?.shopAddress || "",
         landline: user?.landline || "",
         latitude: user?.latitude,
         longitude: user?.longitude
@@ -233,8 +232,8 @@ function CompleteProfilePage() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { 
-        setFormData({ ...formData, [e.target.name]: e.target.value }); 
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleLocationChange = (lat: number, lng: number) => {
@@ -268,7 +267,7 @@ function CompleteProfilePage() {
 function AppContent() {
     const { user, setUser, cart, setCart, currentPage, setCurrentPage, ...appContext } = useAppContext();
     const { addToCart, updateCartQuantity, removeFromCart, getTotalPrice, getOriginalTotalPrice, getTotalItems, setSelectedProduct, selectedProduct } = appContext;
-    
+
     const [products, setProducts] = useState<(PrismaProduct & { category: PrismaCategory, supplier: Supplier })[]>([]);
     const [categories, setCategories] = useState<PrismaCategory[]>([]);
     const [settlements, setSettlements] = useState<Settlement[]>([]);
@@ -305,7 +304,7 @@ function AppContent() {
                 setProducts(await productsRes.json());
                 setCategories(await categoriesRes.json());
                 setSettlements(await settlementsRes.json());
-                await fetchOrders(); 
+                await fetchOrders();
             } catch (e) {
                 console.error(e);
                 alert("خطا در بارگذاری اطلاعات فروشگاه.");
@@ -335,7 +334,7 @@ function AppContent() {
             const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cart, totalPrice: getTotalPrice(), deliveryDate: deliveryDate.toISOString(), settlementId: selectedSettlement, notes: orderNotes }) });
             if (!res.ok) throw new Error("Failed to submit order");
             const newOrder = await res.json() as OrderWithItems;
-            setOrders(prevOrders => [newOrder, ...prevOrders]); 
+            setOrders(prevOrders => [newOrder, ...prevOrders]);
             setCart([]);
             setOrderNotes("");
             setCurrentPage("invoice");
@@ -380,7 +379,7 @@ function HomePage(props: PageProps) {
     const productsToShow = useMemo(() => {
         if (!products) return [];
         if (searchQuery) {
-            return products.filter(p => 
+            return products.filter(p =>
                 p.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
@@ -389,21 +388,21 @@ function HomePage(props: PageProps) {
 
     const renderProductList = (list: any[]) => (
         <div className="grid grid-cols-2 gap-4">
-            {list.map(p => 
-                <ProductCard 
-                    key={p.id} 
-                    product={p as any} 
-                    cartItem={cart!.find((ci) => ci.id === p.id)} 
-                    onAddToCart={addToCart!} 
-                    onSelectProduct={handleSelectProduct!} 
-                    onUpdateQuantity={updateCartQuantity!} 
+            {list.map(p =>
+                <ProductCard
+                    key={p.id}
+                    product={p as any}
+                    cartItem={cart!.find((ci) => ci.id === p.id)}
+                    onAddToCart={addToCart!}
+                    onSelectProduct={handleSelectProduct!}
+                    onUpdateQuantity={updateCartQuantity!}
                     onImageClick={setViewingImage}
                     onSupplierClick={handleSupplierClick}
                 />
             )}
         </div>
     );
-    
+
     return (
         <div className="pb-20">
             <div className="p-4 flex justify-between items-center bg-gray-50 border-b">
@@ -419,8 +418,8 @@ function HomePage(props: PageProps) {
                 <div className="p-4">
                     <h2 className="text-xl font-bold text-green-800 mb-4">سفارش های اخیر</h2>
                     <div className="flex space-x-4 space-x-reverse overflow-x-auto pb-4">
-                        {mostRecentOrder.items.map(item => { 
-                            const productDetails = products!.find(p => p.name === item.productName); 
+                        {mostRecentOrder.items.map(item => {
+                            const productDetails = products!.find(p => p.name === item.productName);
                             return (
                                 <div key={item.id} className="flex-shrink-0 w-28 text-center cursor-pointer" onClick={() => productDetails && handleSelectProduct!(productDetails)}>
                                     <img src={productDetails?.image || "/placeholder.svg"} className="h-20 w-20 object-cover rounded-lg mx-auto mb-2" alt={item.productName} />
@@ -448,11 +447,11 @@ function HomePage(props: PageProps) {
                     <div className="p-4">
                         <h2 className="text-xl font-bold text-green-800 mb-4">دسته‌بندی‌ها</h2>
                         <div className="grid grid-cols-2 gap-3">
-                            {categories!.map(c => 
-                                <Button 
-                                    key={c.id} 
-                                    variant="outline" 
-                                    className="h-20 flex flex-col items-center justify-center gap-2" 
+                            {categories!.map(c =>
+                                <Button
+                                    key={c.id}
+                                    variant="outline"
+                                    className="h-20 flex flex-col items-center justify-center gap-2"
                                     onClick={() => { props.setSelectedCategory!(c.id); props.setCurrentPage("category"); }}
                                 >
                                     {c.image ? (
@@ -483,15 +482,15 @@ function HomePage(props: PageProps) {
 
 function CategoryPage(props: PageProps) {
     const { selectedCategory, setSelectedCategory, selectedSupplier, setSelectedSupplier, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, handleSupplierClick, updateCartQuantity, setCurrentPage, categories, setViewingImage } = props;
-    
-    const filteredProducts = products!.filter((p) => 
-        (selectedCategory ? p.categoryId === selectedCategory : true) && 
+
+    const filteredProducts = products!.filter((p) =>
+        (selectedCategory ? p.categoryId === selectedCategory : true) &&
         (selectedSupplier ? p.supplierId === selectedSupplier : true) &&
         p.name.toLowerCase().includes(searchQuery!.toLowerCase())
     );
 
     const availableSuppliers = useMemo(() => {
-        const relevantProducts = selectedCategory 
+        const relevantProducts = selectedCategory
             ? products.filter(p => p.categoryId === selectedCategory)
             : products;
         const supplierIds = new Set(relevantProducts.map(p => p.supplierId));
@@ -499,17 +498,17 @@ function CategoryPage(props: PageProps) {
             .map(p => p.supplier)
             .filter((s, index, self) => s && supplierIds.has(s.id) && self.findIndex(t => t.id === s.id) === index);
     }, [selectedCategory, products]);
-    
+
     const renderProductList = (list: any[]) => (
         <div className="grid grid-cols-2 gap-4">
-            {list.map(p => 
-                <ProductCard 
-                    key={p.id} 
-                    product={p} 
-                    cartItem={cart!.find((ci:any) => ci.id === p.id)} 
-                    onAddToCart={addToCart!} 
-                    onSelectProduct={handleSelectProduct!} 
-                    onUpdateQuantity={updateCartQuantity!} 
+            {list.map(p =>
+                <ProductCard
+                    key={p.id}
+                    product={p}
+                    cartItem={cart!.find((ci:any) => ci.id === p.id)}
+                    onAddToCart={addToCart!}
+                    onSelectProduct={handleSelectProduct!}
+                    onUpdateQuantity={updateCartQuantity!}
                     onImageClick={setViewingImage}
                     onSupplierClick={handleSupplierClick}
                 />
@@ -587,11 +586,18 @@ function CategoryPage(props: PageProps) {
 function ProductDetailPage(props: PageProps) {
     const { selectedProduct, addToCart, setCurrentPage, formatPrice, setViewingImage } = props;
     const [quantity, setQuantity] = useState(1);
-    
+    const [showSuccess, setShowSuccess] = useState(false);
+
     if (!selectedProduct) {
         useEffect(() => { setCurrentPage("home"); }, [setCurrentPage]);
         return null;
     }
+
+    const handleAddToCart = () => {
+        addToCart!(selectedProduct, quantity);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000); // Hide message after 3 seconds
+    };
 
     return (
         <div className="pb-20">
@@ -603,13 +609,13 @@ function ProductDetailPage(props: PageProps) {
             </div>
             <div className="p-4">
                 <div className="text-center mb-6">
-                    <div 
+                    <div
                         className="w-full h-48 mb-4 flex items-center justify-center cursor-pointer"
                         onClick={() => selectedProduct.image && setViewingImage(selectedProduct.image)}
                     >
-                        <img 
-                            src={selectedProduct.image || "/placeholder.svg"} 
-                            alt={selectedProduct.name} 
+                        <img
+                            src={selectedProduct.image || "/placeholder.svg"}
+                            alt={selectedProduct.name}
                             className="h-full w-full object-contain rounded-2xl"
                         />
                     </div>
@@ -633,9 +639,15 @@ function ProductDetailPage(props: PageProps) {
                                     <Button variant="outline" size="icon" onClick={() => setQuantity(q => q + 1)}><Plus/></Button>
                                 </div>
                             </div>
-                            <Button className="w-full h-14" onClick={() => { addToCart!(selectedProduct, quantity); setCurrentPage("cart"); }}>
+                            <Button className="w-full h-14" onClick={handleAddToCart}>
                                 <ShoppingCart className="ml-2" /> افزودن به سبد
                             </Button>
+                            {showSuccess && (
+                                <div className="mt-4 p-3 text-center text-sm text-green-800 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <CheckCircle className="ml-2 h-5 w-5" />
+                                    محصول با موفقیت به سبد خرید اضافه شد!
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 ) : (
@@ -652,7 +664,7 @@ function ReturnRequestDialog({ order, onOpenChange, onSuccess }: { order: OrderW
     const [returnItems, setReturnItems] = useState<{[key: string]: number}>({});
     const [reason, setReason] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    
+
     useEffect(() => {
         if(order) {
             const initialItems: {[key: string]: number} = {};
@@ -673,7 +685,7 @@ function ReturnRequestDialog({ order, onOpenChange, onSuccess }: { order: OrderW
 
     const handleSubmitReturn = async () => {
         if (!order) return;
-        
+
         const itemsToReturn = Object.entries(returnItems)
             .filter(([_, quantity]) => quantity > 0)
             .map(([orderItemId, quantity]) => ({ orderItemId, quantity }));
@@ -780,7 +792,7 @@ function OrderHistoryPage(props: PageProps) {
                 </div>
             </div>
             <div className="p-4 space-y-4">
-                {isLoadingOrders ? ( <p className="text-center py-10">در حال بارگذاری...</p> ) : 
+                {isLoadingOrders ? ( <p className="text-center py-10">در حال بارگذاری...</p> ) :
                 orders.length > 0 ? (
                     orders.map((order: OrderWithItems) => (
                         <Card key={order.id} className="rounded-2xl">
@@ -817,12 +829,12 @@ function OrderHistoryPage(props: PageProps) {
                     ))
                 ) : ( <p className="text-center py-10">سفارشی ثبت نشده.</p> )}
             </div>
-            
-            <ReturnRequestDialog 
-                order={selectedOrderForReturn} 
+
+            <ReturnRequestDialog
+                order={selectedOrderForReturn}
                 onOpenChange={() => setSelectedOrderForReturn(null)}
                 onSuccess={() => {
-                    fetchOrders!(); 
+                    fetchOrders!();
                     setSelectedOrderForReturn(null);
                 }}
             />
@@ -866,7 +878,7 @@ function OrderHistoryPage(props: PageProps) {
 function CartPage(props: PageProps) {
     const { cart, updateCartQuantity, removeFromCart, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, setCurrentPage, products, settlements } = props;
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-    
+
     const originalTotal = getOriginalTotalPrice!();
     const finalTotal = getTotalPrice!();
     const totalDiscount = originalTotal - finalTotal;
@@ -970,13 +982,13 @@ function InvoicePage(props: PageProps) {
     const { user, orders, formatPrice, settlements, setCart, setCurrentPage } = props;
     const [invoiceNumber, setInvoiceNumber] = useState("");
     const lastSubmittedOrder = orders.length > 0 ? orders[0] : null;
-    
+
     const settlementMethod = settlements.find(s => s.id === lastSubmittedOrder?.settlementId)?.name;
 
     useEffect(() => { setInvoiceNumber("BONAK-" + Math.random().toString(36).substring(2, 9).toUpperCase()); }, []);
-    
+
     const handleNewOrder = () => { setCart!([]); setCurrentPage("home"); };
-    
+
     if (!lastSubmittedOrder) {
         useEffect(() => { setCurrentPage("home"); }, [setCurrentPage]);
         return <div className="p-4 text-center">اطلاعات فاکتور یافت نشد. در حال بازگشت به صفحه اصلی...</div>;
@@ -1006,10 +1018,10 @@ function InvoicePage(props: PageProps) {
                             <div><p className="text-muted-foreground">تاریخ تحویل:</p><p className="font-semibold">{new Date(lastSubmittedOrder.deliveryDate).toLocaleDateString('fa-IR')}</p></div>
                             <div><p className="text-muted-foreground">روش تسویه:</p><p className="font-semibold">{settlementMethod || 'نامشخص'}</p></div>
                         </div>
-                        
+
                         <h3 className="font-bold mb-3">اقلام سفارش:</h3>
                         <div className="space-y-3 mb-6 text-sm">
-                            {lastSubmittedOrder.items.map((item:any) => 
+                            {lastSubmittedOrder.items.map((item:any) =>
                                 <div key={item.id} className="flex justify-between items-baseline">
                                     <span>{item.productName} <span className="text-xs text-muted-foreground">(×{item.quantity})</span></span>
                                     <span className="font-mono">{formatPrice(item.price*item.quantity)}</span>
@@ -1050,7 +1062,7 @@ function ProfilePage(props: PageProps) {
     const handleInfoChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
-    
+
     const handleLocationChange = (lat: number, lng: number) => {
         setFormData({ ...formData, latitude: lat, longitude: lng });
     };
@@ -1070,7 +1082,7 @@ function ProfilePage(props: PageProps) {
             setSuccess("اطلاعات با موفقیت به‌روز شد.");
         } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
     };
-    
+
     const handlePasswordSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmNewPassword) {
