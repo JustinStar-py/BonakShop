@@ -1,4 +1,4 @@
-// FILE: app/page.tsx (Final Version with Image Dialog functionality)
+// FILE: app/page.tsx
 "use client";
 
 import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
@@ -14,11 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { FileText } from "lucide-react";
 
-import type { Product as PrismaProduct, Category as PrismaCategory, Settlement, OrderItem, OrderStatus } from "@prisma/client";
+import type { Product as PrismaProduct, Category as PrismaCategory, Settlement, OrderItem, OrderStatus, Supplier } from "@prisma/client";
 import type { CartItem, OrderWithItems, User } from "@/types";
 import ProductCard from "@/components/shared/ProductCard";
 import BottomNavigation from "@/components/layout/BottomNavigation";
@@ -35,7 +36,6 @@ function ImageDialog({ imageUrl, onClose }: { imageUrl: string | null; onClose: 
     if (!imageUrl) return null;
     return (
         <Dialog open={true} onOpenChange={onClose}>
-            {/* The className is updated to have a white background, padding, and shadow */}
             <DialogContent className="p-2 bg-white shadow-lg rounded-lg max-w-lg w-full">
                 <img src={imageUrl} alt="نمایش بزرگتر محصول" className="w-full h-auto rounded-lg object-contain" />
             </DialogContent>
@@ -52,11 +52,14 @@ interface PageProps {
     isLoadingOrders: boolean;
     handleSelectProduct: (p: PrismaProduct) => void;
     handleNavigateToCategories: () => void;
+    handleSupplierClick: (supplierId: string) => void;
     searchQuery: string;
     setSearchQuery: (q: string) => void;
     selectedCategory: string;
     setSelectedCategory: (c: string) => void;
-    products: (PrismaProduct & { category: PrismaCategory })[];
+    selectedSupplier: string | null;
+    setSelectedSupplier: (s: string | null) => void;
+    products: (PrismaProduct & { category: PrismaCategory, supplier: Supplier })[];
     categories: PrismaCategory[];
     settlements: Settlement[];
     cart: CartItem[];
@@ -78,7 +81,6 @@ interface PageProps {
     selectedProduct: (PrismaProduct & { category: PrismaCategory }) | null;
     setCurrentPage: (p: string) => void;
     setCart: (cart: CartItem[]) => void;
-    // New prop to handle opening the image dialog
     setViewingImage: (url: string | null) => void;
 }
 
@@ -102,8 +104,7 @@ export default function WholesaleFoodApp() {
   return <AppContent />;
 }
 
-// This replaces ONLY the AuthPage function inside app/page.tsx
-
+// --- AuthPage Component ---
 function AuthPage() {
     const { setUser } = useAppContext();
     const [loginPhone, setLoginPhone] = useState("");
@@ -128,7 +129,6 @@ function AuthPage() {
         setError("");
         setSuccessMessage("");
 
-        // ADDED: Client-side check for password length
         if (registerPassword.length < 6) {
             setError("رمز عبور باید حداقل ۶ کاراکتر باشد.");
             setIsLoading(false);
@@ -150,7 +150,7 @@ function AuthPage() {
             if (!res.ok) throw new Error(data.error || "خطایی در هنگام ثبت‌نام رخ داد.");
             
             setSuccessMessage("ثبت نام با موفقیت انجام شد! لطفاً وارد شوید.");
-            setActiveTab("login"); // Switch to login tab on success
+            setActiveTab("login");
         } catch (err: any) { 
             setError(err.message); 
         } finally { 
@@ -193,28 +193,22 @@ function AuthPage() {
                             <TabsTrigger value="register">ثبت نام</TabsTrigger>
                         </TabsList>
                         
-                        {/* Login Tab */}
                         <TabsContent value="login">
                             <form onSubmit={handleLogin} className="space-y-4 pt-4">
                                 <div className="space-y-2"><Label htmlFor="login-phone">شماره تلفن</Label><Input id="login-phone" type="tel" placeholder="مثال: 09130000000" required value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} /></div>
                                 <div className="space-y-2"><Label htmlFor="login-password">رمز عبور</Label><Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>
-                                
                                 {error && activeTab === 'login' && <p className="text-sm text-red-500 text-center">{error}</p>}
                                 {successMessage && <p className="text-sm text-green-600 text-center">{successMessage}</p>}
-
                                 <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ورود...</> : "ورود"}</Button>
                             </form>
                         </TabsContent>
 
-                        {/* Register Tab */}
                         <TabsContent value="register">
                             <form onSubmit={handleRegister} className="space-y-4 pt-4">
                                 <div className="space-y-2"><Label htmlFor="register-phone">شماره تلفن</Label><Input id="register-phone" type="tel" placeholder="09123456789 مثال" required value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} /></div>
                                 <div className="space-y-2"><Label htmlFor="register-password">رمز عبور (حداقل ۶ کاراکتر)</Label><Input id="register-password" type="password" required value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} /></div>
                                 <div className="space-y-2"><Label htmlFor="confirm-password">تکرار رمز عبور</Label><Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
-                                
                                 {error && activeTab === 'register' && <p className="text-sm text-red-500 text-center">{error}</p>}
-                                
                                 <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت نام...</> : "ثبت نام"}</Button>
                             </form>
                         </TabsContent>
@@ -275,15 +269,16 @@ function AppContent() {
     const { user, setUser, cart, setCart, currentPage, setCurrentPage, ...appContext } = useAppContext();
     const { addToCart, updateCartQuantity, removeFromCart, getTotalPrice, getOriginalTotalPrice, getTotalItems, setSelectedProduct, selectedProduct } = appContext;
     
-    const [products, setProducts] = useState<(PrismaProduct & { category: PrismaCategory })[]>([]);
+    const [products, setProducts] = useState<(PrismaProduct & { category: PrismaCategory, supplier: Supplier })[]>([]);
     const [categories, setCategories] = useState<PrismaCategory[]>([]);
     const [settlements, setSettlements] = useState<Settlement[]>([]);
     const [isLoadingContent, setIsLoadingContent] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
+    const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
     const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
-    const [selectedSettlement, setSelectedSettlement] = useState("");
     const [orderNotes, setOrderNotes] = useState("");
+    const [selectedSettlement, setSelectedSettlement] = useState("");
     const [orders, setOrders] = useState<OrderWithItems[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -323,8 +318,14 @@ function AppContent() {
 
     const handleLogout = async () => { try { await fetch('/api/auth/logout', { method: 'POST' }); setUser(null); } catch (e) { console.error(e); } };
     const handleSelectProduct = (p: PrismaProduct) => { setSelectedProduct(p); setCurrentPage("product"); };
-    const handleNavigateToCategories = () => { setSelectedCategory(""); setCurrentPage("category"); };
+    const handleNavigateToCategories = () => { setSelectedCategory(""); setSelectedSupplier(null); setCurrentPage("category"); };
     const formatPrice = (p: number) => p.toLocaleString("fa-IR", { useGrouping: false }) + " ریال";
+
+    const handleSupplierClick = (supplierId: string) => {
+        setSelectedSupplier(supplierId);
+        setSelectedCategory(""); // Reset category filter
+        setCurrentPage("category");
+    };
 
     const handleOrderSubmit = async () => {
         if (!deliveryDate) { alert("لطفاً تاریخ تحویل را انتخاب کنید."); return; }
@@ -342,7 +343,7 @@ function AppContent() {
         finally { setIsSubmitting(false); }
     };
 
-    const props: PageProps = { user, handleLogout, orders, fetchOrders, isLoadingOrders: isLoadingContent, handleSelectProduct, handleNavigateToCategories, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, products, categories, settlements, cart, addToCart, updateCartQuantity, removeFromCart, getTotalItems, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, selectedProduct, setCurrentPage, setCart, setViewingImage };
+    const props: PageProps = { user, handleLogout, orders, fetchOrders, isLoadingOrders: isLoadingContent, handleSelectProduct, handleNavigateToCategories, handleSupplierClick, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedSupplier, setSelectedSupplier, products, categories, settlements, cart, addToCart, updateCartQuantity, removeFromCart, getTotalItems, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, selectedProduct, setCurrentPage, setCart, setViewingImage };
 
     const renderPage = () => {
         if (isLoadingContent) {
@@ -372,7 +373,7 @@ function AppContent() {
 // --- Page Components ---
 
 function HomePage(props: PageProps) {
-    const { user, handleLogout, orders, isLoadingOrders, handleSelectProduct, handleNavigateToCategories, searchQuery, setSearchQuery, categories, products, cart, addToCart, updateCartQuantity, setCurrentPage, setViewingImage } = props;
+    const { user, handleLogout, orders, isLoadingOrders, handleSelectProduct, handleNavigateToCategories, handleSupplierClick, searchQuery, setSearchQuery, categories, products, cart, addToCart, updateCartQuantity, setCurrentPage, setViewingImage } = props;
     const router = useRouter();
     const mostRecentOrder = orders.length > 0 ? orders[0] : null;
 
@@ -397,6 +398,7 @@ function HomePage(props: PageProps) {
                     onSelectProduct={handleSelectProduct!} 
                     onUpdateQuantity={updateCartQuantity!} 
                     onImageClick={setViewingImage}
+                    onSupplierClick={handleSupplierClick}
                 />
             )}
         </div>
@@ -480,10 +482,8 @@ function HomePage(props: PageProps) {
 
 
 function CategoryPage(props: PageProps) {
-    const { selectedCategory, setSelectedCategory, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, updateCartQuantity, setCurrentPage, categories, setViewingImage } = props;
+    const { selectedCategory, setSelectedCategory, selectedSupplier, setSelectedSupplier, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, handleSupplierClick, updateCartQuantity, setCurrentPage, categories, setViewingImage } = props;
     
-    const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
-
     const filteredProducts = products!.filter((p) => 
         (selectedCategory ? p.categoryId === selectedCategory : true) && 
         (selectedSupplier ? p.supplierId === selectedSupplier : true) &&
@@ -491,18 +491,15 @@ function CategoryPage(props: PageProps) {
     );
 
     const availableSuppliers = useMemo(() => {
-        if (!selectedCategory) return [];
-        const supplierIds = new Set(products.filter(p => p.categoryId === selectedCategory).map(p => p.supplierId));
+        const relevantProducts = selectedCategory 
+            ? products.filter(p => p.categoryId === selectedCategory)
+            : products;
+        const supplierIds = new Set(relevantProducts.map(p => p.supplierId));
         return products
-            .filter(p => supplierIds.has(p.supplierId))
             .map(p => p.supplier)
-            .filter((s, index, self) => self.findIndex(t => t.id === s.id) === index);
+            .filter((s, index, self) => s && supplierIds.has(s.id) && self.findIndex(t => t.id === s.id) === index);
     }, [selectedCategory, products]);
-
-    const availableCategories = useMemo(() => {
-        return categories;
-    }, [categories]);
-
+    
     const renderProductList = (list: any[]) => (
         <div className="grid grid-cols-2 gap-4">
             {list.map(p => 
@@ -513,7 +510,8 @@ function CategoryPage(props: PageProps) {
                     onAddToCart={addToCart!} 
                     onSelectProduct={handleSelectProduct!} 
                     onUpdateQuantity={updateCartQuantity!} 
-                    onImageClick={setViewingImage} 
+                    onImageClick={setViewingImage}
+                    onSupplierClick={handleSupplierClick}
                 />
             )}
         </div>
@@ -526,7 +524,7 @@ function CategoryPage(props: PageProps) {
                     <Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button>
                     <h1 className="text-xl font-bold">{selectedCategory ? categories!.find(c => c.id === selectedCategory)?.name : "همه محصولات"}</h1>
                 </div>
-                <div className="flex gap-2 flex-wrap mb-2">
+                <div className="flex gap-2 flex-wrap">
                     <div className="relative flex-grow">
                         <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
                         <Input placeholder="جستجو در محصولات..." value={searchQuery} onChange={(e) => setSearchQuery!(e.target.value)} className="pr-10" />
@@ -544,7 +542,7 @@ function CategoryPage(props: PageProps) {
                                     <CommandEmpty>دسته‌بندی یافت نشد.</CommandEmpty>
                                     <CommandGroup>
                                         <CommandItem onSelect={() => setSelectedCategory("")}>همه دسته‌بندی‌ها</CommandItem>
-                                        {availableCategories.map((cat) => (
+                                        {categories.map((cat) => (
                                             <CommandItem key={cat.id} onSelect={() => setSelectedCategory(cat.id)}>
                                                 {cat.name}
                                             </CommandItem>
@@ -745,8 +743,9 @@ function ReturnRequestDialog({ order, onOpenChange, onSuccess }: { order: OrderW
 }
 
 function OrderHistoryPage(props: PageProps) {
-    const { orders, isLoadingOrders, formatPrice, setCurrentPage, fetchOrders } = props;
+    const { orders, isLoadingOrders, formatPrice, setCurrentPage, fetchOrders, settlements, user } = props;
     const [selectedOrderForReturn, setSelectedOrderForReturn] = useState<OrderWithItems | null>(null);
+    const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<OrderWithItems | null>(null);
 
     const handleCancelOrder = async (orderId: string) => {
         if (!confirm("آیا از لغو این سفارش اطمینان دارید؟ این عمل غیرقابل بازگشت است.")) return;
@@ -800,10 +799,14 @@ function OrderHistoryPage(props: PageProps) {
                                     ))}
                                 </ul>
                                 {order.notes && <p className="text-sm mt-3"><span className="font-semibold">توضیحات:</span> {order.notes}</p>}
-                                <div className="flex gap-2 mt-4">
+                                <div className="flex gap-1 mt-4">
                                      <Button variant="outline" size="sm" onClick={() => setSelectedOrderForReturn(order)}>
-                                        <RefreshCw className="ml-2 h-4 w-4" />
+                                        <RefreshCw className="ml-1 h-4 w-4" />
                                         ثبت مرجوعی
+                                    </Button>
+                                   <Button className="gap-0.5 px-1" variant="outline" size="sm" onClick={() => setSelectedOrderForInvoice(order)}>
+                                        <FileText className="ml-1 h-4 w-4" />
+                                       فاکتور
                                     </Button>
                                     {order.status === 'PENDING' && (
                                         <Button variant="destructive" size="sm" onClick={() => handleCancelOrder(order.id)}>لغو سفارش</Button>
@@ -823,6 +826,39 @@ function OrderHistoryPage(props: PageProps) {
                     setSelectedOrderForReturn(null);
                 }}
             />
+
+            {selectedOrderForInvoice && (
+                <Dialog open={!!selectedOrderForInvoice} onOpenChange={() => setSelectedOrderForInvoice(null)}>
+                    <DialogContent className="max-w-md w-[95vw] z-50">
+                        <DialogHeader>
+                            <DialogTitle>فاکتور سفارش ...{selectedOrderForInvoice.id.slice(-6)}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-2 mb-4">
+                            <div className="flex justify-between"><span>تاریخ سفارش:</span><span>{new Date(selectedOrderForInvoice.createdAt).toLocaleDateString('fa-IR')}</span></div>
+                            <div className="flex justify-between"><span>تاریخ تحویل:</span><span>{new Date(selectedOrderForInvoice.deliveryDate).toLocaleDateString('fa-IR')}</span></div>
+                            <div className="flex justify-between"><span>روش تسویه:</span><span>{settlements.find(s => s.id === selectedOrderForInvoice.settlementId)?.name || 'نامشخص'}</span></div>
+                        </div>
+                        <h3 className="font-bold mb-2">اقلام سفارش:</h3>
+                        <ul className="space-y-1 mb-4">
+                            {selectedOrderForInvoice.items.map(item => (
+                                <li key={item.id} className="flex justify-between">
+                                    <span>{item.productName} <span className="text-xs text-muted-foreground">(×{item.quantity})</span></span>
+                                    <span className="font-mono">{formatPrice(item.price * item.quantity)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <Separator />
+                        <div className="space-y-2 mt-4">
+                            <div className="flex justify-between"><span>جمع کل (قبل از تخفیف):</span><span>{formatPrice(selectedOrderForInvoice.items.reduce((acc, item) => acc + (item.price * item.quantity), 0))}</span></div>
+                            <div className="flex justify-between"><span>مبلغ نهایی:</span><span>{formatPrice(selectedOrderForInvoice.totalPrice)}</span></div>
+                        </div>
+                        {selectedOrderForInvoice.notes && <div className="text-sm mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"><span className="font-semibold">توضیحات:</span> {selectedOrderForInvoice.notes}</div>}
+                        <DialogFooter>
+                            <Button className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white" variant="outline" onClick={() => setSelectedOrderForInvoice(null)}>بستن</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }
@@ -966,7 +1002,8 @@ function InvoicePage(props: PageProps) {
                             <div><p className="text-muted-foreground">مشتری:</p><p className="font-semibold">{user?.name}</p></div>
                             <div><p className="text-muted-foreground">فروشگاه:</p><p className="font-semibold">{user?.shopName}</p></div>
                             <div className="col-span-2"><p className="text-muted-foreground">آدرس:</p><p className="font-semibold">{user?.shopAddress}</p></div>
-                            <div><p className="text-muted-foreground">تاریخ تحویل:</p><p className="font-semibold">{new Date(lastSubmittedOrder.deliveryDate).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' })}</p></div>
+                            <div><p className="text-muted-foreground">تاریخ سفارش:</p><p className="font-semibold">{new Date(lastSubmittedOrder.createdAt).toLocaleDateString('fa-IR')}</p></div>
+                            <div><p className="text-muted-foreground">تاریخ تحویل:</p><p className="font-semibold">{new Date(lastSubmittedOrder.deliveryDate).toLocaleDateString('fa-IR')}</p></div>
                             <div><p className="text-muted-foreground">روش تسویه:</p><p className="font-semibold">{settlementMethod || 'نامشخص'}</p></div>
                         </div>
                         
