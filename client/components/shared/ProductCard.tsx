@@ -44,7 +44,7 @@ export default function ProductCard({
   };
 
   return (
-    <Card className={`overflow-hidden gap-1.5 border-2 border-gray-100 hover:border-green-200 transition-colors rounded-2xl flex flex-col justify-between relative p-2`}>
+    <Card className={`overflow-hidden gap-1.5 border-2 ${hasDiscount ? 'border-red-500' : 'border-gray-200'} hover:border-green-200 transition-colors rounded-2xl flex flex-col justify-between relative p-2`}>
       {hasDiscount && (
         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 z-5">
           <Tag className="h-3 w-3" />

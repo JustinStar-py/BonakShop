@@ -126,7 +126,7 @@ export default function AdminDashboardLayout() {
     );
 }
 
-// --- Procurement Page (Updated with Filters and Details) ---
+// --- Procurement Page ---
 function ProcurementPage() {
     const [rawProcurementList, setRawProcurementList] = useState<ProcurementItem[]>([]);
     const [allDistributors, setAllDistributors] = useState<Distributor[]>([]);
@@ -444,10 +444,17 @@ function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderWithRelatio
                     <CardTitle className="text-base font-bold">{order.user.shopName || order.user.name}</CardTitle>
                     <Badge variant={getOrderStatusInfo(order.status).variant}>{getOrderStatusInfo(order.status).text}</Badge>
                 </div>
-                 <CardDescription>
-                  {new Date(order.createdAt).toLocaleDateString('fa-IR')}
-                </CardDescription>
-                <div className="space-y-1.5 text-sm text-muted-foreground pt-2">
+                <div className="text-xs text-muted-foreground space-y-1 pt-2">
+                    <p>
+                        <span className="font-semibold">تاریخ سفارش: </span>
+                        {new Date(order.createdAt).toLocaleDateString('fa-IR')}
+                    </p>
+                    <p>
+                        <span className="font-semibold">تاریخ تحویل: </span>
+                        {new Date(order.deliveryDate).toLocaleDateString('fa-IR')}
+                    </p>
+                </div>
+                <div className="space-y-1.5 text-sm text-muted-foreground pt-2 border-t mt-2">
                     <p className="flex items-center gap-2"><UserIconLucide className="h-4 w-4" />{order.user.name}</p>
                     <p className="flex items-start gap-2"><Building className="h-4 w-4 mt-1 shrink-0" />{order.user.shopAddress}</p>
                     <p className="flex items-center gap-2"><Phone className="h-4 w-4" />{order.user.phone}</p>
@@ -513,7 +520,7 @@ function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDeli
                     <Badge variant={getReturnStatusInfo(ret.status).variant}>{getReturnStatusInfo(ret.status).text}</Badge>
                 </div>
                 <CardDescription>
-                   {new Date(ret.createdAt).toLocaleDateString('fa-IR')}
+                   شماره: ...{ret.id.slice(-6)} | تاریخ: {new Date(ret.createdAt).toLocaleDateString('fa-IR')}
                 </CardDescription>
             </CardHeader>
             <CardContent>
