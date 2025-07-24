@@ -41,7 +41,7 @@ export default function BottomNavigation({
         onClick={() => onNavigate("home")}
       >
         <Home className="h-6 w-6" />
-        <span className="text-xs mt-1">خانه</span>
+        <span className="text-xs mt-1 font-800">خانه</span>
       </Button>
 
       {/* Products/Categories Button */}
@@ -51,7 +51,7 @@ export default function BottomNavigation({
         onClick={onNavigateToCategories}
       >
         <List className="h-6 w-6" />
-        <span className="text-xs mt-1">محصولات</span>
+        <span className="text-xs mt-1 font-800">محصولات</span>
       </Button>
 
       {/* Order History Button */}
@@ -61,7 +61,7 @@ export default function BottomNavigation({
         onClick={() => onNavigate("order_history")}
       >
         <History className="h-6 w-6" />
-        <span className="text-xs mt-1">تاریخچه</span>
+        <span className="text-xs mt-1 font-800">تاریخچه</span>
       </Button>
 
       {/* Shopping Cart Button */}
@@ -71,7 +71,7 @@ export default function BottomNavigation({
         onClick={() => onNavigate("cart")}
       >
         <ShoppingCart className="h-6 w-6" />
-        <span className="text-xs mt-1">سبد خرید</span>
+        <span className="text-xs mt-1 font-800">سبد خرید</span>
         {totalCartItems > 0 && (
           <Badge className="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
             {totalCartItems}

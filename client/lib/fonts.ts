@@ -31,12 +31,12 @@ export const Samim = localFont({
     {
       path: '/../public/fonts/Samim.ttf',
       weight: '400',
-      style: 'bolder',
+      style: 'normal',
     },
     {
       path: '/../public/fonts/Samim-Bold.ttf',
       weight: '800',
-      style: 'bolder',
+      style: 'bold',
     }
   ],
   variable: '--font-samim', // A CSS variable to use the font

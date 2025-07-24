@@ -3,10 +3,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
+import { Vazirmatn } from "next/font/google"; 
+import { Samim } from "@/lib/fonts"; // Import the font
+
+const vazirmatn = Vazirmatn({
+  subsets: ["latin", "arabic"],
+  variable: "--font-vazir",
+});
 
 // Import Leaflet CSS
 import 'leaflet/dist/leaflet.css';
-import { Samim } from "@/lib/fonts"; // Import the font
 
 // Define metadata for the application
 export const metadata: Metadata = {
@@ -22,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl">
-      <body className={Samim.variable}> {/* Apply the font variable */}
+      <body className={`${vazirmatn.variable} font-sans antialiased`}> {/* Apply the font variable */}
         <AppProvider>
           {children}
         </AppProvider>
