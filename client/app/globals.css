@@ -121,6 +121,10 @@
   }
 }
 
-p, h1, h2, h3, h4, h5, h6, a, span, button, input, textarea {
-  font-family: var(--font-samim), sans-serif !important;
+p, h1, h2, h3, h4, h5, h6, a, span, button, input, textarea, label {
+  font-family: var(--font-vazir), sans-serif !important;
+}
+
+label {
+   padding: 5px;
 }

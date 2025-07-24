@@ -56,7 +56,7 @@ function toGregorian(jy: number, jm: number, jd: number): Date {
             break;
         }
     }
-    return new Date(gy, gm - 1, gd + 1);
+    return new Date(Date.UTC(gy, gm - 1, gd));
 }
 
 
