@@ -540,9 +540,16 @@ function CategoryPage(props: PageProps) {
                                 <CommandList>
                                     <CommandEmpty>دسته‌بندی یافت نشد.</CommandEmpty>
                                     <CommandGroup>
-                                        <CommandItem onSelect={() => setSelectedCategory("")}>همه دسته‌بندی‌ها</CommandItem>
+                                        <CommandItem 
+                                        onSelect={() => {setSelectedCategory(""); setSelectedSupplier(null)}}>همه دسته‌بندی‌ها</CommandItem>
                                         {categories.map((cat) => (
-                                            <CommandItem key={cat.id} onSelect={() => setSelectedCategory(cat.id)}>
+                                            <CommandItem 
+                                              key={cat.id}
+                                              onSelect={() => {
+                                                 setSelectedCategory(cat.id);
+                                                 setSelectedSupplier(null);
+                                                 }}
+                                               >
                                                 {cat.name}
                                             </CommandItem>
                                         ))}

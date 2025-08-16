@@ -189,11 +189,13 @@ function ProcurementPage() {
                     };
                 });
 
-
                 setRawProcurementList(procurementList);
 
-            } catch (error) { console.error("Failed to calculate procurement list:", error); }
-            finally { setIsLoading(false); }
+            } catch (error) { 
+                console.error("Failed to calculate procurement list:", error); 
+            } finally { 
+                setIsLoading(false); 
+            }
         };
         calculateProcurement();
     }, []);
@@ -224,9 +226,11 @@ function ProcurementPage() {
         return Object.entries(grouped);
     }, [rawProcurementList, filterDistributor, filterProduct, filterDate]);
     
-    const uniqueDates = useMemo(() => {
-        const dates = new Set(rawProcurementList.map(item => item.neededDate));
-        return Array.from(dates).sort((a,b) => new Date(a).getTime() - new Date(b).getTime());
+    // --- Only last 10 dates ---
+    const lastTenDates = useMemo(() => {
+        const dates = Array.from(new Set(rawProcurementList.map(item => item.neededDate)))
+            .sort((a,b) => new Date(a).getTime() - new Date(b).getTime());
+        return dates.slice(-10);
     }, [rawProcurementList]);
 
     const handleOpenDetails = (item: ProcurementItem) => {
@@ -248,22 +252,47 @@ function ProcurementPage() {
                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-1.5">
                         <Label>شرکت پخش</Label>
-                        <Select value={filterDistributor} onValueChange={setFilterDistributor} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه شرکت‌ها</SelectItem>{allDistributors.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
+                        <Select value={filterDistributor} onValueChange={setFilterDistributor} dir="rtl">
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">همه شرکت‌ها</SelectItem>
+                                {allDistributors.map(d=> <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-1.5">
                         <Label>محصول</Label>
-                        <Select value={filterProduct} onValueChange={setFilterProduct} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه محصولات</SelectItem>{allProducts.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select>
+                        <Select value={filterProduct} onValueChange={setFilterProduct} dir="rtl">
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">همه محصولات</SelectItem>
+                                {allProducts.map(p=> <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
-                     <div className="space-y-1.5">
-                        <Label>تاریخ نیاز</Label>
-                        <Select value={filterDate} onValueChange={setFilterDate} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه تاریخ‌ها</SelectItem>{uniqueDates.map(d=><SelectItem key={d} value={d}>{new Date(d).toLocaleDateString('fa-IR')}</SelectItem>)}</SelectContent></Select>
+                    <div className="space-y-1.5">
+                        <Label>تاریخ نیاز (آخرین ۱۰ مورد)</Label>
+                        <Select value={filterDate} onValueChange={setFilterDate} dir="rtl">
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">همه تاریخ‌ها</SelectItem>
+                                {lastTenDates.map(d => (
+                                    <SelectItem key={d} value={d}>{new Date(d).toLocaleDateString('fa-IR')}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="flex items-end">
-                       <Button variant="outline" onClick={() => { setFilterDistributor('all'); setFilterProduct('all'); setFilterDate('all'); }} className="w-full"><X className="ml-2 h-4 w-4"/>پاک کردن فیلترها</Button>
+                       <Button variant="outline" onClick={() => { 
+                           setFilterDistributor('all'); 
+                           setFilterProduct('all'); 
+                           setFilterDate('all'); 
+                       }} className="w-full">
+                           <X className="ml-2 h-4 w-4"/>پاک کردن فیلترها
+                       </Button>
                     </div>
                 </CardContent>
             </Card>
-
 
             {filteredAndGroupedList.length === 0 ? (
                 <Card><CardContent className="pt-6 text-center text-muted-foreground">با توجه به فیلترها، موردی برای تدارکات یافت نشد.</CardContent></Card>
@@ -273,13 +302,26 @@ function ProcurementPage() {
                         <CardHeader><CardTitle>شرکت پخش: {distributorName}</CardTitle></CardHeader>
                         <CardContent>
                             <Table>
-                                <TableHeader><TableRow><TableHead className="text-right">تاریخ نیاز</TableHead><TableHead className="text-right">محصول (تولیدکننده)</TableHead><TableHead className="text-right">تعداد مورد نیاز</TableHead><TableHead className="text-center">عملیات</TableHead></TableRow></TableHeader>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="text-right">تاریخ نیاز</TableHead>
+                                        <TableHead className="text-right">محصول (تولیدکننده)</TableHead>
+                                        <TableHead className="text-right">تعداد مورد نیاز</TableHead>
+                                        <TableHead className="text-center">عملیات</TableHead>
+                                    </TableRow>
+                                </TableHeader>
                                 <TableBody>
                                     {products.map(p => (
                                         <TableRow key={`${p.id}-${p.neededDate}`}>
-                                            <TableCell className="text-right">{new Date(p.neededDate).toLocaleDateString('fa-IR')}</TableCell>
-                                            <TableCell className="font-medium text-right">{p.name} <span className="text-muted-foreground text-xs">({p.supplier.name})</span></TableCell>
-                                            <TableCell className="font-bold text-right">{p.neededQuantity.toLocaleString('fa-IR')} {p.unit}</TableCell>
+                                            <TableCell className="text-right">
+                                                {new Date(p.neededDate).toLocaleDateString('fa-IR')}
+                                            </TableCell>
+                                            <TableCell className="font-medium text-right">
+                                                {p.name} <span className="text-muted-foreground text-xs">({p.supplier.name})</span>
+                                            </TableCell>
+                                            <TableCell className="font-bold text-right">
+                                                {p.neededQuantity.toLocaleString('fa-IR')} {p.unit}
+                                            </TableCell>
                                             <TableCell className="text-center">
                                                 <Button variant="ghost" size="sm" onClick={() => handleOpenDetails(p)}>جزئیات</Button>
                                             </TableCell>
@@ -296,14 +338,24 @@ function ProcurementPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>جزئیات نیاز محصول</DialogTitle>
-                        <DialogDescription>{selectedItemDetails?.name} برای تاریخ {new Date(selectedItemDetails?.neededDate || '').toLocaleDateString('fa-IR')}</DialogDescription>
+                        <DialogDescription>
+                            {selectedItemDetails?.name} برای تاریخ {new Date(selectedItemDetails?.neededDate || '').toLocaleDateString('fa-IR')}
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="max-h-80 overflow-y-auto">
                         <Table>
-                            <TableHeader><TableRow><TableHead className="text-right">نام فروشگاه</TableHead><TableHead className="text-center">تعداد سفارش</TableHead></TableRow></TableHeader>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="text-right">نام فروشگاه</TableHead>
+                                    <TableHead className="text-center">تعداد سفارش</TableHead>
+                                </TableRow>
+                            </TableHeader>
                             <TableBody>
                                 {selectedItemDetails?.details.map((detail, index) => (
-                                    <TableRow key={index}><TableCell className="text-right">{detail.customerName}</TableCell><TableCell className="text-center">{detail.quantity}</TableCell></TableRow>
+                                    <TableRow key={index}>
+                                        <TableCell className="text-right">{detail.customerName}</TableCell>
+                                        <TableCell className="text-center">{detail.quantity}</TableCell>
+                                    </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
@@ -313,10 +365,10 @@ function ProcurementPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
         </div>
     );
 }
+
 
 
 // --- Dashboard Home Page ---
