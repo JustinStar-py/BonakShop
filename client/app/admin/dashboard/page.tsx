@@ -697,7 +697,7 @@ function CategoryManagementPage() {
         const formData = new FormData();
         formData.append("image", file);
         try {
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`, { method: "POST", body: formData });
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=4b2ba5e2eec4847988305b536b6f4a50`, { method: "POST", body: formData });
             const data = await res.json();
             if (data.success) {
                 handleFormChange('image', data.data.url);
@@ -800,159 +800,291 @@ function CategoryManagementPage() {
 }
 
 // --- Product Management Page ---
+/**
+ * Product Management Page
+ * - Displays a list of products with options to create, edit, and delete.
+ * - Supports product image upload to imgbb.
+ * - Shows dynamic calculated discounted price in create/edit dialog
+ *   so admin/vendor doesn't need manual calculation.
+ */
+
 function ProductManagementPage() {
-    const [products, setProducts] = useState<(Product & { category: Category, supplier: Supplier, distributor: Distributor })[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-    const [distributors, setDistributors] = useState<Distributor[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<any | null>(null);
-    const [actionLoading, setActionLoading] = useState(false);
+  const [products, setProducts] = useState<(Product & { category: Category, supplier: Supplier, distributor: Distributor })[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [distributors, setDistributors] = useState<Distributor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-    const fetchAllData = async () => {
-        setIsLoading(true);
-        try {
-            const [pRes, cRes, sRes, dRes] = await Promise.all([ fetch('/api/products'), fetch('/api/categories'), fetch('/api/suppliers'), fetch('/api/distributors') ]);
-            setProducts(await pRes.json());
-            setCategories(await cRes.json());
-            setSuppliers(await sRes.json());
-            setDistributors(await dRes.json());
-        } catch (e) { console.error("Failed to fetch page data:", e); } 
-        finally { setIsLoading(false); }
+  // This value will be auto-calculated whenever price or discount changes
+  const discountedPrice = useMemo(() => {
+    if (!editingProduct?.price || isNaN(Number(editingProduct.price))) return 0;
+    const discount = Number(editingProduct.discountPercentage) || 0;
+    return Number(editingProduct.price) * (1 - discount / 100);
+  }, [editingProduct?.price, editingProduct?.discountPercentage]);
+
+  const fetchAllData = async () => {
+    setIsLoading(true);
+    try {
+      const [pRes, cRes, sRes, dRes] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/categories'),
+        fetch('/api/suppliers'),
+        fetch('/api/distributors')
+      ]);
+      setProducts(await pRes.json());
+      setCategories(await cRes.json());
+      setSuppliers(await sRes.json());
+      setDistributors(await dRes.json());
+    } catch (e) {
+      console.error("Failed to fetch page data:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => { fetchAllData(); }, []);
+
+  const handleOpenDialog = (product: any | null = null) => {
+    setEditingProduct(product || {
+      name: "",
+      price: "",
+      description: "",
+      categoryId: "",
+      image: "",
+      available: true,
+      discountPercentage: "0",
+      unit: "عدد",
+      stock: "",
+      supplierId: "",
+      distributorId: ""
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleFormChange = (field: string, value: any) => {
+    setEditingProduct((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    setActionLoading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=4b2ba5e2eec4847988305b536b6f4a50`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        handleFormChange('image', data.data.url);
+      } else {
+        alert("آپلود عکس موفق نبود.");
+      }
+    } catch {
+      alert("خطا در آپلود عکس");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    setActionLoading(true);
+    const isEditing = !!editingProduct.id;
+    const url = isEditing ? `/api/products/${editingProduct.id}` : '/api/products';
+    const method = isEditing ? 'PUT' : 'POST';
+    const body = {
+      ...editingProduct,
+      price: parseFloat(editingProduct.price) || 0,
+      stock: Number(editingProduct.stock) || 0,
+      discountPercentage: Number(editingProduct.discountPercentage) || 0
     };
-    useEffect(() => { fetchAllData(); }, []);
+    try {
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(await res.text());
+      await fetchAllData();
+      setIsDialogOpen(false);
+    } catch (error) {
+      alert(`خطا در ذخیره محصول: ${error}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-    const handleOpenDialog = (product: any | null = null) => {
-        setEditingProduct(product || { name: "", price: "", description: "", categoryId: "", image: "", available: true, discountPercentage: "0", unit: "عدد", stock: "", supplierId: "", distributorId: "" });
-        setIsDialogOpen(true);
-    };
+  const handleDelete = async (productId: string) => {
+    setActionLoading(true);
+    try {
+      await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+      await fetchAllData();
+    } catch (error) {
+      alert(`خطا در حذف محصول: ${error}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-    const handleFormChange = (field: string, value: any) => {
-        setEditingProduct((prev: any) => ({ ...prev, [field]: value }));
-    };
+  if (isLoading) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
-    const handleImageUpload = async (file: File) => {
-        if (!file) return;
-        setActionLoading(true);
-        const formData = new FormData();
-        formData.append("image", file);
-        try {
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`, { method: "POST", body: formData });
-            const data = await res.json();
-            if (data.success) {
-                handleFormChange('image', data.data.url);
-            } else { alert("آپلود عکس موفق نبود."); }
-        } catch (err) { alert("خطا در آپلود عکس"); } 
-        finally { setActionLoading(false); }
-    };
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">مدیریت محصولات</h1>
+        <Button onClick={() => handleOpenDialog()}>
+          <PlusCircle className="ml-2 h-4 w-4" />
+          افزودن محصول
+        </Button>
+      </div>
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        if (!editingProduct) return;
-        setActionLoading(true);
-        const isEditing = !!editingProduct.id;
-        const url = isEditing ? `/api/products/${editingProduct.id}` : '/api/products';
-        const method = isEditing ? 'PUT' : 'POST';
-        const body = { ...editingProduct, price: parseFloat(editingProduct.price) || 0, stock: Number(editingProduct.stock) || 0, discountPercentage: Number(editingProduct.discountPercentage) || 0 };
-        try {
-            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            if (!res.ok) throw new Error(await res.text());
-            await fetchAllData();
-            setIsDialogOpen(false);
-        } catch (error) { alert(`خطا در ذخیره محصول: ${error}`); } 
-        finally { setActionLoading(false); }
-    };
+      {/* Product Table */}
+      <Card>
+        <CardContent className="pt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[60px] text-right">تصویر</TableHead>
+                <TableHead className="text-right">نام محصول</TableHead>
+                <TableHead className="text-right">تولیدکننده</TableHead>
+                <TableHead className="text-right">قیمت</TableHead>
+                <TableHead className="text-right">موجودی</TableHead>
+                <TableHead className="text-right">وضعیت</TableHead>
+                <TableHead className="text-center w-[120px]">عملیات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.map(p => (
+                <TableRow key={p.id}>
+                  <TableCell className="text-right">
+                    <img src={p.image || "/placeholder.svg"} alt={p.name} className="h-12 w-12 rounded-md object-cover" />
+                  </TableCell>
+                  <TableCell className="font-medium text-right">{p.name}</TableCell>
+                  <TableCell className="text-right">{p.supplier.name}</TableCell>
+                  <TableCell className="text-right">{formatPrice(p.price)}</TableCell>
+                  <TableCell className="text-right">{p.stock.toLocaleString('fa-IR')} {p.unit}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant={p.available ? 'default' : 'destructive'}>
+                      {p.available ? "موجود" : "ناموجود"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleOpenDialog(p)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent dir="rtl">
+                          <DialogHeader><DialogTitle>حذف محصول</DialogTitle></DialogHeader>
+                          <p>آیا مطمئن هستید که می‌خواهید محصول "{p.name}" را حذف کنید؟ این عملیات غیرقابل بازگشت است.</p>
+                          <DialogFooter>
+                            <DialogClose asChild><Button variant="secondary">انصراف</Button></DialogClose>
+                            <Button variant="destructive" onClick={() => handleDelete(p.id)} disabled={actionLoading}>
+                              {actionLoading ? <Loader2 className="animate-spin" /> : "تایید حذف"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-    const handleDelete = async (productId: string) => {
-        setActionLoading(true);
-        try {
-            await fetch(`/api/products/${productId}`, { method: 'DELETE' });
-            await fetchAllData();
-        } catch (error) { alert(`خطا در حذف محصول: ${error}`); } 
-        finally { setActionLoading(false); }
-    };
-    
-    if (isLoading) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">مدیریت محصولات</h1>
-                <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن محصول</Button>
-            </div>
-            
-            <Card>
-                <CardContent className="pt-6">
-                    <Table>
-                        <TableHeader><TableRow><TableHead className="w-[60px] text-right">تصویر</TableHead><TableHead className="text-right">نام محصول</TableHead><TableHead className="text-right">تولیدکننده</TableHead><TableHead className="text-right">قیمت</TableHead><TableHead className="text-right">موجودی</TableHead><TableHead className="text-right">وضعیت</TableHead><TableHead className="text-center w-[120px]">عملیات</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {products.map(p => (
-                                <TableRow key={p.id}>
-                                    <TableCell className="text-right"><img src={p.image || "/placeholder.svg"} alt={p.name} className="h-12 w-12 rounded-md object-cover" /></TableCell>
-                                    <TableCell className="font-medium text-right">{p.name}</TableCell>
-                                    <TableCell className="text-right">{p.supplier.name}</TableCell>
-                                    <TableCell className="text-right">{formatPrice(p.price)}</TableCell>
-                                    <TableCell className="text-right">{p.stock.toLocaleString('fa-IR')} {p.unit}</TableCell>
-                                    <TableCell className="text-right"><Badge variant={p.available ? 'default' : 'destructive'}>{p.available ? "موجود" : "ناموجود"}</Badge></TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="flex justify-center gap-2">
-                                            <Button size="sm" variant="outline" onClick={() => handleOpenDialog(p)}><Pencil className="h-4 w-4" /></Button>
-                                            <Dialog>
-                                                <DialogTrigger asChild><Button size="sm" variant="destructive"><Trash2 className="h-4 w-4" /></Button></DialogTrigger>
-                                                <DialogContent dir="rtl">
-                                                    <DialogHeader><DialogTitle>حذف محصول</DialogTitle></DialogHeader>
-                                                    <p>آیا مطمئن هستید که می‌خواهید محصول "{p.name}" را حذف کنید؟ این عملیات غیرقابل بازگشت است.</p>
-                                                    <DialogFooter>
-                                                        <DialogClose asChild><Button variant="secondary">انصراف</Button></DialogClose>
-                                                        <Button variant="destructive" onClick={() => handleDelete(p.id)} disabled={actionLoading}>
-                                                            {actionLoading ? <Loader2 className="animate-spin" /> : "تایید حذف"}
-                                                        </Button>
-                                                    </DialogFooter>
-                                                </DialogContent>
-                                            </Dialog>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent dir="rtl" className="sm:max-w-lg">
-                    <DialogHeader><DialogTitle>{editingProduct?.id ? 'ویرایش محصول' : 'افزودن محصول جدید'}</DialogTitle></DialogHeader>
-                    {editingProduct && (
-                        <form onSubmit={handleSubmit} className="space-y-4 pt-4 max-h-[80vh] overflow-y-auto p-4">
-                             <div className="grid grid-cols-2 gap-4">
-                                 <div><Label>نام محصول</Label><Input value={editingProduct.name} onChange={e => handleFormChange('name', e.target.value)} required/></div>
-                                 <div><Label>قیمت (ریال)</Label><Input type="number" value={editingProduct.price} onChange={e => handleFormChange('price', e.target.value)} required /></div>
-                                 <div><Label>دسته‌بندی</Label><Select value={editingProduct.categoryId} onValueChange={val => handleFormChange('categoryId', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
-                                 <div><Label>تولیدکننده</Label><Select value={editingProduct.supplierId} onValueChange={val => handleFormChange('supplierId', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
-                                 <div><Label>پخش‌کننده</Label><Select value={editingProduct.distributorId} onValueChange={val => handleFormChange('distributorId', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{distributors.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                                 <div><Label>موجودی</Label><Input type="number" value={editingProduct.stock} onChange={e => handleFormChange('stock', e.target.value)} required /></div>
-                                 <div><Label>تخفیف (٪)</Label><Input type="number" value={editingProduct.discountPercentage} onChange={e => handleFormChange('discountPercentage', e.target.value)} required /></div>
-                                 <div><Label>واحد</Label><Input value={editingProduct.unit} onChange={e => handleFormChange('unit', e.target.value)} required /></div>
-                             </div>
-                            <div>
-                                <Label>آدرس تصویر</Label>
-                                <div className="flex items-center gap-2">
-                                    <Input value={editingProduct.image || ''} onChange={e => handleFormChange('image', e.target.value)} placeholder="آدرس را وارد یا آپلود کنید"/>
-                                    <input type="file" accept="image/*" id="product-image-upload" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && handleImageUpload(e.target.files[0])}/>
-                                    <Button type="button" variant="outline" size="icon" onClick={() => document.getElementById('product-image-upload')?.click()} disabled={actionLoading}><Upload className="h-4 w-4"/></Button>
-                                </div>
-                            </div>
-                            <div><Label>توضیحات</Label><Textarea value={editingProduct.description || ''} onChange={e => handleFormChange('description', e.target.value)} /></div>
-                            <div className="flex items-center space-x-2"><Switch id="availability" checked={editingProduct.available} onCheckedChange={(c) => handleFormChange('available', c)} /><Label htmlFor="availability">موجود است</Label></div>
-                            <DialogFooter className="pt-4">
-                                <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>انصراف</Button>
-                                <Button type="submit" disabled={actionLoading}>{actionLoading ? <Loader2 className="animate-spin" /> : "ذخیره"}</Button>
-                            </DialogFooter>
-                        </form>
-                    )}
-                </DialogContent>
-            </Dialog>
-        </div>
-    );
+      {/* Create/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>{editingProduct?.id ? 'ویرایش محصول' : 'افزودن محصول جدید'}</DialogTitle></DialogHeader>
+          {editingProduct && (
+            <form onSubmit={handleSubmit} className="space-y-4 pt-4 max-h-[80vh] overflow-y-auto p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>نام محصول</Label>
+                  <Input value={editingProduct.name} onChange={e => handleFormChange('name', e.target.value)} required />
+                </div>
+                <div>
+                  <Label>قیمت (ریال)</Label>
+                  <Input type="number" value={editingProduct.price} onChange={e => handleFormChange('price', e.target.value)} required />
+                </div>
+                <div>
+                  <Label>تخفیف (٪)</Label>
+                  <Input type="number" value={editingProduct.discountPercentage} onChange={e => handleFormChange('discountPercentage', e.target.value)} />
+                  {Number(editingProduct.discountPercentage) > 0 && (
+                    <p className="text-xs text-green-600 mt-2">
+                      قیمت بعد از تخفیف: {discountedPrice.toLocaleString('fa-IR')} ریال
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label>دسته‌بندی</Label>
+                  <Select value={editingProduct.categoryId} onValueChange={val => handleFormChange('categoryId', val)} required>
+                    <SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger>
+                    <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>تولیدکننده</Label>
+                  <Select value={editingProduct.supplierId} onValueChange={val => handleFormChange('supplierId', val)} required>
+                    <SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger>
+                    <SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>پخش‌کننده</Label>
+                  <Select value={editingProduct.distributorId} onValueChange={val => handleFormChange('distributorId', val)} required>
+                    <SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger>
+                    <SelectContent>{distributors.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>موجودی</Label>
+                  <Input type="number" value={editingProduct.stock} onChange={e => handleFormChange('stock', e.target.value)} required />
+                </div>
+                <div>
+                  <Label>واحد</Label>
+                  <Input value={editingProduct.unit} onChange={e => handleFormChange('unit', e.target.value)} required />
+                </div>
+              </div>
+              <div>
+                <Label>آدرس تصویر</Label>
+                <div className="flex items-center gap-2">
+                  <Input value={editingProduct.image || ''} onChange={e => handleFormChange('image', e.target.value)} placeholder="آدرس را وارد یا آپلود کنید" />
+                  <input type="file" accept="image/*" id="product-image-upload" className="hidden"
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && handleImageUpload(e.target.files[0])} />
+                  <Button type="button" variant="outline" size="icon"
+                    onClick={() => document.getElementById('product-image-upload')?.click()}
+                    disabled={actionLoading}>
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <Label>توضیحات</Label>
+                <Textarea value={editingProduct.description || ''} onChange={e => handleFormChange('description', e.target.value)} />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch id="availability" checked={editingProduct.available} onCheckedChange={(c) => handleFormChange('available', c)} />
+                <Label htmlFor="availability">موجود است</Label>
+              </div>
+              <DialogFooter className="pt-4">
+                <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>انصراف</Button>
+                <Button type="submit" disabled={actionLoading}>
+                  {actionLoading ? <Loader2 className="animate-spin" /> : "ذخیره"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
