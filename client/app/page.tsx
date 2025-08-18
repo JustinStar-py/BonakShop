@@ -762,228 +762,501 @@ function ReturnRequestDialog({ order, onOpenChange, onSuccess }: { order: OrderW
 }
 
 function OrderHistoryPage(props: PageProps) {
-    const { orders, isLoadingOrders, formatPrice, setCurrentPage, fetchOrders, settlements, user } = props;
-    const [selectedOrderForReturn, setSelectedOrderForReturn] = useState<OrderWithItems | null>(null);
-    const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<OrderWithItems | null>(null);
+  const {
+    orders,
+    isLoadingOrders,
+    setCurrentPage,
+    fetchOrders,
+    settlements,
+    user
+  } = props;
+  const [selectedOrderForReturn, setSelectedOrderForReturn] =
+    useState<OrderWithItems | null>(null);
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] =
+    useState<OrderWithItems | null>(null);
 
-    const handleCancelOrder = async (orderId: string) => {
-        if (!confirm("آیا از لغو این سفارش اطمینان دارید؟ این عمل غیرقابل بازگشت است.")) return;
-        try {
-            const res = await fetch(`/api/orders/${orderId}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'CANCELED' })
-            });
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "خطا در لغو سفارش");
-            }
-            alert("سفارش با موفقیت لغو شد.");
-            fetchOrders!(); // Refresh the list
-        } catch (e) {
-            alert((e as Error).message);
-        }
-    };
+  // فرمت‌کننده اعداد
+  const formatWithSeparators = (value: number) => {
+    if (typeof value !== "number" || isNaN(value)) return "۰ ریال";
+    return value.toLocaleString("fa-IR") + " ریال";
+  };
 
-    const getStatusText = (status: OrderStatus) => {
-        const map = { PENDING: "در حال بررسی", SHIPPED: "ارسال شده", DELIVERED: "تحویل داده شد", CANCELED: "لغو شده" };
-        return map[status];
+  const handleCancelOrder = async (orderId: string) => {
+    if (
+      !confirm(
+        "آیا از لغو این سفارش اطمینان دارید؟ این عمل غیرقابل بازگشت است."
+      )
+    )
+      return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CANCELED" })
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "خطا در لغو سفارش");
+      }
+      alert("سفارش با موفقیت لغو شد.");
+      fetchOrders!(); // Refresh the list
+    } catch (e) {
+      alert((e as Error).message);
     }
+  };
 
-    return (
-        <div className="pb-20">
-            <div className="sticky top-0 bg-white z-10 p-4 border-b">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button>
-                    <h1 className="text-xl font-bold">تاریخچه سفارشات</h1>
-                </div>
-            </div>
-            <div className="p-4 space-y-4">
-                {isLoadingOrders ? ( <p className="text-center py-10">در حال بارگذاری...</p> ) :
-                orders.length > 0 ? (
-                    orders.map((order: OrderWithItems) => (
-                        <Card key={order.id} className="rounded-2xl">
-                            <CardHeader>
-                                <div className="flex justify-between items-center">
-                                    <CardTitle>سفارش: ...{order.id.substring(18)}</CardTitle>
-                                    <Badge variant={order.status === 'SHIPPED' ? 'default' : order.status === 'CANCELED' ? 'destructive' : 'secondary'}>{getStatusText(order.status)}</Badge>
-                                </div>
-                                <CardDescription>تاریخ: {new Date(order.createdAt).toLocaleDateString("fa-IR")} - مجموع: {formatPrice(order.totalPrice)}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="font-semibold mb-2">اقلام:</p>
-                                <ul className="list-disc list-inside text-sm">
-                                    {order.items.map((item: any) => (
-                                        <li key={item.id}>{item.productName} (تعداد: {item.quantity})</li>
-                                    ))}
-                                </ul>
-                                {order.notes && <p className="text-sm mt-3"><span className="font-semibold">توضیحات:</span> {order.notes}</p>}
-                                <div className="flex gap-1 mt-4">
-                                     <Button variant="outline" size="sm" onClick={() => setSelectedOrderForReturn(order)}>
-                                        <RefreshCw className="ml-1 h-4 w-4" />
-                                        ثبت مرجوعی
-                                    </Button>
-                                   <Button className="gap-0.5 px-1" variant="outline" size="sm" onClick={() => setSelectedOrderForInvoice(order)}>
-                                        <FileText className="ml-1 h-4 w-4" />
-                                       فاکتور
-                                    </Button>
-                                    {order.status === 'PENDING' && (
-                                        <Button variant="destructive" size="sm" onClick={() => handleCancelOrder(order.id)}>لغو سفارش</Button>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
-                ) : ( <p className="text-center py-10">سفارشی ثبت نشده.</p> )}
-            </div>
+  const getStatusText = (status: OrderStatus) => {
+    const map = {
+      PENDING: "در حال بررسی",
+      SHIPPED: "ارسال شده",
+      DELIVERED: "تحویل داده شد",
+      CANCELED: "لغو شده"
+    };
+    return map[status];
+  };
 
-            <ReturnRequestDialog
-                order={selectedOrderForReturn}
-                onOpenChange={() => setSelectedOrderForReturn(null)}
-                onSuccess={() => {
-                    fetchOrders!();
-                    setSelectedOrderForReturn(null);
-                }}
-            />
-
-            {selectedOrderForInvoice && (
-                <Dialog open={!!selectedOrderForInvoice} onOpenChange={() => setSelectedOrderForInvoice(null)}>
-                    <DialogContent className="max-w-md w-[95vw] z-50">
-                        <DialogHeader>
-                            <DialogTitle>فاکتور سفارش ...{selectedOrderForInvoice.id.slice(-6)}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-2 mb-4">
-                            <div className="flex justify-between"><span>تاریخ سفارش:</span><span>{new Date(selectedOrderForInvoice.createdAt).toLocaleDateString('fa-IR')}</span></div>
-                            <div className="flex justify-between"><span>تاریخ تحویل:</span><span>{new Date(selectedOrderForInvoice.deliveryDate).toLocaleDateString('fa-IR')}</span></div>
-                            <div className="flex justify-between"><span>روش تسویه:</span><span>{settlements.find(s => s.id === selectedOrderForInvoice.settlementId)?.name || 'نامشخص'}</span></div>
-                        </div>
-                        <h3 className="font-bold mb-2">اقلام سفارش:</h3>
-                        <ul className="space-y-1 mb-4">
-                            {selectedOrderForInvoice.items.map(item => (
-                                <li key={item.id} className="flex justify-between">
-                                    <span>{item.productName} <span className="text-xs text-muted-foreground">(×{item.quantity})</span></span>
-                                    <span className="font-mono">{formatPrice(item.price * item.quantity)}</span>
-                                </li>
-                            ))}
-                        </ul>
-                        <Separator />
-                        <div className="space-y-2 mt-4">
-                            <div className="flex justify-between"><span>جمع کل (قبل از تخفیف):</span><span>{formatPrice(selectedOrderForInvoice.items.reduce((acc, item) => acc + (item.price * item.quantity), 0))}</span></div>
-                            <div className="flex justify-between"><span>مبلغ نهایی:</span><span>{formatPrice(selectedOrderForInvoice.totalPrice)}</span></div>
-                        </div>
-                        {selectedOrderForInvoice.notes && <div className="text-sm mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"><span className="font-semibold">توضیحات:</span> {selectedOrderForInvoice.notes}</div>}
-                        <DialogFooter>
-                            <Button className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white" variant="outline" onClick={() => setSelectedOrderForInvoice(null)}>بستن</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            )}
+  return (
+    <div className="pb-20">
+      <div className="sticky top-0 bg-white z-10 p-4 border-b">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCurrentPage("home")}
+          >
+            <ArrowRight className="h-6 w-6" />
+          </Button>
+          <h1 className="text-xl font-bold">تاریخچه سفارشات</h1>
         </div>
-    );
+      </div>
+      <div className="p-4 space-y-4">
+        {isLoadingOrders ? (
+          <p className="text-center py-10">در حال بارگذاری...</p>
+        ) : orders.length > 0 ? (
+          orders.map((order: OrderWithItems) => (
+            <Card key={order.id} className="rounded-2xl">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>سفارش: ...{order.id.substring(18)}</CardTitle>
+                  <Badge
+                    variant={
+                      order.status === "SHIPPED"
+                        ? "default"
+                        : order.status === "CANCELED"
+                        ? "destructive"
+                        : "secondary"
+                    }
+                  >
+                    {getStatusText(order.status)}
+                  </Badge>
+                </div>
+                <CardDescription>
+                  تاریخ:{" "}
+                  {new Date(order.createdAt).toLocaleDateString("fa-IR")} - مجموع:{" "}
+                  {formatWithSeparators(order.totalPrice)}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="font-semibold mb-2">اقلام:</p>
+                <ul className="list-disc list-inside text-sm">
+                  {order.items.map((item: any) => (
+                    <li key={item.id}>
+                      {item.productName} (تعداد: {item.quantity})
+                    </li>
+                  ))}
+                </ul>
+                {order.notes && (
+                  <p className="text-sm mt-3">
+                    <span className="font-semibold">توضیحات:</span>{" "}
+                    {order.notes}
+                  </p>
+                )}
+                <div className="flex gap-1 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedOrderForReturn(order)}
+                  >
+                    <RefreshCw className="ml-1 h-4 w-4" />
+                    ثبت مرجوعی
+                  </Button>
+                  <Button
+                    className="gap-0.5 px-1"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedOrderForInvoice(order)}
+                  >
+                    <FileText className="ml-1 h-4 w-4" />
+                    فاکتور
+                  </Button>
+                  {order.status === "PENDING" && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleCancelOrder(order.id)}
+                    >
+                      لغو
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <p className="text-center py-10">سفارشی ثبت نشده.</p>
+        )}
+      </div>
+
+      <ReturnRequestDialog
+        order={selectedOrderForReturn}
+        onOpenChange={() => setSelectedOrderForReturn(null)}
+        onSuccess={() => {
+          fetchOrders!();
+          setSelectedOrderForReturn(null);
+        }}
+      />
+
+      {selectedOrderForInvoice && (
+        <Dialog
+          open={!!selectedOrderForInvoice}
+          onOpenChange={() => setSelectedOrderForInvoice(null)}
+        >
+          <DialogContent className="max-w-md w-[95vw] z-50">
+            <DialogHeader>
+              <DialogTitle>
+                فاکتور سفارش ...{selectedOrderForInvoice.id.slice(-6)}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between">
+                <span>تاریخ سفارش:</span>
+                <span>
+                  {new Date(
+                    selectedOrderForInvoice.createdAt
+                  ).toLocaleDateString("fa-IR")}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>تاریخ تحویل:</span>
+                <span>
+                  {new Date(
+                    selectedOrderForInvoice.deliveryDate
+                  ).toLocaleDateString("fa-IR")}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>روش تسویه:</span>
+                <span>
+                  {settlements.find(
+                    (s) => s.id === selectedOrderForInvoice.settlementId
+                  )?.name || "نامشخص"}
+                </span>
+              </div>
+            </div>
+            <h3 className="font-bold mb-2">اقلام سفارش:</h3>
+            <ul className="space-y-1 mb-4">
+              {selectedOrderForInvoice.items.map((item) => (
+                <li key={item.id} className="flex justify-between">
+                  <span>
+                    {item.productName}{" "}
+                    <span className="text-xs text-muted-foreground">
+                      (×{item.quantity})
+                    </span>
+                  </span>
+                  <span className="font-mono">
+                    {formatWithSeparators(item.price * item.quantity)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <Separator />
+            <div className="space-y-2 mt-4">
+              <div className="flex justify-between">
+                <span>جمع کل (قبل از تخفیف):</span>
+                <span>
+                  {formatWithSeparators(
+                    selectedOrderForInvoice.items.reduce(
+                      (acc, item) => acc + item.price * item.quantity,
+                      0
+                    )
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>مبلغ نهایی:</span>
+                <span>
+                  {formatWithSeparators(selectedOrderForInvoice.totalPrice)}
+                </span>
+              </div>
+            </div>
+            {selectedOrderForInvoice.notes && (
+              <div className="text-sm mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <span className="font-semibold">توضیحات:</span>{" "}
+                {selectedOrderForInvoice.notes}
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                variant="outline"
+                onClick={() => setSelectedOrderForInvoice(null)}
+              >
+                بستن
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
 }
+
 
 function CartPage(props: PageProps) {
-    const { cart, updateCartQuantity, removeFromCart, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, setCurrentPage, products, settlements } = props;
-    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const {
+    cart,
+    updateCartQuantity,
+    removeFromCart,
+    getTotalPrice,
+    getOriginalTotalPrice,
+    deliveryDate,
+    setDeliveryDate,
+    selectedSettlement,
+    setSelectedSettlement,
+    orderNotes,
+    setOrderNotes,
+    handleOrderSubmit,
+    isSubmitting,
+    setCurrentPage,
+    products,
+    settlements,
+  } = props;
 
-    const originalTotal = getOriginalTotalPrice!();
-    const finalTotal = getTotalPrice!();
-    const totalDiscount = originalTotal - finalTotal;
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-    const handleDateSelect = (date: Date) => {
-        setDeliveryDate!(date);
-        setIsCalendarOpen(false);
-    };
+  const originalTotal = getOriginalTotalPrice!();
+  const finalTotal = getTotalPrice!();
+  const totalDiscount = originalTotal - finalTotal;
 
-    return (
-        <div className="pb-20">
-            <div className="sticky top-0 bg-white z-10 p-4 border-b">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentPage("home")}><ArrowRight className="h-6 w-6" /></Button>
-                    <h1 className="text-xl font-bold">سبد خرید</h1>
-                </div>
-            </div>
-            <div className="p-4">
-                {cart!.length > 0 ? (
-                    <>
-                        <div className="space-y-4 mb-6">
-                            {cart!.map((item: CartItem) => {
-                                const productDetail = products!.find(p => p.id === item.id);
-                                return (
-                                    <Card key={item.id}>
-                                        <CardContent className="p-4">
-                                            <div className="flex gap-4">
-                                                <img src={productDetail?.image || "/placeholder.svg"} alt={item.name} className="h-20 w-20 rounded-xl object-cover" />
-                                                <div className="flex-1">
-                                                    <h3 className="font-medium mb-2">{item.name}</h3>
-                                                    <div className="text-green-600 font-bold mb-3">{formatPrice(item.price)}</div>
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-3">
-                                                            <Button variant="outline" size="icon" onClick={() => updateCartQuantity!(item.id, item.quantity - 1)}><Minus className="h-3 w-3" /></Button>
-                                                            <span>{item.quantity}</span>
-                                                            <Button variant="outline" size="icon" onClick={() => updateCartQuantity!(item.id, item.quantity + 1)}><Plus className="h-3 w-3" /></Button>
-                                                        </div>
-                                                        <Button variant="destructive" size="sm" onClick={() => removeFromCart!(item.id)}>حذف</Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )
-                            })}
-                        </div>
-                        <Card className="rounded-2xl border-2">
-                            <CardContent className="p-6">
-                                <div className="space-y-3 mb-6">
-                                    <div className="flex justify-between"><span>مجموع کل (بدون تخفیف):</span><span>{formatPrice(originalTotal)}</span></div>
-                                    <div className="flex justify-between text-red-600"><span>مجموع تخفیف:</span><span>{formatPrice(totalDiscount)}</span></div>
-                                    <Separator />
-                                    <div className="flex justify-between font-bold text-xl"><span>مبلغ نهایی:</span><span>{formatPrice(finalTotal)}</span></div>
-                                </div>
-                                <div className="space-y-4 my-4">
-                                    <div>
-                                        <Label>تاریخ تحویل</Label>
-                                        <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                                    <CalendarIcon className="ml-2 h-4 w-4" />
-                                                    {deliveryDate ? deliveryDate.toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }) : <span>یک روز را انتخاب کنید</span>}
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="w-[340px] p-0">
-                                                <ShamsiCalendar onDateSelect={handleDateSelect} initialDate={deliveryDate} minDate={new Date(Date.now() + 86400000)} />
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                    <div>
-                                        <Label>توافق تسویه</Label>
-                                        <Select onValueChange={setSelectedSettlement} value={selectedSettlement} dir="rtl">
-                                            <SelectTrigger><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
-                                            <SelectContent>{settlements!.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="notes">توضیحات سفارش (اختیاری)</Label>
-                                        <Textarea id="notes" placeholder="مثلاً: فاکتور رسمی نیاز است." value={orderNotes} onChange={(e) => setOrderNotes!(e.target.value)} />
-                                    </div>
-                                </div>
-                                <Button className="w-full h-14 text-lg" onClick={handleOrderSubmit} disabled={!deliveryDate || !selectedSettlement || isSubmitting}>
-                                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت...</> : "ثبت نهایی"}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </>
-                ) : (
-                    <div className="text-center py-12">
-                        <div className="text-6xl mb-4">🛒</div>
-                        <h3>سبد خرید خالی است</h3>
-                        <Button onClick={() => setCurrentPage("home")} className="hover:bg-green-700 rounded-2xl px-7 h-10 text-lg mt-4">شروع خرید</Button>
-                    </div>
-                )}
-            </div>
+  const handleDateSelect = (date: Date) => {
+    setDeliveryDate!(date);
+    setIsCalendarOpen(false);
+  };
+
+  // فرمت‌کننده محلی برای هزارگان فارسی
+  const formatWithSeparators = (value: number) => {
+    if (typeof value !== "number" || isNaN(value)) return "۰ ریال";
+    return value.toLocaleString("fa-IR") + " ریال";
+  };
+
+  return (
+    <div className="pb-20">
+      <div className="sticky top-0 bg-white z-10 p-4 border-b">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCurrentPage("home")}
+          >
+            <ArrowRight className="h-6 w-6" />
+          </Button>
+          <h1 className="text-xl font-bold">سبد خرید</h1>
         </div>
-    );
+      </div>
+      <div className="p-4">
+        {cart!.length > 0 ? (
+          <>
+            <div className="space-y-4 mb-6">
+              {cart!.map((item: CartItem) => {
+                const productDetail = products!.find((p) => p.id === item.id);
+                const finalUnitPrice = item.discountPercentage
+                  ? item.price * (1 - item.discountPercentage / 100)
+                  : item.price;
+                const totalProductPrice = finalUnitPrice * item.quantity;
+
+                return (
+                  <Card key={item.id}>
+                    <CardContent className="p-4">
+                      <div className="flex gap-4">
+                        <img
+                          src={productDetail?.image || "/placeholder.svg"}
+                          alt={item.name}
+                          className="h-20 w-20 rounded-xl object-cover"
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-medium mb-2">{item.name}</h3>
+
+                          {/* Unit price */}
+                          <div className="text-green-600 font-bold">
+                            {formatWithSeparators(finalUnitPrice)}
+                          </div>
+
+                          {/* Total price for this item */}
+                          <div className="text-sm text-gray-600 mb-3">
+                               جمع کل : {" "}
+                            <span className="font-semibold">
+                              {formatWithSeparators(totalProductPrice)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                  updateCartQuantity!(
+                                    item.id,
+                                    item.quantity - 1
+                                  )
+                                }
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span>{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                  updateCartQuantity!(
+                                    item.id,
+                                    item.quantity + 1
+                                  )
+                                }
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeFromCart!(item.id)}
+                            >
+                              حذف
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+            <Card className="rounded-2xl border-2">
+              <CardContent className="p-6">
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between">
+                    <span>مجموع کل (بدون تخفیف):</span>
+                    <span>{formatWithSeparators(originalTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-red-600">
+                    <span>مجموع تخفیف:</span>
+                    <span>{formatWithSeparators(totalDiscount)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold text-xl">
+                    <span>مبلغ نهایی:</span>
+                    <span>{formatWithSeparators(finalTotal)}</span>
+                  </div>
+                </div>
+                <div className="space-y-4 my-4">
+                  <div>
+                    <Label>تاریخ تحویل</Label>
+                    <Dialog
+                      open={isCalendarOpen}
+                      onOpenChange={setIsCalendarOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          <CalendarIcon className="ml-2 h-4 w-4" />
+                          {deliveryDate
+                            ? deliveryDate.toLocaleDateString("fa-IR", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })
+                            : "یک روز را انتخاب کنید"}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="w-[340px] p-0">
+                        <ShamsiCalendar
+                          onDateSelect={handleDateSelect}
+                          initialDate={deliveryDate}
+                          minDate={new Date(Date.now() + 86400000)}
+                        />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  <div>
+                    <Label>توافق تسویه</Label>
+                    <Select
+                      onValueChange={setSelectedSettlement}
+                      value={selectedSettlement}
+                      dir="rtl"
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="انتخاب کنید" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {settlements!.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="notes">
+                      توضیحات سفارش (اختیاری)
+                    </Label>
+                    <Textarea
+                      id="notes"
+                      placeholder="مثلاً: فاکتور رسمی نیاز است."
+                      value={orderNotes}
+                      onChange={(e) => setOrderNotes!(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button
+                  className="w-full h-14 text-lg"
+                  onClick={handleOrderSubmit}
+                  disabled={
+                    !deliveryDate || !selectedSettlement || isSubmitting
+                  }
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال
+                      ثبت...
+                    </>
+                  ) : (
+                    "ثبت نهایی"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🛒</div>
+            <h3>سبد خرید خالی است</h3>
+            <Button
+              onClick={() => setCurrentPage("home")}
+              className="hover:bg-green-700 rounded-2xl px-7 h-10 text-lg mt-4"
+            >
+              شروع خرید
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
+
 
 function InvoicePage(props: PageProps) {
     const { user, orders, formatPrice, settlements, setCart, setCurrentPage } = props;
