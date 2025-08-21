@@ -3,12 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "jamkharid.ir" },
-      { protocol: "https", hostname: "sabziman.com" },
-      { protocol: "https", hostname: "bamomarket.com" },
-      { protocol: "https", hostname: "amirarsalanmushroom.com" },
-      { protocol: "https", hostname: "img.beroozmart.com" },
-      { protocol: "https", hostname: "berangeirani.com" },
+      { protocol: "https", hostname: "i.ibb.co" },
+      { protocol: "https", hostname: "i.postimg.cc" },
     ],
   },
     eslint: {

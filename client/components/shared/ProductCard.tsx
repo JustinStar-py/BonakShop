@@ -1,4 +1,3 @@
-// FILE: components/shared/ProductCard.tsx
 "use client";
 
 import type { Product, Supplier } from "@/types";
@@ -7,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Minus, Tag, Building } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product & { supplier: Supplier };
@@ -27,6 +28,7 @@ export default function ProductCard({
   onImageClick,
   onSupplierClick,
 }: ProductCardProps) {
+  const [imageError, setImageError] = useState(false);
   const quantityInCart = cartItem?.quantity || 0;
   const hasDiscount = product.discountPercentage > 0;
   const discountedPrice = product.price * (1 - product.discountPercentage / 100);
@@ -51,42 +53,46 @@ export default function ProductCard({
           {product.discountPercentage}%
         </div>
       )}
-       <div className="absolute top-2 right-2 z-5">
-         <Badge
+      <div className="absolute top-2 right-2 z-5">
+        <Badge
           variant="secondary"
           className="flex items-center gap-1 cursor-pointer"
           onClick={handleSupplierBadgeClick}
         >
-          <Building className="h-3 w-3"/>
+          <Building className="h-3 w-3" />
           {product.supplier.name}
         </Badge>
-       </div>
+      </div>
 
       <div className="flex-grow flex flex-col cursor-pointer" onClick={() => onSelectProduct(product)}>
-          <div className="flex justify-center mt-8 mb-1 cursor-pointer" onClick={handleImageClick}>
-            <img
-              src={product.image || "/placeholder.svg"}
-              alt={product.name}
-              className="h-20 w-20 object-cover rounded-xl"
-            />
-          </div>
+        <div className="flex justify-center mt-8 mb-1 cursor-pointer" onClick={handleImageClick}>
+          <Image
+            src={imageError ? "/placeholder.jpg" : product.image || "/placeholder.jpg"}
+            alt={product.name}
+            width={80}
+            height={80}
+            loading="lazy"
+            onError={() => setImageError(true)}
+            className="object-cover rounded-xl"
+          />
+        </div>
 
-          <div className="flex-grow flex flex-col justify-end">
-            <h3 className={`font-medium text-right text-sm leading-tight min-h-[1.5rem] px-1`}>
-              {product.name}
-            </h3>
-            
-            <div className="text-green-800 font-bold text-left px-1">
-              {hasDiscount ? (
-                <div className="flex flex-col items-end">
-                  <span>{discountedPrice.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
-                  <span className="text-xs text-gray-400 line-through">{product.price.toLocaleString("fa-IR")}</span>
-                </div>
-              ) : (
-                <span>{product.price.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
-              )}
-            </div>
+        <div className="flex-grow flex flex-col justify-end">
+          <h3 className={`font-medium text-right ${product.name.length > 13 ? product.name.length > 20 ? 'text-[12px]' : 'text-[15px]' : 'text-small'} leading-tight min-h-[1.5rem] px-1`}>
+            {product.name}
+          </h3>
+
+          <div className="text-green-800 font-bold text-left px-1">
+            {hasDiscount ? (
+              <div className="flex flex-col items-end">
+                <span>{discountedPrice.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
+                <span className="text-xs text-gray-400 line-through">{product.price.toLocaleString("fa-IR")}</span>
+              </div>
+            ) : (
+              <span>{product.price.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
+            )}
           </div>
+        </div>
       </div>
 
       <div className="text-xs text-gray-500 text-right px-1">

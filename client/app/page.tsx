@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
+import Image from "next/image";
 import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
 import { Search, ShoppingCart, Plus, Minus, ArrowRight, Download, Share, Home, List, LogOut, History, Send, Loader2, User as UserIcon, CalendarIcon, RefreshCw, Truck, LayoutDashboard, ChevronsUpDown, CheckCircle } from "lucide-react";
@@ -372,9 +373,28 @@ function AppContent() {
 // --- Page Components ---
 
 function HomePage(props: PageProps) {
+    // استخراج props مورد نیاز کامپوننت
     const { user, handleLogout, orders, isLoadingOrders, handleSelectProduct, handleNavigateToCategories, handleSupplierClick, searchQuery, setSearchQuery, categories, products, cart, addToCart, updateCartQuantity, setCurrentPage, setViewingImage } = props;
     const router = useRouter();
-    const mostRecentOrder = orders.length > 0 ? orders[0] : null;
+
+    const recentOrderItems = useMemo(() => {
+        if (!orders || orders.length === 0) return [];
+
+        const recentOrders = orders.slice(0, 10);
+
+        const allItems = recentOrders.flatMap(order => order.items);
+
+        const uniqueItems = [];
+        const seenProductNames = new Set();
+
+        for (const item of allItems) {
+            if (!seenProductNames.has(item.productName)) {
+                seenProductNames.add(item.productName);
+                uniqueItems.push(item);
+            }
+        }
+        return uniqueItems;
+    }, [orders]);
 
     const productsToShow = useMemo(() => {
         if (!products) return [];
@@ -414,15 +434,24 @@ function HomePage(props: PageProps) {
                     <Button variant="ghost" size="icon" onClick={handleLogout} className="text-red-500" title="خروج"><LogOut className="h-5 w-5" /></Button>
                 </div>
             </div>
-            {!isLoadingOrders && mostRecentOrder && mostRecentOrder.items.length > 0 && !searchQuery && (
+
+            {!isLoadingOrders && recentOrderItems.length > 0 && !searchQuery && (
                 <div className="p-4">
                     <h2 className="text-xl font-bold text-green-800 mb-4">سفارش های اخیر</h2>
                     <div className="flex space-x-4 space-x-reverse overflow-x-auto pb-4">
-                        {mostRecentOrder.items.map(item => {
+               
+                        {recentOrderItems.map(item => {
                             const productDetails = products!.find(p => p.name === item.productName);
                             return (
                                 <div key={item.id} className="flex-shrink-0 w-28 text-center cursor-pointer" onClick={() => productDetails && handleSelectProduct!(productDetails)}>
-                                    <img src={productDetails?.image || "/placeholder.svg"} className="h-20 w-20 object-cover rounded-lg mx-auto mb-2" alt={item.productName} />
+                                    <Image
+                                        src={productDetails?.image || "/placeholder.jpg"}
+                                        alt={item.productName}
+                                        width={80} 
+                                        height={80}
+                                        loading="lazy"
+                                        className="h-20 w-20 object-cover rounded-lg mx-auto mb-2"
+                                    />
                                     <p className="text-xs truncate">{item.productName}</p>
                                 </div>
                             )
@@ -430,6 +459,7 @@ function HomePage(props: PageProps) {
                     </div>
                 </div>
             )}
+
             <div className="p-4">
                 <div className="relative">
                     <Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" />
@@ -455,7 +485,14 @@ function HomePage(props: PageProps) {
                                     onClick={() => { props.setSelectedCategory!(c.id); props.setCurrentPage("category"); }}
                                 >
                                     {c.image ? (
-                                        <img src={c.image} alt={c.name} className="h-10 w-10 object-contain rounded-md" />
+                                        <Image
+                                            src={c.image}
+                                            alt={c.name}
+                                            width={40} // تعیین عرض
+                                            height={40} // تعیین ارتفاع
+                                            loading="lazy" // فعال‌سازی lazy loading
+                                            className="h-10 w-10 object-contain rounded-md"
+                                        />
                                     ) : (
                                         <span className="text-2xl">{c.icon}</span>
                                     )}
@@ -464,6 +501,7 @@ function HomePage(props: PageProps) {
                             )}
                         </div>
                     </div>
+                    {/* بخش محصولات ویژه */}
                     <div className="p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-green-800">محصولات ویژه</h2>
@@ -478,7 +516,6 @@ function HomePage(props: PageProps) {
         </div>
     );
 }
-
 
 function CategoryPage(props: PageProps) {
     const { selectedCategory, setSelectedCategory, selectedSupplier, setSelectedSupplier, searchQuery, setSearchQuery, products, cart, addToCart, handleSelectProduct, handleSupplierClick, updateCartQuantity, setCurrentPage, categories, setViewingImage } = props;
