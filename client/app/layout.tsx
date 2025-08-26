@@ -9,7 +9,7 @@ import { Samim } from "@/lib/fonts"; // Import the font
 const vazirmatn = Vazirmatn({
   subsets: ["latin", "arabic"],
   variable: "--font-vazir",
-});
+}); 
 
 // Import Leaflet CSS
 import 'leaflet/dist/leaflet.css';
@@ -18,6 +18,9 @@ import 'leaflet/dist/leaflet.css';
 export const metadata: Metadata = {
   title: "فروشگاه عمده‌فروشی",
   description: "اپلیکیشن سفارش عمده مواد غذایی برای فروشگاه‌های کوچک",
+  icons: {
+    icon: "/logo.png",
+  }
 };
 
 // Root layout component
