@@ -341,7 +341,7 @@ function AppContent() {
     const props: PageProps = { user, handleLogout, orders, fetchOrders, isLoadingOrders: isLoadingContent, handleSelectProduct, handleNavigateToCategories, handleSupplierClick, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedSupplier, setSelectedSupplier, products, categories, settlements, cart, addToCart, updateCartQuantity, removeFromCart, getTotalItems, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, selectedProduct, setCurrentPage, setCart, setViewingImage };
 
     const renderPage = () => {
-        if (!isLoadingContent) {
+        if (isLoadingContent) {
             return <LoadingSpinner message="در حال بارگذاری فروشگاه..." />;
         }
         switch (currentPage) {
