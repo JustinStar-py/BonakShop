@@ -101,7 +101,7 @@ export default function ProductCard({
 
       <div className="pt-2">
         {!product.available ? (
-          <Button size="sm" variant="outline" className="w-full h-9 rounded-xl font-bold" disabled>
+          <Button size="sm" variant="outline" className="w-full h-9 rounded-xl font-bold bg-red-900 text-white disabled:bg-red-700 disabled:opacity-100" disabled>
             ناموجود
           </Button>
         ) : quantityInCart === 0 ? (
