@@ -429,7 +429,6 @@ function HomePage(props: PageProps) {
                 <div className="p-4">
                     <h2 className="text-xl font-bold text-green-800 mb-4">سفارش های اخیر</h2>
                     <div className="flex space-x-4 space-x-reverse overflow-x-auto pb-4">
-               
                         {recentOrderItems.map(item => {
                             const productDetails = products!.find(p => p.name === item.productName);
                             return (
@@ -464,33 +463,38 @@ function HomePage(props: PageProps) {
                 </div>
             ) : (
                 <>
-                    <div className="p-4">
-                        <h2 className="text-xl font-bold text-green-800 mb-4">دسته‌بندی‌ها</h2>
-                        <div className="grid grid-cols-2 gap-3">
+                    {/* --- START: Updated Categories Section with Border --- */}
+                    <div className="py-4">
+                        <h2 className="text-xl font-bold text-green-800 mb-4 px-4">دسته‌بندی‌ها</h2>
+                        <div className="flex space-x-4 space-x-reverse overflow-x-auto px-4 pb-4">
                             {categories!.map(c =>
-                                <Button
+                                <div
                                     key={c.id}
-                                    variant="outline"
-                                    className="h-20 flex flex-col items-center justify-center gap-2"
+                                    className="flex flex-col items-center justify-start flex-shrink-0 w-20 cursor-pointer group"
                                     onClick={() => { props.setSelectedCategory!(c.id); props.setCurrentPage("category"); }}
                                 >
-                                    {c.image ? (
-                                        <Image
-                                            src={c.image}
-                                            alt={c.name}
-                                            width={40}
-                                            height={40}
-                                            loading="lazy"
-                                            className="h-10 w-10 object-contain rounded-md"
-                                        />
-                                    ) : (
-                                        <span className="text-2xl">{c.icon}</span>
-                                    )}
-                                    <span className="text-sm">{c.name}</span>
-                                </Button>
+                                    {/* The circular border container */}
+                                    <div className="h-17 w-17 rounded-full flex items-center justify-center mb-2 border-2 border-green-600 p-1 group-hover:border-green-500 transition-colors">
+                                        {c.image ? (
+                                            <Image
+                                                src={c.image}
+                                                alt={c.name}
+                                                width={75}
+                                                height={75}
+                                                loading="lazy"
+                                                className="h-full w-full object-cover rounded-full"
+                                            />
+                                        ) : (
+                                            <span className="text-3xl">{c.icon}</span>
+                                        )}
+                                    </div>
+                                    <span className="text-xs text-center font-medium text-gray-700 group-hover:text-green-600 transition-colors">{c.name}</span>
+                                </div>
                             )}
                         </div>
                     </div>
+                    {/* --- END: Updated Categories Section --- */}
+                    
                     <div className="p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-green-800">محصولات ویژه</h2>
