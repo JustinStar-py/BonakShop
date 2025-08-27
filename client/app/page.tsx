@@ -1,4 +1,7 @@
 // FILE: app/page.tsx
+// DESCRIPTION: The main entry point for the application's UI.
+// This file is updated to use the JWT-based authentication flow with apiClient.
+
 "use client";
 
 import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
@@ -27,6 +30,7 @@ import BottomNavigation from "@/components/layout/BottomNavigation";
 import { useAppContext } from "@/context/AppContext";
 import { ShamsiCalendar } from "@/components/shared/ShamsiCalendar";
 import apiClient from "@/lib/apiClient"; // Import our new API client
+import LoadingSpinner from "@/components/shared/LoadingSpinner"; // Import the new loading spinner
 
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
     ssr: false,
@@ -91,7 +95,7 @@ export default function WholesaleFoodApp() {
   const { user, isLoadingUser } = useAppContext();
 
   if (isLoadingUser) {
-    return <div className="flex items-center justify-center min-h-screen bg-gray-50"><p className="text-lg font-medium text-gray-600">در حال بارگذاری...</p></div>;
+    return <LoadingSpinner message="در حال بررسی اطلاعات کاربری..." />;
   }
 
   if (!user) {
@@ -337,8 +341,8 @@ function AppContent() {
     const props: PageProps = { user, handleLogout, orders, fetchOrders, isLoadingOrders: isLoadingContent, handleSelectProduct, handleNavigateToCategories, handleSupplierClick, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedSupplier, setSelectedSupplier, products, categories, settlements, cart, addToCart, updateCartQuantity, removeFromCart, getTotalItems, getTotalPrice, getOriginalTotalPrice, formatPrice, deliveryDate, setDeliveryDate, selectedSettlement, setSelectedSettlement, orderNotes, setOrderNotes, handleOrderSubmit, isSubmitting, selectedProduct, setCurrentPage, setCart, setViewingImage };
 
     const renderPage = () => {
-        if (isLoadingContent) {
-            return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="mr-4">در حال بارگذاری فروشگاه...</p></div>;
+        if (!isLoadingContent) {
+            return <LoadingSpinner message="در حال بارگذاری فروشگاه..." />;
         }
         switch (currentPage) {
             case "home": return <HomePage {...props} />;
