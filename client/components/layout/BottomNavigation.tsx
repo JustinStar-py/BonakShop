@@ -24,7 +24,7 @@ export default function BottomNavigation({
   const getButtonClass = (page: string) => {
     const baseClass = "flex flex-col items-center h-16 px-6 rounded-2xl transition-all duration-200";
     // add 0.5 secends of transition for smooth animation
-    const activeClass = "bg-green-600 text-white w-[30vw]";
+    const activeClass = "bg-blue-500 text-white w-[30vw]";
     const inactiveClass = "text-green-700 w-[15vw]";
     return `${baseClass} ${currentPage === page ? activeClass : inactiveClass}`;
   };

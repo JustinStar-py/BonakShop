@@ -4,30 +4,27 @@ import type { Product, Supplier } from "@/types";
 import type { CartItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Minus, Tag, Building } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
-interface ProductCardProps {
+interface NewProductCardProps {
   product: Product & { supplier: Supplier };
   cartItem: CartItem | undefined;
   onAddToCart: (product: Product) => void;
   onSelectProduct: (product: Product) => void;
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onImageClick: (imageUrl: string) => void;
-  onSupplierClick: (supplierId: string) => void; // Prop to handle supplier click event
 }
 
-export default function ProductCard({
+export default function NewProductCard({
   product,
   cartItem,
   onAddToCart,
   onSelectProduct,
   onUpdateQuantity,
   onImageClick,
-  onSupplierClick,
-}: ProductCardProps) {
+}: NewProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const quantityInCart = cartItem?.quantity || 0;
   const hasDiscount = product.discountPercentage > 0;
@@ -40,66 +37,66 @@ export default function ProductCard({
     }
   };
 
-  const handleSupplierBadgeClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card's onClick from firing
-    onSupplierClick(product.supplier.id);
+  const toPersianDigits = (num: number) => {
+    const persian = {
+      0: "۰", 1: "۱", 2: "۲", 3: "۳", 4: "۴", 5: "۵", 6: "۶", 7: "۷", 8: "۸", 9: "۹"
+    };
+    return num.toString().replace(/\d/g, (d) => persian[d as unknown as keyof typeof persian]);
   };
 
   return (
-    <Card className={`overflow-hidden gap-1.5 border-2 ${hasDiscount ? 'border-red-500' : 'border-gray-200'} hover:border-green-200 transition-colors rounded-2xl flex flex-col justify-between relative p-2`}>
-      {hasDiscount && (
-        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 z-5">
-          <Tag className="h-3 w-3" />
-          {product.discountPercentage}%
-        </div>
-      )}
-      <div className="absolute top-2 right-2 z-5">
-        <Badge
-          variant="secondary"
-          className="flex items-center gap-1 cursor-pointer"
-          onClick={handleSupplierBadgeClick}
-        >
-          <Building className="h-3 w-3" />
-          {product.supplier.name}
-        </Badge>
+    <Card className="overflow-hidden border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-3 font-sans">
+      
+      {/* Supplier Name Badge */}
+      <div className="absolute top-0 right-0 bg-teal-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-md z-10">
+        {product.supplier.name}
+      </div>
+
+      {/* Stock Badge */}
+      <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md z-10">
+        {toPersianDigits(product.stock)} {product.unit} 
       </div>
 
       <div className="flex-grow flex flex-col cursor-pointer" onClick={() => onSelectProduct(product)}>
-        <div className="flex justify-center mt-8 mb-1 cursor-pointer" onClick={handleImageClick}>
+        <div className="flex justify-center items-center h-28 cursor-pointer" onClick={handleImageClick}>
           <Image
             src={imageError ? "/placeholder.jpg" : product.image || "/placeholder.jpg"}
             alt={product.name}
-            width={80}
-            height={80}
+            width={100}
+            height={100}
             loading="lazy"
             onError={() => setImageError(true)}
-            className="object-cover rounded-xl"
+            className="object-contain max-h-full"
           />
         </div>
 
-        <div className="flex-grow flex flex-col justify-end">
-          <h3 className={`font-medium text-right ${product.name.length > 13 ? product.name.length > 20 ? 'text-[12px]' : 'text-[15px]' : 'text-small'} leading-tight min-h-[1.5rem] px-1`}>
-            {product.name}
-          </h3>
-
-          <div className="text-green-800 font-bold text-left px-1">
-            {hasDiscount ? (
-              <div className="flex flex-col items-end">
-                <span>{discountedPrice.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
-                <span className="text-xs text-gray-400 line-through">{product.price.toLocaleString("fa-IR")}</span>
-              </div>
-            ) : (
-              <span>{product.price.toLocaleString("fa-IR")} <span className="text-xs font-normal">ریال</span></span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="text-xs text-gray-500 text-right px-1">
-        {product.unit}
+        <h3 className="font-medium text-gray-700 text-sm leading-tight line-clamp-2 mt-2">
+          {product.name}
+        </h3>
       </div>
 
       <div className="pt-2">
+                {/* خط بالای قیمت */}
+        <hr className="border-gray-200 mt-2 mb-1" />
+
+        {/* بخش قیمت چسبیده به پایین */}
+        <div className="flex flex-col items-end pb-2">
+          {hasDiscount && (
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-white bg-yellow-500 font-bold px-2 py-0.5 rounded-md">
+                ٪{toPersianDigits(product.discountPercentage)}-
+              </span>
+              <span className="text-sm text-gray-400 line-through">
+                {toPersianDigits(product.price)}
+              </span>
+            </div>
+          )}
+          <div className="text-gray-800 font-bold text-lg text-right">
+            <span>{toPersianDigits(discountedPrice)}</span>
+            <span className="text-xs font-normal">تومان</span>
+          </div>
+        </div>
+
         {!product.available ? (
           <Button size="sm" variant="outline" className="w-full h-9 rounded-xl font-bold bg-red-900 text-white disabled:bg-red-700 disabled:opacity-100" disabled>
             ناموجود
@@ -107,7 +104,7 @@ export default function ProductCard({
         ) : quantityInCart === 0 ? (
           <Button
             size="sm"
-            className="w-full bg-green-600 hover:bg-green-700 h-9 rounded-xl font-bold gap-0.5"
+            className="w-full bg-blue-500 hover:bg-green-700 h-9 rounded-xl font-bold gap-0.5"
             onClick={() => onAddToCart(product)}
           >
             <Plus className="h-4 w-4" />
@@ -118,12 +115,12 @@ export default function ProductCard({
             <Button
               variant="default"
               size="icon"
-              className="h-9 w-9 rounded-full bg-green-600 hover:bg-green-700"
+              className="h-9 w-9 rounded-full bg-blue-500 hover:bg-green-700"
               onClick={() => onUpdateQuantity(product.id, quantityInCart + 1)}
             >
               <Plus className="h-4 w-4" />
             </Button>
-            <span className="font-bold text-lg w-8 text-center">{quantityInCart}</span>
+            <span className="font-bold text-lg w-8 text-center">{toPersianDigits(quantityInCart)}</span>
             <Button
               variant="outline"
               size="icon"

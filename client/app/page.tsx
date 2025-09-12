@@ -416,7 +416,7 @@ function HomePage(props: PageProps) {
     return (
         <div className="pb-20">
             <div className="p-4 flex justify-between items-center bg-gray-50 border-b">
-                <h1 className="font-bold text-lg text-green-800">سلام، {user?.name}!</h1>
+                <h1 className="font-bold text-lg text-gray-700">سلام، {user?.name}!</h1>
                 <div className="flex items-center">
                     {user?.role === 'ADMIN' && <Button variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')} className="text-gray-600" title="پنل ادمین"><LayoutDashboard className="h-5 w-5" /></Button>}
                     {user?.role === 'WORKER' && <Button variant="ghost" size="icon" onClick={() => router.push('/delivery')} className="text-gray-600" title="پنل تحویل"><Truck className="h-5 w-5" /></Button>}
@@ -427,7 +427,7 @@ function HomePage(props: PageProps) {
 
             {!isLoadingOrders && recentOrderItems.length > 0 && !searchQuery && (
                 <div className="p-4">
-                    <h2 className="text-xl font-bold text-green-800 mb-4">سفارش های اخیر</h2>
+                    <h2 className="text-xl font-bold text-gray-700 mb-4">سفارش های اخیر</h2>
                     <div className="flex space-x-4 space-x-reverse overflow-x-auto pb-4">
                         {recentOrderItems.map(item => {
                             const productDetails = products!.find(p => p.name === item.productName);
@@ -458,14 +458,14 @@ function HomePage(props: PageProps) {
 
             {searchQuery ? (
                 <div className="p-4">
-                    <h2 className="text-xl font-bold text-green-800 mb-4">نتایج جستجو برای: "{searchQuery}"</h2>
+                    <h2 className="text-xl font-bold text-gray-700 mb-4">نتایج جستجو برای: "{searchQuery}"</h2>
                     {productsToShow.length > 0 ? renderProductList(productsToShow) : <p className="text-center text-muted-foreground py-10">محصولی یافت نشد.</p>}
                 </div>
             ) : (
                 <>
                     {/* --- START: Updated Categories Section with Border --- */}
                     <div className="py-4">
-                        <h2 className="text-xl font-bold text-green-800 mb-4 px-4">دسته‌بندی‌ها</h2>
+                        <h2 className="text-xl font-bold text-gray-700 mb-4 px-4">دسته‌بندی‌ها</h2>
                         <div className="flex space-x-4 space-x-reverse overflow-x-auto px-4 pb-4">
                             {categories!.map(c =>
                                 <div
@@ -474,7 +474,7 @@ function HomePage(props: PageProps) {
                                     onClick={() => { props.setSelectedCategory!(c.id); props.setCurrentPage("category"); }}
                                 >
                                     {/* The circular border container */}
-                                    <div className="h-17 w-17 rounded-full flex items-center justify-center mb-2 border-2 border-green-600 p-1 group-hover:border-green-500 transition-colors">
+                                    <div className="h-17 w-17 rounded-full flex items-center justify-center mb-2 border-2 border-teal-500 p-1 group-hover:border-green-500 transition-colors">
                                         {c.image ? (
                                             <Image
                                                 src={c.image}
@@ -497,7 +497,7 @@ function HomePage(props: PageProps) {
                     
                     <div className="p-4">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-green-800">محصولات ویژه</h2>
+                            <h2 className="text-xl font-bold text-gray-700">محصولات ویژه</h2>
                             <Button variant="ghost" className="text-green-600" onClick={handleNavigateToCategories!}>
                                 مشاهده همه <ArrowRight className="mr-2 h-4 w-4" />
                             </Button>
@@ -530,7 +530,7 @@ function ProductDetailPage(props: PageProps) {
     const [showSuccess, setShowSuccess] = useState(false);
     if (!selectedProduct) { useEffect(() => { setCurrentPage("home"); }, [setCurrentPage]); return null; }
     const handleAddToCart = () => { addToCart!(selectedProduct, quantity); setShowSuccess(true); setTimeout(() => setShowSuccess(false), 3000); };
-    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4"><Button variant="ghost" size="icon" onClick={() => setCurrentPage("category")}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-lg font-bold">جزئیات محصول</h1></div></div><div className="p-4"><div className="text-center mb-6"><div className="w-full h-48 mb-4 flex items-center justify-center cursor-pointer" onClick={() => selectedProduct.image && setViewingImage(selectedProduct.image)}><img src={selectedProduct.image || "/placeholder.svg"} alt={selectedProduct.name} className="h-full w-full object-contain rounded-2xl" /></div><h2 className="text-2xl font-bold">{selectedProduct.name}</h2><div className="text-2xl font-bold text-green-600">{formatPrice(selectedProduct.price)}</div></div><Card className="mb-6 rounded-2xl"><CardContent className="p-6"><h3 className="font-bold">توضیحات</h3><p>{selectedProduct.description}</p></CardContent></Card>{selectedProduct.available ? (<Card><CardContent className="p-6"><div className="flex items-center justify-between mb-6"><span className="text-lg">تعداد:</span><div className="flex items-center gap-4"><Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(1, q - 1))}><Minus/></Button><span className="text-xl font-bold">{quantity}</span><Button variant="outline" size="icon" onClick={() => setQuantity(q => q + 1)}><Plus/></Button></div></div><Button className="w-full h-14" onClick={handleAddToCart}><ShoppingCart className="ml-2" /> افزودن به سبد</Button>{showSuccess && (<div className="mt-4 p-3 text-center text-sm text-green-800 bg-green-100 rounded-lg flex items-center justify-center"><CheckCircle className="ml-2 h-5 w-5" />محصول با موفقیت به سبد خرید اضافه شد!</div>)}</CardContent></Card>) : (<Card><CardContent><p>این محصول موجود نیست.</p></CardContent></Card>)}</div></div>);
+    return (<div className="pb-20"><div className="sticky top-0 bg-white z-10 p-4 border-b"><div className="flex items-center gap-4"><Button variant="ghost" size="icon" onClick={() => setCurrentPage("category")}><ArrowRight className="h-6 w-6" /></Button><h1 className="text-lg font-bold">جزئیات محصول</h1></div></div><div className="p-4"><div className="text-center mb-6"><div className="w-full h-48 mb-4 flex items-center justify-center cursor-pointer" onClick={() => selectedProduct.image && setViewingImage(selectedProduct.image)}><img src={selectedProduct.image || "/placeholder.svg"} alt={selectedProduct.name} className="h-full w-full object-contain rounded-2xl" /></div><h2 className="text-2xl font-bold">{selectedProduct.name}</h2><div className="text-2xl font-bold text-green-600">{formatPrice(selectedProduct.price)}</div></div><Card className="mb-6 rounded-2xl"><CardContent className="p-6"><h3 className="font-bold">توضیحات</h3><p>{selectedProduct.description}</p></CardContent></Card>{selectedProduct.available ? (<Card><CardContent className="p-6"><div className="flex items-center justify-between mb-6"><span className="text-lg">تعداد:</span><div className="flex items-center gap-4"><Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(1, q - 1))}><Minus/></Button><span className="text-xl font-bold">{quantity}</span><Button variant="outline" size="icon" onClick={() => setQuantity(q => q + 1)}><Plus/></Button></div></div><Button className="w-full h-14" onClick={handleAddToCart}><ShoppingCart className="ml-2" /> افزودن به سبد</Button>{showSuccess && (<div className="mt-4 p-3 text-center text-sm text-gray-700 bg-green-100 rounded-lg flex items-center justify-center"><CheckCircle className="ml-2 h-5 w-5" />محصول با موفقیت به سبد خرید اضافه شد!</div>)}</CardContent></Card>) : (<Card><CardContent><p>این محصول موجود نیست.</p></CardContent></Card>)}</div></div>);
 }
 
 // --- CartPage ---
