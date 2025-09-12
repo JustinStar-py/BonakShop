@@ -9,40 +9,29 @@
         HR Team
     </author>
 
-    <!-- اپلیکیشن مستقیم وب‌سایت شما رو لود می‌کنه -->
     <content src="https://bonak-shop.vercel.app/" />
 
-    <!-- دسترسی‌ها -->
     <access origin="*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
 
-    <!-- تنظیمات عمومی -->
     <preference name="Orientation" value="portrait" />
     <preference name="Fullscreen" value="false" />
     <preference name="AndroidInsecureFileModeEnabled" value="true" />
 
-    <!-- تنظیمات اسپلش -->
     <platform name="android">
-        <preference name="SplashScreen" value="splash" />
-        <preference name="SplashScreenDelay" value="3000" />
-        <preference name="AutoHideSplashScreen" value="true" />
-        <preference name="ShowSplashScreenSpinner" value="false" />
-        <preference name="SplashScreenBackgroundColor" value="#ffffff" />
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="resources/android/splash.png" />
+        
+        <preference name="AndroidWindowSplashScreenBackground" value="#FFFFFF" />
+        
+        <preference name="AndroidSplashScreenConfiguration" value='{"stopTimeout": 3000}'/>
+        
+        <icon density="mdpi" src="resources/android/icon/drawable-mdpi-icon.png" />
+        <icon density="hdpi" src="resources/android/icon/drawable-hdpi-icon.png" />
+        <icon density="xhdpi" src="resources/android/icon/drawable-xhdpi-icon.png" />
+        <icon density="xxhdpi" src="resources/android/icon/drawable-xxhdpi-icon.png" />
+        <icon density="xxxhdpi" src="resources/android/icon/drawable-xxxhdpi-icon.png" />
 
-        <!-- آیکون‌ها -->
-        <icon src="resources/android/icon/drawable-mdpi-icon.png" density="mdpi" />
-        <icon src="resources/android/icon/drawable-hdpi-icon.png" density="hdpi" />
-        <icon src="resources/android/icon/drawable-xhdpi-icon.png" density="xhdpi" />
-        <icon src="resources/android/icon/drawable-xxhdpi-icon.png" density="xxhdpi" />
-        <icon src="resources/android/icon/drawable-xxxhdpi-icon.png" density="xxxhdpi" />
-
-        <!-- اسپلش‌ها -->
-        <splash src="resources/android/splash/drawable-port-mdpi-screen.png" density="port-mdpi"/>
-        <splash src="resources/android/splash/drawable-port-hdpi-screen.png" density="port-hdpi"/>
-        <splash src="resources/android/splash/drawable-port-xhdpi-screen.png" density="port-xhdpi"/>
-        <splash src="resources/android/splash/drawable-port-xxhdpi-screen.png" density="port-xxhdpi"/>
-        <splash src="resources/android/splash/drawable-port-xxxhdpi-screen.png" density="port-xxxhdpi"/>
-    </platform>
+        </platform>
 
 </widget>
