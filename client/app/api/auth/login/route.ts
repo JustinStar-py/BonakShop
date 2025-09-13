@@ -57,14 +57,14 @@ export async function POST(req: Request) {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role, phone: user.phone },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: '1h' } // Expires in 1 hour (adjust as needed)
+      { expiresIn: '60d' } // Expires in 1 hour (adjust as needed)
     );
 
     // 5. Create a long-lived Refresh Token
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: '30d' } // Expires in 30 days (adjust as needed)
+      { expiresIn: '60d' } // Expires in 30 days (adjust as needed)
     );
     // --- END: JWT Generation ---
 

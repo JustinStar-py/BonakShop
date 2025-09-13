@@ -4,6 +4,35 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const productId = params.id;
+    if (!productId) {
+      return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        category: true, // Include related category
+        supplier: true,   // Include related supplier
+      },
+    });
+
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(product, { status: 200 });
+  } catch (error) {
+    console.error("Failed to fetch product:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 // --- This function handles UPDATING a full product record ---
 export async function PUT(
   req: Request,

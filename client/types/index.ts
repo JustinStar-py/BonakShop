@@ -1,7 +1,4 @@
-// justinstar-py/bonakshop/BonakShop-e6b838d87bef95729686f4e3b951e4072eed623d/client/types/index.ts
-// FILE: types/index.ts
-// Contains all custom TypeScript types for the application.
-
+// FILE: types/index.ts (FIXED)
 import type {
   Order as PrismaOrder,
   OrderItem as PrismaOrderItem,
@@ -13,9 +10,11 @@ import type {
   ReturnRequestItem as PrismaReturnRequestItem,
   Supplier as PrismaSupplier,
   Distributor as PrismaDistributor
+  // <-- CHANGE: CartItem از این لیست حذف شد چون یک تایپ سفارشی است
 } from '@prisma/client';
 
 // A product item in the shopping cart, extending the base product with quantity
+// این تعریف کاملا صحیح است و باقی می‌ماند
 export type CartItem = PrismaProduct & {
   quantity: number;
 };
@@ -23,6 +22,7 @@ export type CartItem = PrismaProduct & {
 // An order with its associated items included
 export type OrderWithItems = PrismaOrder & {
   items: PrismaOrderItem[];
+  total: number;
 };
 
 // An order with its associated items and the customer's info

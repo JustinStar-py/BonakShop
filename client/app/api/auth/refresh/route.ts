@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     const newAccessToken = jwt.sign(
       { userId: user.id, role: user.role, phone: user.phone },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: '1h' } // Keep the expiration consistent with the login API
+      { expiresIn: '60d' } // Keep the expiration consistent with the login API
     );
 
     // 5. Send the new access token back to the client

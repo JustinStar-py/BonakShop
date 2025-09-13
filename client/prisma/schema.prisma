@@ -68,13 +68,15 @@ model Product {
   discountPercentage Int         @default(0)
   unit               String      @default("عدد")
   stock              Int         @default(0)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
   categoryId         String
   category           Category    @relation(fields: [categoryId], references: [id])
   supplierId         String
   supplier           Supplier    @relation(fields: [supplierId], references: [id])
   distributorId      String
   distributor        Distributor @relation(fields: [distributorId], references: [id])
-
+  isFeatured         Boolean     @default(false)
   @@unique([name, supplierId])
 }
 

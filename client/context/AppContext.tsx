@@ -1,160 +1,163 @@
-// FILE: context/AppContext.tsx
-// DESCRIPTION: Manages the global state of the application including user authentication,
-// shopping cart, and page navigation. Adapted to handle JWT-based authentication.
-
+// FILE: context/AppContext.tsx (FIXED)
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import type { CartItem } from "@/types";
 import type { User, Product as PrismaProduct } from "@prisma/client";
-import apiClient from "@/lib/apiClient"; // Import our new API client
+import apiClient from "@/lib/apiClient";
 
-// Define the shape of all data and functions in our context
+// تعریف ساختار داده‌ها و توابع در Context
 interface AppContextType {
-  cart: CartItem[];
-  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
-  addToCart: (product: PrismaProduct, quantity?: number) => void;
-  updateCartQuantity: (productId: string, newQuantity: number) => void;
-  removeFromCart: (productId: string) => void;
-  getTotalPrice: () => number;
-  getOriginalTotalPrice: () => number;
-  getTotalItems: () => number;
-  
-  currentPage: string;
-  setCurrentPage: React.Dispatch<React.SetStateAction<string>>;
-  selectedProduct: PrismaProduct | null;
-  setSelectedProduct: React.Dispatch<React.SetStateAction<PrismaProduct | null>>;
+    cart: CartItem[];
+    addToCart: (product: PrismaProduct, quantity?: number) => void;
+    updateCartQuantity: (productId: string, newQuantity: number) => void;
+    removeFromCart: (productId: string) => void;
+    clearCart: () => void;
+    getTotalPrice: () => number;
+    getOriginalTotalPrice: () => number;
+    getTotalItems: () => number;
 
-  user: User | null;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  login: (userData: User, accessToken: string, refreshToken: string) => void;
-  logout: () => void;
-  isLoadingUser: boolean;
+    user: User | null;
+    login: (phone: string, password: string) => Promise<boolean>;
+    logout: () => void;
+    isLoadingUser: boolean;
+    error: string | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [currentPage, setCurrentPage] = useState("home");
-  const [selectedProduct, setSelectedProduct] = useState<PrismaProduct | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
+    const [cart, setCart] = useState<CartItem[]>([]);
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-  // --- START: JWT Authentication Logic ---
-  // This effect runs once when the app starts.
-  useEffect(() => {
-    const checkUserSession = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
+    useEffect(() => {
+        const checkUserSession = async () => {
+            const token = localStorage.getItem('accessToken');
+            // اگر توکنی وجود نداشت، نیازی به ادامه نیست
+            if (!token) {
+                setIsLoadingUser(false);
+                return;
+            }
+
+            try {
+                // تلاش برای دریافت اطلاعات کاربر با توکن موجود
+                const response = await apiClient.get('/auth/user');
+                setUser(response.data.user);
+            } catch (e) {
+                console.error("Session check failed, logging out.", e);
+                setUser(null);
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+            } finally {
+                setIsLoadingUser(false);
+            }
+        };
+
+        checkUserSession();
+    }, []);
+
+
+    const login = async (phone: string, password: string): Promise<boolean> => {
+        setIsLoadingUser(true);
+        setError(null);
         try {
-          // If a token exists, try to fetch the user profile.
-          // The apiClient will automatically handle authorization header.
-          const response = await apiClient.get('/auth/user');
-          if (response.data.user) {
-            setUser(response.data.user);
-          }
-        } catch (error) {
-          console.error("Session check failed:", error);
-          // If token is invalid (e.g., expired), logout will be triggered by apiClient interceptor.
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+            const response = await apiClient.post('/auth/login', { phone, password });
+            const { user, accessToken, refreshToken } = response.data;
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+            setUser(user);
+            return true;
+        } catch (err: any) {
+            setError(err.response?.data?.error || "خطای ورود");
+            return false;
+        } finally {
+            setIsLoadingUser(false);
         }
-      }
-      setIsLoadingUser(false);
     };
-    checkUserSession();
-  }, []);
 
-  // Function to handle successful login
-  const login = (userData: User, accessToken: string, refreshToken: string) => {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    setUser(userData);
-  };
+    const logout = async () => {
+        await apiClient.post('/auth/logout');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        setUser(null);
+        setCart([]);
+    };
 
-  // Function to handle logout
-  const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    setUser(null);
-    // Optionally, you can call the backend logout to invalidate session on server too
-    // apiClient.post('/auth/logout');
-  };
-  // --- END: JWT Authentication Logic ---
+    const addToCart = (product: PrismaProduct, quantity = 1) => {
+        setCart((prevCart) => {
+            const existingItem = prevCart.find((item) => item.id === product.id);
+            if (existingItem) {
+                return prevCart.map((item) =>
+                    item.id === product.id
+                        ? { ...item, quantity: item.quantity + quantity }
+                        : item
+                );
+            }
+            return [...prevCart, { ...product, quantity }];
+        });
+    };
 
-  const addToCart = (product: PrismaProduct, quantity = 1) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+    const updateCartQuantity = (productId: string, newQuantity: number) => {
+        if (newQuantity <= 0) {
+            removeFromCart(productId);
+            return;
+        }
+        setCart((prevCart) =>
+            prevCart.map((item) =>
+                item.id === productId ? { ...item, quantity: newQuantity } : item
+            )
         );
-      }
-      const newCartItem: CartItem = { ...product, quantity };
-      return [...prevCart, newCartItem];
-    });
-  };
+    };
 
-  const updateCartQuantity = (productId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
+    const removeFromCart = (productId: string) => {
+        setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    };
+
+    const clearCart = () => {
+        setCart([]);
+    };
+
+    const getOriginalTotalPrice = () => {
+        return cart.reduce((total, item) => total + item.price * item.quantity, 0);
     }
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
-  };
-  
-  const getOriginalTotalPrice = () => {
-      return cart.reduce((total, item) => total + item.price * item.quantity, 0);
-  }
+    const getTotalPrice = () => {
+        return cart.reduce((total, item) => {
+            const discount = item.discountPercentage || 0;
+            const discountedPrice = item.price * (1 - discount / 100);
+            return total + discountedPrice * item.quantity;
+        }, 0);
+    };
 
-  const getTotalPrice = () => {
-    return cart.reduce((total, item) => {
-        const discount = item.discountPercentage || 0;
-        const discountedPrice = item.price * (1 - discount / 100);
-        return total + discountedPrice * item.quantity;
-    }, 0);
-  };
+    const getTotalItems = () => {
+        return cart.reduce((total, item) => total + item.quantity, 0);
+    };
 
-  const getTotalItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
+    const value: AppContextType = {
+        cart,
+        addToCart,
+        updateCartQuantity,
+        removeFromCart,
+        clearCart,
+        getTotalPrice,
+        getOriginalTotalPrice,
+        getTotalItems,
+        user,
+        login,
+        logout,
+        isLoadingUser,
+        error,
+    };
 
-  const value: AppContextType = {
-    cart,
-    setCart,
-    addToCart,
-    updateCartQuantity,
-    removeFromCart,
-    getTotalPrice,
-    getOriginalTotalPrice,
-    getTotalItems,
-    currentPage,
-    setCurrentPage,
-    selectedProduct,
-    setSelectedProduct,
-    user,
-    setUser, // Keep setUser for direct manipulation if needed
-    login,
-    logout,
-    isLoadingUser,
-  };
-
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
 export function useAppContext() {
-  const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error("useAppContext must be used within an AppProvider");
-  }
-  return context;
+    const context = useContext(AppContext);
+    if (context === undefined) {
+        throw new Error("useAppContext must be used within an AppProvider");
+    }
+    return context;
 }

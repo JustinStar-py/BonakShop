@@ -1,3 +1,4 @@
+// FILE: components/shared/ProductCard.tsx
 "use client";
 
 import type { Product, Supplier } from "@/types";
@@ -7,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Plus, Minus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import toPersianDigits from "@/utils/persianNum";
 
 interface NewProductCardProps {
   product: Product & { supplier: Supplier };
@@ -15,6 +17,7 @@ interface NewProductCardProps {
   onSelectProduct: (product: Product) => void;
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onImageClick: (imageUrl: string) => void;
+  onSupplierClick: (supplierId: string) => void; // <-- CHANGE: Prop جدید اضافه شد
 }
 
 export default function NewProductCard({
@@ -24,6 +27,7 @@ export default function NewProductCard({
   onSelectProduct,
   onUpdateQuantity,
   onImageClick,
+  onSupplierClick, // <-- CHANGE: Prop جدید اضافه شد
 }: NewProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const quantityInCart = cartItem?.quantity || 0;
@@ -37,23 +41,27 @@ export default function NewProductCard({
     }
   };
 
-  const toPersianDigits = (num: number) => {
-    const persian = {
-      0: "۰", 1: "۱", 2: "۲", 3: "۳", 4: "۴", 5: "۵", 6: "۶", 7: "۷", 8: "۸", 9: "۹"
-    };
-    return num.toString().replace(/\d/g, (d) => persian[d as unknown as keyof typeof persian]);
+  // <-- CHANGE: تابع جدید برای مدیریت کلیک روی نام شرکت
+  const handleSupplierClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // جلوگیری از اجرای رویداد کلیک کارت اصلی
+    onSupplierClick(product.supplier.id);
   };
 
+
   return (
-    <Card className="overflow-hidden border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-3 font-sans">
+    <Card className="overflow-hidden gap-0 h-[250px] border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-2 font-sans">
       
       {/* Supplier Name Badge */}
-      <div className="absolute top-0 right-0 bg-teal-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-md z-10">
+      {/* v-- CHANGE: این بخش برای کلیک کردن تغییر کرده است */}
+      <div 
+        onClick={handleSupplierClick}
+        className="absolute top-0 right-0 bg-teal-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-md cursor-pointer hover:bg-teal-600 transition-colors"
+      >
         {product.supplier.name}
       </div>
 
       {/* Stock Badge */}
-      <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md z-10">
+      <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md">
         {toPersianDigits(product.stock)} {product.unit} 
       </div>
 
@@ -70,14 +78,14 @@ export default function NewProductCard({
           />
         </div>
 
-        <h3 className="font-medium text-gray-700 text-sm leading-tight line-clamp-2 mt-2">
+        <h3 className="font-medium text-gray-700 text-xs leading-tight line-clamp-2 mt-2">
           {product.name}
         </h3>
       </div>
 
       <div className="pt-2">
                 {/* خط بالای قیمت */}
-        <hr className="border-gray-200 mt-2 mb-1" />
+        <hr className="border-gray-300 mt-1" />
 
         {/* بخش قیمت چسبیده به پایین */}
         <div className="flex flex-col items-end pb-2">
@@ -91,9 +99,9 @@ export default function NewProductCard({
               </span>
             </div>
           )}
-          <div className="text-gray-800 font-bold text-lg text-right">
+          <div className="text-gray-800 font-bold text-md text-right">
             <span>{toPersianDigits(discountedPrice)}</span>
-            <span className="text-xs font-normal">تومان</span>
+            <span className="text-xs font-normal">ریال</span>
           </div>
         </div>
 
@@ -104,10 +112,10 @@ export default function NewProductCard({
         ) : quantityInCart === 0 ? (
           <Button
             size="sm"
-            className="w-full bg-blue-500 hover:bg-green-700 h-9 rounded-xl font-bold gap-0.5"
+            className="w-full bg-blue-500 hover:bg-blue-500 h-9 rounded-lg font-bold gap-0.5 text-sm"
             onClick={() => onAddToCart(product)}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-2 w-2" />
             افزودن
           </Button>
         ) : (
