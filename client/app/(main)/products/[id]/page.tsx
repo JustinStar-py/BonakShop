@@ -1,4 +1,4 @@
-// FILE: app/products/[id]/page.tsx (New File)
+// FILE: app/(main)/products/[id]/page.tsx (FIXED)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -64,12 +64,13 @@ export default function ProductDetailPage() {
     const discountedPrice = product.price * (1 - product.discountPercentage / 100);
 
     return (
-        <div className="max-w-4xl mx-auto">
+        // v-- CHANGE: یک پدینگ پایین به اندازه ارتفاع نوار سبد خرید اضافه شد
+        <div className="max-w-4xl mx-auto pb-24">
             <header className="p-4 flex items-center border-b">
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
                     <ArrowRight />
                 </Button>
-                <h1 className="font-bold text-lg mr-4">{product.name}</h1>
+                <h1 className="font-bold text-md mr-4">{product.name}</h1>
             </header>
 
             <main className="p-4">
@@ -79,7 +80,7 @@ export default function ProductDetailPage() {
                     </div>
 
                     <div className="space-y-4 text-right">
-                        <h2 className="text-2xl font-bold">{product.name}</h2>
+                        <h2 className="text-lg font-semibold">{product.name}</h2>
                         <p className="text-muted-foreground">{product.description}</p>
                         
                         <Separator />
@@ -111,26 +112,27 @@ export default function ProductDetailPage() {
                                 {product.discountPercentage > 0 && (
                                     <div className="flex items-center gap-2 justify-end">
                                         <Badge variant="destructive">%{product.discountPercentage}</Badge>
-                                        <p className="text-lg text-gray-400 line-through">{toPersianDigits(product.price)} تومان</p>
+                                        <p className="text-lg text-gray-400 line-through">{toPersianDigits(product.price)} ریال</p>
                                     </div>
                                 )}
-                                <p className="text-lg font-extrabold text-blue-500">{toPersianDigits(discountedPrice)} تومان</p>
+                                <p className="text-lg font-extrabold text-blue-500">{toPersianDigits(discountedPrice)} ریال</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Add to Cart Section */}
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg max-w-4xl mx-auto">
+                {/* v-- CHANGE: موقعیت از bottom-0 به bottom-20 تغییر کرد */}
+                <div className="fixed bottom-20 left-0 right-0 p-4 bg-white border-t shadow-lg max-w-4xl mx-auto z-40">
                     {!product.available ? (
                         <Button className="w-full" size="lg" disabled>ناموجود</Button>
                     ) : quantityInCart === 0 ? (
-                        <Button className="w-full" size="lg" onClick={() => addToCart(product)}>افزودن به سبد خرید</Button>
+                        <Button className="w-full bg-blue-500 text-white" size="lg" onClick={() => addToCart(product)}>افزودن به سبد خرید</Button>
                     ) : (
                         <div className="flex items-center justify-between">
                             <p className="font-semibold">در سبد خرید</p>
                             <div className="flex items-center gap-3">
-                                <Button size="icon" onClick={() => updateCartQuantity(product.id, quantityInCart + 1)}><Plus /></Button>
+                                <Button className="bg-teal-500 text-white" size="icon" onClick={() => updateCartQuantity(product.id, quantityInCart + 1)}><Plus /></Button>
                                 <span className="text-xl font-bold w-10 text-center">{quantityInCart}</span>
                                 <Button variant="outline" size="icon" onClick={() => updateCartQuantity(product.id, quantityInCart - 1)}><Minus /></Button>
                             </div>
