@@ -2,8 +2,8 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
-import type { CartItem } from "@/types";
-import type { User, Product as PrismaProduct } from "@prisma/client";
+import type { CartItem, User } from "@/types"; // <-- User هم از types وارد شد
+import type { Product as PrismaProduct } from "@prisma/client";
 import apiClient from "@/lib/apiClient";
 
 // تعریف ساختار داده‌ها و توابع در Context
@@ -18,6 +18,7 @@ interface AppContextType {
     getTotalItems: () => number;
 
     user: User | null;
+    setUser: (user: User | null) => void;
     login: (phone: string, password: string) => Promise<boolean>;
     logout: () => void;
     isLoadingUser: boolean;
@@ -35,14 +36,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const checkUserSession = async () => {
             const token = localStorage.getItem('accessToken');
-            // اگر توکنی وجود نداشت، نیازی به ادامه نیست
             if (!token) {
                 setIsLoadingUser(false);
                 return;
             }
-
             try {
-                // تلاش برای دریافت اطلاعات کاربر با توکن موجود
                 const response = await apiClient.get('/auth/user');
                 setUser(response.data.user);
             } catch (e) {
@@ -78,11 +76,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = async () => {
-        await apiClient.post('/auth/logout');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
-        setCart([]);
+        try {
+            await apiClient.post('/auth/logout');
+        } catch (e) {
+            console.error("Logout API call failed, clearing local data anyway.", e);
+        } finally {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            setUser(null);
+            setCart([]);
+        }
     };
 
     const addToCart = (product: PrismaProduct, quantity = 1) => {
@@ -145,6 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         getOriginalTotalPrice,
         getTotalItems,
         user,
+        setUser,
         login,
         logout,
         isLoadingUser,

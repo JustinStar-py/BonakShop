@@ -11,7 +11,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Search, Loader2, ArrowRight, User as UserIcon, LayoutDashboard, Truck, LogOut } from "lucide-react";
+import { Search, Loader2, User as UserIcon, LayoutDashboard, Truck, LogOut, ArrowLeft } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -42,8 +42,8 @@ function ProductCarousel({
     if (!products || products.length === 0) return null;
     return (
         <div className="py-4">
-            <h2 className="text-md font-bold text-gray-700 mb-4 px-4">{title}</h2>
-            <div className="flex space-x-4 space-x-reverse overflow-x-auto px-4 pb-4">
+            <h2 className="text-lg font-semibold text-teal-500 mb-4 px-4">{title}</h2>
+            <div className="flex space-x-4 space-x-reverse overflow-x-auto px-2 pb-4">
                 {products.map(product => (
                     <div key={product.id} className="flex-shrink-0 w-44">
                         <ProductCard 
@@ -278,8 +278,10 @@ export default function HomePage() {
           
           <div className="p-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-md font-bold text-gray-700">همه محصولات</h2>
-              <Button variant="ghost" className="text-green-600" onClick={() => router.push('/products')}>مشاهده همه <ArrowRight className="mr-2 h-4 w-4" /></Button>
+              <h2 className="text-md font-semibold text-teal-500">همه محصولات</h2>
+              <Button variant="ghost" className="text-green-600" onClick={() => router.push('/products')}>
+                مشاهده همه
+               <ArrowLeft className="mr-2 h-4 w-4" /></Button>
             </div>
             <div className="grid grid-cols-2 gap-4">
               {paginatedProducts.map(p => <ProductCard key={p.id} product={p} cartItem={cart.find(ci => ci.id === p.id)} onAddToCart={addToCart} onUpdateQuantity={updateCartQuantity} onSelectProduct={handleSelectProduct} onImageClick={setViewingImage} onSupplierClick={handleSupplierClick} />)}

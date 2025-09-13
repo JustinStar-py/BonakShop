@@ -1,4 +1,4 @@
-// FILE: app/admin/dashboard/page.tsx (FIXED)
+// FILE: app/admin/dashboard/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import apiClient from "@/lib/apiClient";
-import { useAppContext } from "@/context/AppContext"; // <-- CHANGE: useAppContext وارد شد
 
 // Helper function to format currency
 function formatPrice(price: number) {
@@ -15,7 +14,6 @@ function formatPrice(price: number) {
 }
 
 export default function DashboardHomePage() {
-    const { isLoadingUser } = useAppContext(); // <-- CHANGE: وضعیت لودینگ کاربر از کانتکست گرفته شد
     const [stats, setStats] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -31,13 +29,10 @@ export default function DashboardHomePage() {
                 setIsLoading(false);
             }
         };
+        fetchDashboardData();
+    }, []);
 
-        if (!isLoadingUser) {
-            fetchDashboardData();
-        }
-    }, [isLoadingUser]); // <-- CHANGE: وابستگی به isLoadingUser اضافه شد
-
-    if (isLoadingUser || isLoading || !stats) {
+    if (isLoading || !stats) {
         return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
     }
 

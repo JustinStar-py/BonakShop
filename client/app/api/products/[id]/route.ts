@@ -34,13 +34,8 @@ export async function GET(
 }
 
 // --- This function handles UPDATING a full product record ---
-export async function PUT(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const params = await context.params;
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const productId = params.id;
-
   try {
     const session = await getSession();
     if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
@@ -49,23 +44,13 @@ export async function PUT(
 
     const body = await req.json();
     const {
-      name,
-      price,
-      description,
-      image,
-      categoryId,
-      available,
-      discountPercentage,
-      unit,
-      stock,
-      supplierId,
-      distributorId
+      name, price, description, image, categoryId, available,
+      discountPercentage, unit, stock, supplierId, distributorId,
+      isFeatured // <-- CHANGE: isFeatured از body دریافت شد
     } = body;
 
     if (!name || price === undefined || !categoryId || !unit || stock === undefined || !supplierId || !distributorId) {
-      return NextResponse.json({
-        error: "Name, price, category, unit, stock, supplier, and distributor are required"
-      }, { status: 400 });
+      return NextResponse.json({ error: "Required fields are missing" }, { status: 400 });
     }
 
     const updatedProduct = await prisma.product.update({
@@ -81,13 +66,9 @@ export async function PUT(
         available,
         discountPercentage: parseInt(discountPercentage, 10) || 0,
         unit,
-        stock: Number(stock)
+        stock: Number(stock),
+        isFeatured: Boolean(isFeatured) // <-- CHANGE: isFeatured به دیتابیس ارسال شد
       },
-      include: {
-        category: true,
-        supplier: true,
-        distributor: true
-      }
     });
 
     return NextResponse.json(updatedProduct, { status: 200 });
