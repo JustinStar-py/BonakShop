@@ -5,6 +5,7 @@ import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
 import { Vazirmatn } from "next/font/google"; 
 import { Samim } from "@/lib/fonts"; // Import the font
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const vazirmatn = Vazirmatn({
   subsets: ["latin", "arabic"],
@@ -32,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body className={`${vazirmatn.variable} font-sans antialiased`}> {/* Apply the font variable */}
+        <SpeedInsights/>
         <AppProvider>
           {children}
         </AppProvider>
