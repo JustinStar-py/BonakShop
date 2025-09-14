@@ -106,7 +106,7 @@ export default function CartPage() {
     if (cart.length === 0 && !isCheckout) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8">
-                <h2 className="text-md font-bold mb-4">!سبد خرید شما خالی است</h2>
+                <h2 className="text-md font-bold mb-4">سبد خرید شما خالی است!</h2>
                 <Button className="bg-teal-500 text-white" onClick={() => router.push('/')}>بازگشت به فروشگاه</Button>
             </div>
         );
