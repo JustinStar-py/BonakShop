@@ -152,7 +152,7 @@ export default function CartPage() {
 
     return (
         <div className="p-4">
-            <h1 className="text-2xl font-bold text-right mb-6">سبد خرید</h1>
+            <h1 className="text-xl font-bold text-right mb-6">سبد خرید</h1>
             <div className="space-y-4">
                 {cart.map(item => (
                     <div key={item.id} className="flex flex-col justify-between p-3 bg-white rounded-lg shadow">

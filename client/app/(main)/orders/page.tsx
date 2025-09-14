@@ -109,7 +109,7 @@ export default function OrdersPage() {
 
     return (
         <div className="p-4">
-            <h1 className="text-2xl font-bold text-right mb-6">تاریخچه سفارشات</h1>
+            <h1 className="text-xl font-bold text-right mb-6">تاریخچه سفارشات</h1>
             <Accordion type="single" collapsible className="w-full space-y-4">
                 {orders.map((order, index) => (
                     <AccordionItem key={order.id} value={order.id} className="bg-white rounded-lg shadow-sm border data-[state=open]:shadow-md">

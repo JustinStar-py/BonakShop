@@ -162,7 +162,7 @@ export default function ProductsPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold text-right mb-4">همه محصولات</h1>
+      <h1 className="text-xl font-bold text-right mb-4">همه محصولات</h1>
       <div className="space-y-4 mb-6 sticky top-0 bg-white/80 backdrop-blur-sm z-10 py-2">
         <div className="relative">
           {isSearching ? (
