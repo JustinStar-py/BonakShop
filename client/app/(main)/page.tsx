@@ -285,7 +285,7 @@ export default function HomePage() {
           <div className="py-4">
             <div className="flex items-center gap-2 mb-4 px-4 items-stretch">
               <LayoutGridIcon className="h-6 w-6 text-teal-500" />
-                <h2 className="flex text-lg font-semibold text-teal-500 mb-4">
+                <h2 className="flex text-md font-semibold text-teal-500 mb-4">
                    دسته‌بندی‌ها
                 </h2>
             </div>
