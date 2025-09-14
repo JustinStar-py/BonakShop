@@ -13,7 +13,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 // --- NEW: Import desired icons ---
 import { 
     Search, Loader2, User as UserIcon, LayoutDashboard, Truck, LogOut, ArrowLeft,
-    Star, TrendingUp, Sparkles
+    Star, TrendingUp, Sparkles,
+    LayoutGridIcon
 } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
@@ -232,10 +233,10 @@ export default function HomePage() {
       <div className="p-4 flex justify-between items-center bg-gray-50 border-b sticky top-0 z-20">
         <h1 className="font-bold text-sm text-gray-700">سلام، {user?.name}!</h1>
         <div className="flex items-center">
-          {user?.role === 'ADMIN' && <Button variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')}><LayoutDashboard className="h-5 w-5" /></Button>}
-          {user?.role === 'WORKER' && <Button variant="ghost" size="icon" onClick={() => router.push('/delivery')}><Truck className="h-5 w-5" /></Button>}
-          <Button variant="ghost" size="icon" onClick={() => router.push('/profile')}><UserIcon className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon" onClick={logout} className="text-red-500"><LogOut className="h-5 w-5" /></Button>
+          {user?.role === 'ADMIN' && <Button className="text-teal-500" variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')}><LayoutDashboard className="h-7 w-7" strokeWidth={2.5} /></Button>}
+          {user?.role === 'WORKER' && <Button className="text-teal-500" variant="ghost" size="icon" onClick={() => router.push('/delivery')}><Truck className="h-7 w-7" strokeWidth={2.5} /></Button>}
+          <Button className="text-teal-500" variant="ghost" size="icon" onClick={() => router.push('/profile')}><UserIcon className="h-7 w-7" strokeWidth={2.75} /></Button>
+          <Button variant="ghost" size="icon" onClick={logout} className="text-red-500"><LogOut className="h-7 w-7"strokeWidth={2.5} /></Button>
         </div>
       </div>
 
@@ -282,16 +283,40 @@ export default function HomePage() {
           )}
           
           <div className="py-4">
-            <h2 className="text-md font-bold text-gray-700 mb-4 px-4">دسته‌بندی‌ها</h2>
+            <div className="flex items-center gap-2 mb-4 px-4 items-stretch">
+              <LayoutGridIcon className="h-6 w-6 text-teal-500" />
+                <h2 className="flex text-lg font-semibold text-teal-500 mb-4">
+                   دسته‌بندی‌ها
+                </h2>
+            </div>
             <div className="flex space-x-4 space-x-reverse overflow-x-auto px-4 pb-4">
-              {categories.map(c =>
-                <div key={c.id} className="flex flex-col items-center justify-start flex-shrink-0 w-20 cursor-pointer group" onClick={() => router.push(`/products?categoryId=${c.id}`)}>
-                  <div className="h-16 w-16 rounded-full flex items-center justify-center mb-2 border-2 border-teal-500 p-1 group-hover:border-green-500 transition-colors">
-                    {c.image ? (<Image src={c.image} alt={c.name} width={64} height={64} loading="lazy" className="h-full w-full object-cover rounded-full"/>) : (<span className="text-3xl">{c.icon}</span>)}
+              {categories.map(c => (
+                <div
+                  key={c.id}
+                  className="flex flex-col items-center justify-start flex-shrink-0 w-20 cursor-pointer group"
+                  onClick={() => router.push(`/products?categoryId=${c.id}`)}
+                >
+                  <div className="h-18 w-18 rounded-full flex items-center justify-center mb-2 border-2 border-green-200 group-hover:border-green-500 transition-colors">
+                    <div className="h-16 w-16 rounded-full flex items-center justify-center border-2 border-teal-400 group-hover:border-green-400 overflow-hidden">
+                      {c.image ? (
+                        <Image
+                          src={c.image}
+                          alt={c.name}
+                          width={64}
+                          height={64}
+                          loading="lazy"
+                          className="h-full w-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <span className="text-3xl">{c.icon}</span>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-xs text-center font-medium text-gray-700 group-hover:text-green-600 transition-colors">{c.name}</span>
+                  <span className="text-xs text-center font-medium text-gray-700 group-hover:text-green-600 transition-colors">
+                    {c.name}
+                  </span>
                 </div>
-              )}
+              ))}
             </div>
           </div>
 
