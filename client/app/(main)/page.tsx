@@ -296,8 +296,8 @@ export default function HomePage() {
                   className="flex flex-col items-center justify-start flex-shrink-0 w-20 cursor-pointer group"
                   onClick={() => router.push(`/products?categoryId=${c.id}`)}
                 >
-                  <div className="h-18 w-18 rounded-full flex items-center justify-center mb-2 border-2 border-green-200 group-hover:border-green-500 transition-colors">
-                    <div className="h-16 w-16 rounded-full flex items-center justify-center border-2 border-teal-400 group-hover:border-green-400 overflow-hidden">
+                  <div className="h-20 w-20 rounded-full flex items-center justify-center mb-2 border-2 border-teal-600 group-hover:border-green-500 transition-colors">
+                    <div className="h-18 w-18 rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-green-400 overflow-hidden">
                       {c.image ? (
                         <Image
                           src={c.image}

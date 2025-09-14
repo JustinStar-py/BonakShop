@@ -49,7 +49,7 @@ export default function NewProductCard({
 
 
   return (
-    <Card className="overflow-hidden gap-0 h-[265px] border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-2 font-sans">
+    <Card className="overflow-hidden gap-0 h-[280px] border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-2 font-sans">
       
       {/* Supplier Name Badge */}
       {/* v-- CHANGE: این بخش برای کلیک کردن تغییر کرده است */}
@@ -62,7 +62,8 @@ export default function NewProductCard({
 
       {/* Stock Badge */}
       <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md">
-        {toPersianDigits(product.stock)} {product.unit} 
+        {toPersianDigits(product.stock)} 
+        {/* {product.unit}  */}
       </div>
 
       <div className="flex-grow flex flex-col cursor-pointer" onClick={() => onSelectProduct(product)}>
@@ -85,7 +86,7 @@ export default function NewProductCard({
 
       <div className="pt-2">
                 {/* خط بالای قیمت */}
-        <hr className="border-gray-300 mt-1" />
+        <hr className="border-gray-300 my-1" />
 
         {/* بخش قیمت چسبیده به پایین */}
         <div className="flex flex-col items-end pb-2">
@@ -99,9 +100,9 @@ export default function NewProductCard({
               </span>
             </div>
           )}
-          <div className="text-gray-800 font-bold text-md text-right">
+          <div className="text-gray-800 font-bold text-sm text-right">
             <span>{toPersianDigits(discountedPrice)}</span>
-            <span className="text-xs font-normal">ریال</span>
+            <span className="text-xs font-normal px-1">ریال</span>
           </div>
         </div>
 

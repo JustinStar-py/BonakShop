@@ -27,6 +27,7 @@ import {
 import { useRouter } from "next/navigation";
 import { RefreshCw, XCircle, Calendar, StickyNote } from "lucide-react";
 import { ReturnRequestDialog } from "@/components/shared/ReturnRequestDialog";
+import toPersianDigits from "@/utils/persianNum";
 
 // --- Type Definitions ---
 type OrderWithItems = Order & {
@@ -109,14 +110,14 @@ export default function OrdersPage() {
 
     return (
         <div className="p-4">
-            <h1 className="text-xl font-bold text-right mb-6">تاریخچه سفارشات</h1>
+            <h1 className="text-lg font-bold text-right mb-6">تاریخچه سفارشات</h1>
             <Accordion type="single" collapsible className="w-full space-y-4">
                 {orders.map((order, index) => (
                     <AccordionItem key={order.id} value={order.id} className="bg-white rounded-lg shadow-sm border data-[state=open]:shadow-md">
                         <AccordionTrigger className="w-full text-right px-4 py-3 hover:no-underline">
                             <div className="flex justify-between items-center w-full">
                                 <div className="flex flex-col items-start gap-1">
-                                    <span className="font-semibold">سفارش {index + 1}#</span>
+                                    <span className="font-semibold">سفارش {toPersianDigits(orders.length - index)}#</span>
                                     <span className="text-xs text-gray-500">
                                         ثبت: {new Date(order.createdAt).toLocaleDateString('fa-IR')}
                                     </span>
@@ -128,7 +129,7 @@ export default function OrdersPage() {
                             <div className="pt-3 border-t space-y-3">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="font-semibold text-gray-600">مجموع مبلغ:</span>
-                                    <span className="font-bold text-lg">{order.totalPrice.toLocaleString()} تومان</span>
+                                    <span className="font-bold text-md">{toPersianDigits(order.totalPrice)} تومان</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="font-semibold text-gray-600 flex items-center gap-2"><Calendar size={16} /> تاریخ تحویل:</span>
@@ -147,7 +148,7 @@ export default function OrdersPage() {
                                     {order.items.map((item: OrderItem) => (
                                         <li key={item.id} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-md">
                                             <span>{item.productName}</span>
-                                            <span className="text-gray-600 px-2 border-b-4 border-teal-200">{item.quantity}</span>
+                                            <span className="text-gray-600 px-2 border-b-4 border-teal-200">{toPersianDigits(item.quantity)}</span>
                                         </li>
                                     ))}
                                 </ul>
