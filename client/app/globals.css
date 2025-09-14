@@ -220,4 +220,42 @@ label {
     transform: translateX(-99%);
   }
 }
-    
+  
+.loader3 {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(
+    165deg,
+    #5eead4 0%,   /* teal-300 */
+    #2dd4bf 40%,  /* teal-400 */
+    #14b8a6 98%,  /* teal-500 */
+    #0d9488 100%  /* teal-600 */
+  );
+  border-radius: 50%;
+  position: relative;
+}
+
+.loader3:before {
+  position: absolute;
+  content: "";
+  width: 100%;
+  height: 100%;
+  border-radius: 100%;
+  border-bottom: 0 solid #14b8a605;
+  box-shadow: 
+    0 -10px 20px 20px #5eead440 inset,
+    0 -5px 15px 10px #2dd4bf50 inset,
+    0 -2px 5px #14b8a680 inset,
+    0 -3px 2px #0d9488bb inset,
+    0 2px 0px #14b8a6,
+    0 2px 3px #2dd4bf,
+    0 5px 5px #14b8a690,
+    0 10px 15px #0d948860,
+    0 10px 20px 20px #0f766e40;
+  filter: blur(3px);
+  animation: 2s rotate linear infinite;
+}
+
+@keyframes rotate {
+  100% { transform: rotate(360deg); }
+}

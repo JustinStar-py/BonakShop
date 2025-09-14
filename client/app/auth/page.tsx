@@ -108,7 +108,7 @@ export default function AuthPage() {
                                 <div className="space-y-2"><Label htmlFor="login-password">رمز عبور</Label><Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>
                                 {error && activeTab === 'login' && <p className="text-sm text-red-500 text-center">{error}</p>}
                                 {successMessage && <p className="text-sm text-green-600 text-center">{successMessage}</p>}
-                                <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ورود...</> : "ورود"}</Button>
+                                <Button type="submit" className="w-full bg-blue-500 text-white" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />...در حال ورود</> : "ورود"}</Button>
                             </form>
                         </TabsContent>
                         <TabsContent value="register">
@@ -117,7 +117,7 @@ export default function AuthPage() {
                                 <div className="space-y-2"><Label htmlFor="register-password">رمز عبور (حداقل ۶ کاراکتر)</Label><Input id="register-password" type="password" required value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} /></div>
                                 <div className="space-y-2"><Label htmlFor="confirm-password">تکرار رمز عبور</Label><Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
                                 {error && activeTab === 'register' && <p className="text-sm text-red-500 text-center">{error}</p>}
-                                <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> در حال ثبت نام...</> : "ثبت نام"}</Button>
+                                <Button type="submit" className="w-full bg-blue-500 text-white" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...در حال ثبت نام</> : "ثبت نام"}</Button>
                             </form>
                         </TabsContent>
                     </Tabs>
