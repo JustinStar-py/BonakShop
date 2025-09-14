@@ -110,7 +110,7 @@ export default function ProfilePage() {
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
                     <ArrowRight className="h-6 w-6" />
                 </Button>
-                <h1 className="text-xl font-bold">پروفایل من</h1>
+                <h1 className="text-md font-bold">پروفایل من</h1>
             </header>
 
             <main className="p-4 space-y-8">

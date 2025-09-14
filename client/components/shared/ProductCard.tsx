@@ -113,7 +113,7 @@ export default function NewProductCard({
         ) : quantityInCart === 0 ? (
           <Button
             size="sm"
-            className="w-full bg-blue-500 hover:bg-blue-500 h-9 rounded-lg font-bold gap-0.5 text-sm"
+            className="w-full bg-blue-500 hover:bg-blue-500 h-9 rounded-lg font-bold gap-0.5 text-xs"
             onClick={() => onAddToCart(product)}
           >
             <Plus className="h-2 w-2" />
