@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "i.ibb.co" },
       { protocol: "https", hostname: "i.postimg.cc" },
+      { protocol: "https", hostname: "studiomani.ir"},
+      { protocol: "https", hostname: "www.digikala.com"}
     ],
   },
     eslint: {

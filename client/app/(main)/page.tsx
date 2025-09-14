@@ -1,4 +1,4 @@
-// FILE: app/(main)/page.tsx (FIXED)
+// FILE: app/(main)/page.tsx (FINAL VERSION WITH BANNER)
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -15,6 +15,7 @@ import { Search, Loader2, User as UserIcon, LayoutDashboard, Truck, LogOut, Arro
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 // --- Type Definitions ---
 type ProductWithRelations = Product & { supplier: Supplier };
@@ -41,7 +42,7 @@ function ProductCarousel({
 }) {
     if (!products || products.length === 0) return null;
     return (
-        <div className="py-4">
+        <div className="py-2">
             <h2 className="text-lg font-semibold text-teal-500 mb-4 px-4">{title}</h2>
             <div className="flex space-x-4 space-x-reverse overflow-x-auto px-2 pb-4">
                 {products.map(product => (
@@ -78,6 +79,29 @@ function ImageDialog({ imageUrl, onClose }: { imageUrl: string | null; onClose: 
 export default function HomePage() {
   const { user, cart, addToCart, updateCartQuantity, logout } = useAppContext();
   const router = useRouter();
+
+  // --- BANNER CONTROLS ---
+ const banners = [
+  {
+    id: 1,
+    image: "https://studiomani.ir/wp-content/uploads/2019/05/istak-non-alcoholic-beer-02.jpg",
+    link: "/products?supplierId=cmeg3ib2h0000jy04qsat2ejr",
+    active: true,
+  },
+  {
+    id: 2,
+    image: "https://www.digikala.com/mag/wp-content/uploads/2024/03/9b6907ac-5dd5-4fcd-b4c8-3a0874fcb16d-22-pickles.jpg",
+    link: "/products?categoryId=cmd8x3h5k0000jm047c3bv2zk",
+    active: true,
+  },
+  {
+    id: 3,
+    image: "/assets/banners/banner3.jpg",
+    link: "https://example.com/page3",
+    active: true,
+  },
+];
+  // --- END OF BANNER CONTROLS ---
 
   // Data states
   const [paginatedProducts, setPaginatedProducts] = useState<ProductWithRelations[]>([]);
@@ -231,6 +255,24 @@ export default function HomePage() {
         </div>
       ) : (
         <>
+          {/* --- BANNER SECTION --- */}
+          {banners[0].active && (
+            <div className="px-4 pb-4">
+             <Link href={banners[0].link} passHref>
+                <div className="relative w-full h-24 sm:h-32 rounded-lg overflow-hidden shadow-md">
+                  <Image
+                    src={banners[0].image}
+                    alt="Banner"
+                    layout="fill"
+                    objectFit="cover"
+                    className="w-full h-full"
+                  />
+              </div>
+            </Link>
+            </div>
+          )}
+          {/* --- END OF BANNER SECTION --- */}
+          
           <div className="py-4">
             <h2 className="text-md font-bold text-gray-700 mb-4 px-4">دسته‌بندی‌ها</h2>
             <div className="flex space-x-4 space-x-reverse overflow-x-auto px-4 pb-4">
@@ -255,6 +297,25 @@ export default function HomePage() {
             onImageClick={setViewingImage}
             onSupplierClick={handleSupplierClick}
           />
+
+          {/* --- BANNER SECTION --- */}
+            {banners[1].active && (
+            <div className="px-4 pb-4">
+             <Link href={banners[1].link} passHref>
+                <div className="relative w-full h-24 sm:h-32 rounded-lg overflow-hidden shadow-md">
+                  <Image
+                    src={banners[1].image}
+                    alt="Banner"
+                    layout="fill"
+                    objectFit="cover"
+                    className="w-full h-full"
+                  />
+              </div>
+            </Link>
+            </div>
+          )}
+          {/* --- END OF BANNER SECTION --- */}
+
           <ProductCarousel 
             title="پرفروش‌ترین‌ها" 
             products={bestsellerProducts} 
