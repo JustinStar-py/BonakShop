@@ -49,7 +49,7 @@ export default function NewProductCard({
 
 
   return (
-    <Card className="overflow-hidden gap-0 h-[250px] border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-2 font-sans">
+    <Card className="overflow-hidden gap-0 h-[265px] border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-2 font-sans">
       
       {/* Supplier Name Badge */}
       {/* v-- CHANGE: این بخش برای کلیک کردن تغییر کرده است */}
