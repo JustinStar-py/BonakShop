@@ -1,17 +1,20 @@
-// FILE: app/(main)/page.tsx (FINAL VERSION WITH BANNER)
+// FILE: app/(main)/page.tsx (FINAL VERSION WITH BANNERS & ICONS)
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ElementType } from "react";
 import { useAppContext } from "@/context/AppContext";
 import apiClient from "@/lib/apiClient";
-// v-- CHANGE: این خط برای حل ارور اصلاح شد
 import type { Product, Category, Supplier, CartItem } from "@/types";
 import ProductCard from "@/components/shared/ProductCard";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Search, Loader2, User as UserIcon, LayoutDashboard, Truck, LogOut, ArrowLeft } from "lucide-react";
+// --- NEW: Import desired icons ---
+import { 
+    Search, Loader2, User as UserIcon, LayoutDashboard, Truck, LogOut, ArrowLeft,
+    Star, TrendingUp, Sparkles
+} from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -20,9 +23,10 @@ import Link from "next/link";
 // --- Type Definitions ---
 type ProductWithRelations = Product & { supplier: Supplier };
 
-// --- Reusable Product Carousel Component ---
+// --- Reusable Product Carousel Component (Updated) ---
 function ProductCarousel({ 
     title, 
+    icon: Icon, // <-- FIX: Destructure the new icon prop
     products, 
     cart,
     onAddToCart,
@@ -32,6 +36,7 @@ function ProductCarousel({
     onSupplierClick 
 }: { 
     title: string;
+    icon?: ElementType; // <-- FIX: Add optional icon prop
     products: ProductWithRelations[];
     cart: CartItem[];
     onAddToCart: (product: Product) => void;
@@ -43,7 +48,12 @@ function ProductCarousel({
     if (!products || products.length === 0) return null;
     return (
         <div className="py-2">
-            <h2 className="text-lg font-semibold text-teal-500 mb-4 px-4">{title}</h2>
+            {/* --- FIX: Title section now supports an icon --- */}
+            <div className="flex items-center gap-2 mb-4 px-4">
+                {Icon && <Icon className="h-6 w-6 text-teal-500" />}
+                <h2 className="text-lg font-semibold text-teal-500">{title}</h2>
+            </div>
+
             <div className="flex space-x-4 space-x-reverse overflow-x-auto px-2 pb-4">
                 {products.map(product => (
                     <div key={product.id} className="flex-shrink-0 w-44">
@@ -98,7 +108,7 @@ export default function HomePage() {
     id: 3,
     image: "/assets/banners/banner3.jpg",
     link: "https://example.com/page3",
-    active: true,
+    active: false, // This banner will not be shown
   },
 ];
   // --- END OF BANNER CONTROLS ---
@@ -255,14 +265,13 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-          {/* --- BANNER SECTION --- */}
           {banners[0].active && (
             <div className="px-4 pb-4">
              <Link href={banners[0].link} passHref>
-                <div className="relative w-full h-24 sm:h-32 rounded-lg overflow-hidden shadow-md">
+                <div className="relative w-full h-24 sm:h-32 rounded-lg overflow-hidden shadow-md cursor-pointer">
                   <Image
                     src={banners[0].image}
-                    alt="Banner"
+                    alt="Banner 1"
                     layout="fill"
                     objectFit="cover"
                     className="w-full h-full"
@@ -271,7 +280,6 @@ export default function HomePage() {
             </Link>
             </div>
           )}
-          {/* --- END OF BANNER SECTION --- */}
           
           <div className="py-4">
             <h2 className="text-md font-bold text-gray-700 mb-4 px-4">دسته‌بندی‌ها</h2>
@@ -288,7 +296,8 @@ export default function HomePage() {
           </div>
 
           <ProductCarousel 
-            title="پیشنهاد ما" 
+            title="پیشنهاد ما"
+            icon={Star}
             products={featuredProducts} 
             cart={cart}
             onAddToCart={addToCart}
@@ -298,14 +307,13 @@ export default function HomePage() {
             onSupplierClick={handleSupplierClick}
           />
 
-          {/* --- BANNER SECTION --- */}
-            {banners[1].active && (
+          {banners[1].active && (
             <div className="px-4 pb-4">
              <Link href={banners[1].link} passHref>
-                <div className="relative w-full h-24 sm:h-32 rounded-lg overflow-hidden shadow-md">
+                <div className="relative w-full h-24 sm:h-32 rounded-lg overflow-hidden shadow-md cursor-pointer">
                   <Image
                     src={banners[1].image}
-                    alt="Banner"
+                    alt="Banner 2"
                     layout="fill"
                     objectFit="cover"
                     className="w-full h-full"
@@ -314,10 +322,10 @@ export default function HomePage() {
             </Link>
             </div>
           )}
-          {/* --- END OF BANNER SECTION --- */}
 
           <ProductCarousel 
             title="پرفروش‌ترین‌ها" 
+            icon={TrendingUp}
             products={bestsellerProducts} 
             cart={cart}
             onAddToCart={addToCart}
@@ -328,6 +336,7 @@ export default function HomePage() {
           />
           <ProductCarousel 
             title="جدیدترین‌ها" 
+            icon={Sparkles}
             products={newestProducts} 
             cart={cart}
             onAddToCart={addToCart}
