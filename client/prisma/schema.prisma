@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,25 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum OrderStatus {
-  PENDING
-  SHIPPED
-  DELIVERED
-  CANCELED
-}
-
-enum Role {
-  CUSTOMER
-  ADMIN
-  WORKER
-}
-
-enum ReturnStatus {
-  REQUESTED
-  APPROVED
-  REJECTED
 }
 
 model Supplier {
@@ -44,8 +22,8 @@ model Distributor {
 }
 
 model Settlement {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String  @id @default(cuid())
+  name        String  @unique
   description String?
   orders      Order[]
 }
@@ -68,30 +46,31 @@ model Product {
   discountPercentage Int         @default(0)
   unit               String      @default("عدد")
   stock              Int         @default(0)
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-  isFeatured         Boolean     @default(false)
   categoryId         String
-  category           Category    @relation(fields: [categoryId], references: [id])
   supplierId         String
-  supplier           Supplier    @relation(fields: [supplierId], references: [id])
   distributorId      String
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @default(now()) @updatedAt
+  isFeatured         Boolean     @default(false)
+  category           Category    @relation(fields: [categoryId], references: [id])
   distributor        Distributor @relation(fields: [distributorId], references: [id])
+  supplier           Supplier    @relation(fields: [supplierId], references: [id])
+
   @@unique([name, supplierId])
 }
 
 model Order {
-  id           String      @id @default(cuid())
-  totalPrice   Float
-  createdAt    DateTime    @default(now())
-  deliveryDate DateTime
-  status       OrderStatus @default(PENDING)
-  notes        String?
-  userId       String
-  user         User        @relation(fields: [userId], references: [id])
-  settlementId String
-  settlement   Settlement  @relation(fields: [settlementId], references: [id])
-  items        OrderItem[]
+  id            String         @id @default(cuid())
+  totalPrice    Float
+  createdAt     DateTime       @default(now())
+  deliveryDate  DateTime
+  status        OrderStatus    @default(PENDING)
+  notes         String?
+  userId        String
+  settlementId  String
+  settlement    Settlement     @relation(fields: [settlementId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
+  items         OrderItem[]
   returnRequest ReturnRequest?
 }
 
@@ -134,7 +113,26 @@ model ReturnRequestItem {
   id              String        @id @default(cuid())
   quantity        Int
   orderItemId     String
-  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
   returnRequestId String
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
   returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id])
+}
+
+enum OrderStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  WORKER
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
 }
