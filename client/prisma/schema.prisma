@@ -1,35 +1,37 @@
+// FILE: prisma/schema.prisma (Updated for MongoDB)
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model Supplier {
-  id       String    @id @default(cuid())
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
   name     String    @unique
   logo     String?
   products Product[]
 }
 
 model Distributor {
-  id       String    @id @default(cuid())
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
   name     String    @unique
   logo     String?
   products Product[]
 }
 
 model Settlement {
-  id          String  @id @default(cuid())
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
   name        String  @unique
   description String?
   orders      Order[]
 }
 
 model Category {
-  id       String    @id @default(cuid())
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
   name     String    @unique
   icon     String?
   image    String?
@@ -37,7 +39,7 @@ model Category {
 }
 
 model Product {
-  id                 String      @id @default(cuid())
+  id                 String      @id @default(auto()) @map("_id") @db.ObjectId
   name               String
   description        String?
   price              Float
@@ -46,12 +48,14 @@ model Product {
   discountPercentage Int         @default(0)
   unit               String      @default("عدد")
   stock              Int         @default(0)
-  categoryId         String
-  supplierId         String
-  distributorId      String
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @default(now()) @updatedAt
   isFeatured         Boolean     @default(false)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  categoryId         String      @db.ObjectId
+  supplierId         String      @db.ObjectId
+  distributorId      String      @db.ObjectId
+
   category           Category    @relation(fields: [categoryId], references: [id])
   distributor        Distributor @relation(fields: [distributorId], references: [id])
   supplier           Supplier    @relation(fields: [supplierId], references: [id])
@@ -60,14 +64,16 @@ model Product {
 }
 
 model Order {
-  id            String         @id @default(cuid())
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
   totalPrice    Float
   createdAt     DateTime       @default(now())
   deliveryDate  DateTime
   status        OrderStatus    @default(PENDING)
   notes         String?
-  userId        String
-  settlementId  String
+  
+  userId        String         @db.ObjectId
+  settlementId  String         @db.ObjectId
+  
   settlement    Settlement     @relation(fields: [settlementId], references: [id])
   user          User           @relation(fields: [userId], references: [id])
   items         OrderItem[]
@@ -75,17 +81,18 @@ model Order {
 }
 
 model OrderItem {
-  id                 String              @id @default(cuid())
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
   productName        String
   quantity           Int
   price              Float
-  orderId            String
+
+  orderId            String              @db.ObjectId
   order              Order               @relation(fields: [orderId], references: [id])
   returnRequestItems ReturnRequestItem[]
 }
 
 model User {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   phone       String   @unique
   password    String
   createdAt   DateTime @default(now())
@@ -100,20 +107,23 @@ model User {
 }
 
 model ReturnRequest {
-  id        String              @id @default(cuid())
+  id        String              @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime            @default(now())
   status    ReturnStatus        @default(REQUESTED)
   reason    String?
-  orderId   String              @unique
+
+  orderId   String              @unique @db.ObjectId
   order     Order               @relation(fields: [orderId], references: [id])
   items     ReturnRequestItem[]
 }
 
 model ReturnRequestItem {
-  id              String        @id @default(cuid())
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
   quantity        Int
-  orderItemId     String
-  returnRequestId String
+
+  orderItemId     String        @db.ObjectId
+  returnRequestId String        @db.ObjectId
+
   orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
   returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id])
 }
