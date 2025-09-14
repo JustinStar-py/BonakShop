@@ -1,158 +1,153 @@
-// FILE: components/shared/ShamsiCalendar.tsx (Updated)
+// FILE: new-bonak-src/components/shared/ShamsiCalendar.tsx (FINAL GUARANTEED FIX)
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toJalaali, toGregorian } from "jalaali-js";
 
 // --- Props Interface ---
-// <-- 1. Define the props for the component
 interface ShamsiCalendarProps {
-    initialDate?: Date;
-    onSelectDate: (date: Date) => void; // The function to call when a date is selected
+  onSelectDate: (date: string) => void; // <-- FIX: Prop now expects a string
+  initialDate?: string; // <-- FIX: Prop is now a string 'YYYY-MM-DD'
+  minDate?: Date;
 }
 
-// --- Persian Calendar Logic (remains the same) ---
-const PERSIAN_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+const PERSIAN_MONTHS = [
+  "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+  "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند",
+];
 const PERSIAN_WEEKDAYS = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
 
-function toPersian(gy: number, gm: number, gd: number): [number, number, number] {
-  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-  gy = (gm > 2) ? gy : gy - 1;
-  const gy2 = (gm > 2) ? (gy + 1) : gy;
-  let days = 355666 + (365 * gy) + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
-  let jy = -1595 + (33 * Math.floor(days / 12053));
-  days %= 12053;
-  jy += 4 * Math.floor(days / 1461);
-  days %= 1461;
-  if (days > 365) {
-    jy += Math.floor((days - 1) / 365);
-    days = (days - 1) % 365;
-  }
-  const jm = (days < 186) ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
-  const jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
-  return [jy, jm, jd];
+type JalaaliDate = { jy: number; jm: number; jd: number };
+
+// --- FIX: A robust function to parse a 'YYYY-MM-DD' string into a Jalaali date ---
+function jalaaliFromDateString(dateString: string): JalaaliDate {
+    const [year, month, day] = dateString.split('-').map(Number);
+    // Convert Gregorian parts to Jalaali
+    return toJalaali(year, month, day);
 }
 
-function toGregorian(jy: number, jm: number, jd: number): [number, number, number] {
-    jy += 1595;
-    let days = -355668 + (365 * jy) + Math.floor(jy / 33 * 8) + Math.floor(((jy % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
-    let gy = 400 * Math.floor(days / 146097);
-    days %= 146097;
-    if (days > 36524) {
-        gy += 100 * Math.floor(--days / 36524);
-        days %= 36524;
-        if (days >= 365) days++;
-    }
-    gy += 4 * Math.floor(days / 1461);
-    days %= 1461;
-    if (days > 365) {
-        gy += Math.floor((days - 1) / 365);
-        days = (days - 1) % 365;
-    }
-    let gd = days + 1;
-    const sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    let gm;
-    for (gm = 0; gm < 13 && gd > sal_a[gm]; gm++) gd -= sal_a[gm];
-    return [gy, gm, gd]; 
+// --- FIX: Converts Jalaali date parts to a standard 'YYYY-MM-DD' string ---
+function dateStringToJalaali(jy: number, jm: number, jd: number): string {
+    const g = toGregorian(jy, jm, jd);
+    // Pad month and day with a leading zero if needed
+    const month = String(g.gm).padStart(2, '0');
+    const day = String(g.gd).padStart(2, '0');
+    return `${g.gy}-${month}-${day}`;
 }
 
-// --- Component ---
-export function ShamsiCalendar({ initialDate, onSelectDate }: ShamsiCalendarProps) { // <-- 2. Receive props
-    const today = new Date();
-    const [currentShamsiDate, setCurrentShamsiDate] = useState(() => toPersian(today.getFullYear(), today.getMonth() + 1, today.getDate()));
-    const [currentYear, currentMonth, currentDay] = currentShamsiDate;
-    
-    const { minDatePersian, todayYear, todayMonth, todayDay } = useMemo(() => {
-        const minDate = new Date();
-        return {
-            minDatePersian: toPersian(minDate.getFullYear(), minDate.getMonth() + 1, minDate.getDate()),
-            todayYear: currentYear,
-            todayMonth: currentMonth,
-            todayDay: currentDay,
-        };
-    }, [currentYear, currentMonth, currentDay]);
+function getDaysInPersianMonth(year: number, month: number): number {
+  const g = toGregorian(year, month, 1);
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  const nextG = toGregorian(nextYear, nextMonth, 1);
+  const date1 = new Date(g.gy, g.gm - 1, g.gd);
+  const date2 = new Date(nextG.gy, nextG.gm - 1, nextG.gd);
+  return Math.round((date2.getTime() - date1.getTime()) / (1000 * 60 * 60 * 24));
+}
 
-    const handleMonthChange = (offset: number) => {
-        setCurrentShamsiDate(prev => {
-            let newMonth = prev[1] + offset;
-            let newYear = prev[0];
-            if (newMonth > 12) {
-                newMonth = 1;
-                newYear++;
-            } else if (newMonth < 1) {
-                newMonth = 12;
-                newYear--;
-            }
-            return [newYear, newMonth, 1];
-        });
-    };
+export function ShamsiCalendar({ onSelectDate, initialDate, minDate: minDateProp }: ShamsiCalendarProps) {
+  const today = useMemo(() => new Date(), []);
 
-    const handleSelectDay = (day: number) => {
-        const [gy, gm, gd] = toGregorian(currentYear, currentMonth, day);
-        const selectedDate = new Date(gy, gm - 1, gd);
-        onSelectDate(selectedDate); // <-- 3. Call the passed function with the new date
-    };
+  // Get today as a 'YYYY-MM-DD' string
+  const todayString = useMemo(() => {
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, [today]);
 
-    const calendarGrid = useMemo(() => {
-        const daysInMonth = (currentMonth <= 6) ? 31 : (currentMonth <= 11) ? 30 : (currentYear % 4 === 3 && currentYear % 100 !== 99) || (currentYear % 400 === 399) ? 30 : 29;
-        const [firstDayGregorian] = toGregorian(currentYear, currentMonth, 1);
-        const firstDay = new Date(firstDayGregorian, currentMonth -1, 1).getDay(); // (0-6, Sun-Sat)
-        const firstDayOfWeek = (firstDay + 1) % 7; // Convert to Shamsi week (0-6, Sat-Fri)
-        
-        const grid: (number | null)[] = Array(firstDayOfWeek).fill(null);
-        for (let i = 1; i <= daysInMonth; i++) {
-            grid.push(i);
-        }
-        return grid;
-    }, [currentYear, currentMonth]);
-    
-    const formatDay = (day: number) => new Intl.NumberFormat('fa-IR').format(day);
-    
-    return (
-        <div className="p-3 border rounded-md">
-            <div className="flex justify-between items-center mb-4">
-                <Button variant="outline" size="icon" onClick={() => handleMonthChange(-1)}><ChevronRight className="h-4 w-4" /></Button>
-                <div className="font-bold text-center">{PERSIAN_MONTHS[currentMonth - 1]} {formatDay(currentYear)}</div>
-                <Button variant="outline" size="icon" onClick={() => handleMonthChange(1)}><ChevronLeft className="h-4 w-4" /></Button>
-            </div>
-            <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-semibold text-gray-500">
-                {PERSIAN_WEEKDAYS.map(day => <div key={day}>{day}</div>)}
-            </div>
-            <div className="grid grid-cols-7 gap-1">
-                {calendarGrid.map((day, index) => {
-                    if (day === null) {
-                        return <div key={`empty-${index}`} />;
-                    }
-                    
-                    let isSelectable = true;
-                    if (minDatePersian) {
-                        if (currentYear < minDatePersian[0]) isSelectable = false;
-                        if (currentYear === minDatePersian[0] && currentMonth < minDatePersian[1]) isSelectable = false;
-                        if (currentYear === minDatePersian[0] && currentMonth === minDatePersian[1] && day < minDatePersian[2]) isSelectable = false;
-                    }
+  const minDateJ = useMemo(() => {
+    const min = minDateProp || today;
+    return toJalaali(min.getFullYear(), min.getMonth() + 1, min.getDate());
+  }, [minDateProp, today]);
 
-                    const isSelected = initialDate && toPersian(initialDate.getFullYear(), initialDate.getMonth()+1, initialDate.getDate()).join(',') === [currentYear, currentMonth, day].join(',');
-                    const isToday = todayYear === currentYear && todayMonth === currentMonth && todayDay === day;
+  // All internal state now works with Jalaali objects, derived from strings
+  const [display, setDisplay] = useState<JalaaliDate>(() => jalaaliFromDateString(initialDate || todayString));
+  const [selected, setSelected] = useState<JalaaliDate | null>(() => (initialDate ? jalaaliFromDateString(initialDate) : null));
 
-                    return (
-                        <Button
-                            key={day}
-                            variant="ghost"
-                            disabled={!isSelectable}
-                            onClick={() => handleSelectDay(day)}
-                            className={cn("h-9 w-9 p-0 text-sm font-normal rounded-full",
-                                isToday && "border border-blue-400",
-                                isSelected && "bg-primary text-primary-foreground hover:bg-primary/90",
-                                !isSelectable && "text-gray-300"
-                            )}
-                        >
-                            {formatDay(day)}
-                        </Button>
-                    );
-                })}
-            </div>
+  // On initial render, if no date is selected, notify the parent of the default date.
+  useEffect(() => {
+      if (!selected) {
+          onSelectDate(initialDate || todayString);
+      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { jy: currentYear, jm: currentMonth } = display;
+
+  const firstDayOfWeek = useMemo(() => {
+    const g = toGregorian(currentYear, currentMonth, 1);
+    const date = new Date(g.gy, g.gm - 1, g.gd);
+    return (date.getDay() + 1) % 7;
+  }, [currentYear, currentMonth]);
+
+  const daysInMonth = useMemo(() => getDaysInPersianMonth(currentYear, currentMonth), [currentYear, currentMonth]);
+
+  const isBeforeMin = (y: number, m: number, d: number) => {
+    if (y < minDateJ.jy) return true;
+    if (y === minDateJ.jy && m < minDateJ.jm) return true;
+    if (y === minDateJ.jy && m === minDateJ.jm && d < minDateJ.jd) return true;
+    return false;
+  };
+
+  const handleSelectDay = (day: number) => {
+    if (isBeforeMin(currentYear, currentMonth, day)) return;
+    const newSel: JalaaliDate = { jy: currentYear, jm: currentMonth, jd: day };
+    setSelected(newSel);
+    // Notify parent with the 'YYYY-MM-DD' string
+    onSelectDate(dateStringToJalaali(newSel.jy, newSel.jm, newSel.jd));
+  };
+  
+  const navigateMonth = (delta: number) => {
+    setDisplay(prev => {
+        let ny = prev.jy;
+        let nm = prev.jm + delta;
+        if (nm > 12) { nm = 1; ny++; }
+        if (nm < 1) { nm = 12; ny--; }
+        return { ...prev, jy: ny, jm: nm };
+    });
+  };
+
+  const calendarGrid = useMemo(() => {
+    const arr = Array(firstDayOfWeek).fill(null);
+    for (let d = 1; d <= daysInMonth; d++) arr.push(d);
+    return arr;
+  }, [firstDayOfWeek, daysInMonth]);
+
+  const todayJ = toJalaali(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+  return (
+    <div className="p-3 w-full max-w-sm mx-auto" dir="rtl">
+        <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" size="icon" onClick={() => navigateMonth(-1)}><ChevronRight className="h-5 w-5" /></Button>
+            <div className="text-sm font-semibold text-center">{PERSIAN_MONTHS[currentMonth - 1]} {currentYear.toLocaleString("fa-IR")}</div>
+            <Button variant="ghost" size="icon" onClick={() => navigateMonth(1)}><ChevronLeft className="h-5 w-5" /></Button>
         </div>
-    );
+        <div className="grid grid-cols-7 text-center text-xs text-gray-500">{PERSIAN_WEEKDAYS.map(day => <div key={day} className="py-2">{day}</div>)}</div>
+        <div className="grid grid-cols-7 gap-1">
+            {calendarGrid.map((day, idx) => {
+                if (!day) return <div key={`empty-${idx}`} />;
+                const isToday = todayJ.jy === currentYear && todayJ.jm === currentMonth && todayJ.jd === day;
+                const isSelected = selected && selected.jy === currentYear && selected.jm === currentMonth && selected.jd === day;
+                const isDisabled = isBeforeMin(currentYear, currentMonth, day);
+                return (
+                    <Button
+                        key={day}
+                        variant="ghost"
+                        disabled={isDisabled}
+                        onClick={() => handleSelectDay(day)}
+                        className={cn("h-9 w-9 p-0 text-sm font-normal rounded-full", isToday && "border-2 border-blue-400", isSelected && "bg-primary text-primary-foreground", isDisabled && "text-gray-300")}>
+                        {day.toLocaleString("fa-IR")}
+                    </Button>
+                );
+            })}
+        </div>
+        {selected && (<div className="mt-4 p-2 bg-gray-50 rounded-lg text-center text-sm"><strong>تاریخ انتخابی:</strong> {selected.jd.toLocaleString("fa-IR")} {PERSIAN_MONTHS[selected.jm - 1]} {selected.jy.toLocaleString("fa-IR")}</div>)}
+    </div>
+  );
 }
+
+export default ShamsiCalendar;

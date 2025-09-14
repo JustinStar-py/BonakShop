@@ -147,7 +147,7 @@ export default function OrdersPage() {
                                     {order.items.map((item: OrderItem) => (
                                         <li key={item.id} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-md">
                                             <span>{item.productName}</span>
-                                            <span className="text-gray-600">تعداد: {item.quantity}</span>
+                                            <span className="text-gray-600 px-2 border-b-4 border-teal-200">{item.quantity}</span>
                                         </li>
                                     ))}
                                 </ul>
