@@ -49,7 +49,7 @@ export default function NewProductCard({
 
 
   return (
-    <Card className="overflow-hidden gap-0 h-[280px] border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-2 font-sans">
+    <Card className="overflow-hidden gap-0 h-[285px] border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-2 font-sans">
       
       {/* Supplier Name Badge */}
       {/* v-- CHANGE: این بخش برای کلیک کردن تغییر کرده است */}
@@ -60,15 +60,11 @@ export default function NewProductCard({
         {product.supplier.name}
       </div>
 
+
       {/* Stock Badge */}
-      <div className="absolute top-0 left-0 bg-blue-400 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md">
-        {product.unit} 
-      </div>
-      
-      {/* Stock Badge */}
-      <div className="absolute top-7 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tr-md">
+      <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md">
         {toPersianDigits(product.stock)} 
-        {/* {product.unit}  */}
+        {product.unit} 
       </div>
 
 
@@ -106,7 +102,7 @@ export default function NewProductCard({
               </span>
             </div>
           )}
-          <div className="text-gray-800 font-bold text-sm text-right">
+          <div className="text-gray-800 font-bold text-xs text-right">
             <span>{toPersianDigits(discountedPrice)}</span>
             <span className="text-xs font-normal px-1">ریال</span>
           </div>
