@@ -1,4 +1,4 @@
-// FILE: app/(main)/products/[id]/page.tsx (FIXED)
+// FILE: app/(main)/products/[id]/page.tsx (CORRECTED)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -64,7 +64,6 @@ export default function ProductDetailPage() {
     const discountedPrice = product.price * (1 - product.discountPercentage / 100);
 
     return (
-        // v-- CHANGE: یک پدینگ پایین به اندازه ارتفاع نوار سبد خرید اضافه شد
         <div className="max-w-4xl mx-auto pb-24">
             <header className="p-4 flex items-center border-b">
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -81,7 +80,10 @@ export default function ProductDetailPage() {
 
                     <div className="space-y-4 text-right">
                         <h2 className="text-lg font-semibold">{product.name}</h2>
-                        <p className="text-muted-foreground">{product.description}</p>
+                        {/* The product description is rendered here if it exists */}
+                        {product.description && (
+                           <p className="text-sm text-muted-foreground">{product.description}</p>
+                        )}
                         
                         <Separator />
                         
@@ -100,7 +102,7 @@ export default function ProductDetailPage() {
                             </div>
                             <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
                                 <Box size={16} className="text-gray-500"/>
-                                <strong>موجودی:</strong> {product.stock > 0 ? `${product.stock} عدد` : "ناموجود"}
+                                <strong>موجودی:</strong> {product.stock > 0 ? `${toPersianDigits(product.stock)} عدد` : "ناموجود"}
                             </div>
                         </div>
                                                 
@@ -128,8 +130,6 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
 
-                {/* Add to Cart Section */}
-                {/* v-- CHANGE: موقعیت از bottom-0 به bottom-20 تغییر کرد */}
                 <div className="fixed bottom-20 left-0 right-0 p-4 bg-white border-t shadow-lg max-w-4xl mx-auto z-40">
                     {!product.available ? (
                         <Button className="w-full" size="lg" disabled>ناموجود</Button>
@@ -140,7 +140,7 @@ export default function ProductDetailPage() {
                             <p className="font-semibold">در سبد خرید</p>
                             <div className="flex items-center gap-3">
                                 <Button className="bg-teal-500 text-white" size="icon" onClick={() => updateCartQuantity(product.id, quantityInCart + 1)}><Plus /></Button>
-                                <span className="text-xl font-bold w-10 text-center">{quantityInCart}</span>
+                                <span className="text-xl font-bold w-10 text-center">{toPersianDigits(quantityInCart)}</span>
                                 <Button variant="outline" size="icon" onClick={() => updateCartQuantity(product.id, quantityInCart - 1)}><Minus /></Button>
                             </div>
                         </div>

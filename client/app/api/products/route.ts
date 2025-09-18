@@ -1,4 +1,4 @@
-// FILE: app/api/products/route.ts (Updated for Supplier Filter)
+// FILE: app/api/products/route.ts (Updated for Admin Pagination & Search)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -7,14 +7,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "12");
+    const limit = parseInt(searchParams.get("limit") || "15"); // تعداد آیتم در هر صفحه
     const searchTerm = searchParams.get("search") || "";
     const categoryId = searchParams.get("categoryId") || "";
-    const supplierId = searchParams.get("supplierId") || ""; // New filter param for supplier
+    const supplierId = searchParams.get("supplierId") || "";
 
     const skip = (page - 1) * limit;
 
-    // Build the 'where' clause for the Prisma query
     let whereClause: any = {};
 
     if (searchTerm) {
@@ -22,6 +21,7 @@ export async function GET(request: Request) {
         { name: { contains: searchTerm, mode: 'insensitive' } },
         { description: { contains: searchTerm, mode: 'insensitive' } },
         { supplier: { name: { contains: searchTerm, mode: 'insensitive' } } },
+        { category: { name: { contains: searchTerm, mode: 'insensitive' } } },
       ];
     }
 
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     }
 
     if (supplierId) {
-      whereClause.supplierId = supplierId; // Add supplierId to the where clause
+      whereClause.supplierId = supplierId;
     }
 
     const products = await prisma.product.findMany({
@@ -60,6 +60,7 @@ export async function GET(request: Request) {
   }
 }
 
+// ... POST function remains unchanged ...
 export async function POST(req: Request) {
   try {
     const session = await getSession();
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
     const {
       name, price, description, image, categoryId, available,
       discountPercentage, unit, stock, supplierId, distributorId,
-      isFeatured, consumerPrice // <-- متغیر جدید را از body بگیرید
+      isFeatured, consumerPrice
     } = body;
 
     if (!name || !price || !categoryId || !supplierId || !distributorId) {
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
             unit,
             stock: Number(stock),
             isFeatured: Boolean(isFeatured),
-            consumerPrice: consumerPrice ? parseFloat(consumerPrice) : null // <-- فیلد جدید را اضافه کنید
+            consumerPrice: consumerPrice ? parseFloat(consumerPrice) : null
         }
     });
 
