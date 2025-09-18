@@ -1,4 +1,4 @@
-// FILE: app/(main)/cart/page.tsx (FINAL GUARANTEED FIX)
+// FILE: app/(main)/cart/page.tsx (FINAL with Line Item Totals)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,12 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ShamsiCalendar } from "@/components/shared/ShamsiCalendar";
 import { Label } from "@/components/ui/label";
 import toPersianDigits from "@/utils/persianNum";
+import { Separator } from "@/components/ui/separator";
 
-/**
- * @description Helper function to get today's date as a 'YYYY-MM-DD' string.
- * This is unambiguous and safe to use for state and API calls.
- * @returns {string} Today's date in 'YYYY-MM-DD' format.
- */
 const getTodayDateString = (): string => {
     const today = new Date();
     const year = today.getFullYear();
@@ -36,10 +32,7 @@ export default function CartPage() {
     const [isCheckout, setIsCheckout] = useState(false);
     const [settlements, setSettlements] = useState<Settlement[]>([]);
     const [selectedSettlement, setSelectedSettlement] = useState<string>("");
-    
-    // FIX: deliveryDate state is now a string, initialized with today's date string.
     const [deliveryDate, setDeliveryDate] = useState<string>(getTodayDateString());
-    
     const [notes, setNotes] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -77,14 +70,17 @@ export default function CartPage() {
 
         try {
             const orderData = {
-                items: cart.map(item => ({
-                    productId: item.id,
-                    quantity: item.quantity,
-                    price: item.price,
-                    productName: item.name
-                })),
+                items: cart.map(item => {
+                    const discountedPrice = item.price * (1 - (item.discountPercentage || 0) / 100);
+                    return {
+                        productId: item.id,
+                        productName: item.name,
+                        quantity: item.quantity,
+                        price: discountedPrice,
+                    };
+                }),
                 totalPrice: getTotalPrice(),
-                deliveryDate, // <-- The 'YYYY-MM-DD' string is sent directly
+                deliveryDate,
                 settlementId: selectedSettlement,
                 notes,
             };
@@ -101,8 +97,7 @@ export default function CartPage() {
             setIsLoading(false);
         }
     };
-
-    // --- (The rest of the component's JSX remains the same) ---
+    
     if (cart.length === 0 && !isCheckout) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8">
@@ -123,7 +118,6 @@ export default function CartPage() {
                     <CardContent className="p-3 sm:p-6 space-y-4">
                         <div>
                             <Label className="mb-2 flex items-center gap-2 text-sm font-semibold"><CalendarIcon size={16}/> تاریخ تحویل</Label>
-                            {/* The calendar component now correctly handles the string date */}
                             <ShamsiCalendar onSelectDate={setDeliveryDate} initialDate={deliveryDate} />
                         </div>
                         <div>
@@ -154,40 +148,51 @@ export default function CartPage() {
         <div className="p-4">
             <h1 className="text-md font-bold text-right mb-6">سبد خرید</h1>
             <div className="space-y-4">
-                {cart.map(item => (
-                    <div key={item.id} className="flex flex-col justify-between p-3 bg-white rounded-lg shadow">
-                        <div className="flex items-center gap-4">
-                            <Image src={item.image || "/placeholder.jpg"} alt={item.name} width={64} height={64} className="rounded-md object-cover"/>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate">{item.name}</h3>
-                                <p className="text-sm text-gray-600">{toPersianDigits(item.price)} تومان</p>
+                {cart.map(item => {
+                    const finalPrice = item.price * (1 - (item.discountPercentage || 0) / 100);
+                    const lineItemTotal = finalPrice * item.quantity;
+                    return (
+                        <div key={item.id} className="flex flex-col justify-between p-3 bg-white rounded-lg shadow-sm border">
+                            <div className="flex items-center gap-4">
+                                <Image src={item.image || "/placeholder.jpg"} alt={item.name} width={64} height={64} className="rounded-md object-cover"/>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold truncate">{item.name}</h3>
+                                    <p className="text-sm text-gray-500">قیمت واحد: {toPersianDigits(finalPrice)} ریال</p>
+                                </div>
+                            </div>
+                            <Separator className="my-3"/>
+                            <div className="flex justify-between items-center gap-2 sm:gap-3">
+                                <div className="flex items-center gap-2">
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => updateCartQuantity(item.id, item.quantity + 1)}><Plus size={16}/></Button>
+                                    <span className="font-bold text-xl w-8 text-center">{toPersianDigits(item.quantity)}</span>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => updateCartQuantity(item.id, item.quantity - 1)}><Minus size={16}/></Button>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {/* --- NEW: This block shows the line item total price --- */}
+                                    <p className="font-bold text-md text-teal-600">
+                                        {toPersianDigits(lineItemTotal)} ریال
+                                    </p>
+                                    <Button size="icon" variant="destructive" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => removeFromCart(item.id)}><Trash2 size={16}/></Button>
+                                </div>
                             </div>
                         </div>
-                        <div className="w-full h-px bg-gray-300 my-2"></div>
-                        <div className="flex place-content-between gap-2 sm:gap-3">
-                            <div>
-                                <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => updateCartQuantity(item.id, item.quantity + 1)}><Plus size={16}/></Button>
-                                <span className="font-bold text-xl">{toPersianDigits(item.quantity)}</span>
-                                <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => updateCartQuantity(item.id, item.quantity - 1)}><Minus size={16}/></Button>
-                            </div>
-                            <div>
-                            <Button size="icon" variant="destructive" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => removeFromCart(item.id)}><Trash2 size={16}/></Button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
             <div className="mt-8 p-4 bg-gray-50 rounded-lg space-y-3">
                 <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>مجموع (با تخفیف):</span>
-                    <span>{toPersianDigits(getOriginalTotalPrice())} تومان</span>
+                    <span>مجموع (قبل از تخفیف):</span>
+                    {/* FIX: Changed Toman to Rial */}
+                    <span>{toPersianDigits(getOriginalTotalPrice())} ریال</span>
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="font-semibold">مبلغ نهایی فاکتور:</span>
-                    <span className="text-md font-bold">{toPersianDigits(getTotalPrice())} تومان</span>
+                     {/* FIX: Changed Toman to Rial */}
+                    <span className="text-md font-bold">{toPersianDigits(getTotalPrice())} ریال</span>
                 </div>
                 <Button className="w-full mt-4 bg-blue-500 text-white" size="lg" onClick={() => setIsCheckout(true)}>ادامه فرآیند خرید</Button>
             </div>
         </div>
     );
 }
+
