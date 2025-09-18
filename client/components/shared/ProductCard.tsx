@@ -95,7 +95,7 @@ export default function NewProductCard({
           {hasDiscount && (
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs text-white bg-yellow-500 font-bold px-2 py-0.5 rounded-md">
-                ٪{toPersianDigits(product.discountPercentage)}-
+                ٪{toPersianDigits(product.discountPercentage)}
               </span>
               <span className="text-xs text-gray-400 line-through">
                 {toPersianDigits(product.price)}
