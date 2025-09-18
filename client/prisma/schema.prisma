@@ -41,6 +41,7 @@ model Product {
   name               String
   description        String?
   price              Float
+  consumerPrice      Float?
   image              String?
   available          Boolean     @default(true)
   discountPercentage Int         @default(0)

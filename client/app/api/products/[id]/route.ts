@@ -46,7 +46,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const {
       name, price, description, image, categoryId, available,
       discountPercentage, unit, stock, supplierId, distributorId,
-      isFeatured // <-- CHANGE: isFeatured از body دریافت شد
+      isFeatured, consumerPrice
     } = body;
 
     if (!name || price === undefined || !categoryId || !unit || stock === undefined || !supplierId || !distributorId) {
@@ -67,7 +67,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         discountPercentage: parseInt(discountPercentage, 10) || 0,
         unit,
         stock: Number(stock),
-        isFeatured: Boolean(isFeatured) // <-- CHANGE: isFeatured به دیتابیس ارسال شد
+        isFeatured: Boolean(isFeatured),
+        consumerPrice: consumerPrice ? parseFloat(consumerPrice) : null,
       },
     });
 
@@ -77,7 +78,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }
 }
-
 
 // --- This function handles PARTIALLY updating a product ---
 export async function PATCH(

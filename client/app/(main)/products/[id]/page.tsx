@@ -10,7 +10,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, Plus, Minus, Building, Tag, Package, Box } from "lucide-react";
+import { ArrowRight, Plus, Minus, Building, Tag, Package, Box, User } from "lucide-react";
 import Image from "next/image";
 import toPersianDigits from "@/utils/persianNum";
 
@@ -103,15 +103,22 @@ export default function ProductDetailPage() {
                                 <strong>موجودی:</strong> {product.stock > 0 ? `${product.stock} عدد` : "ناموجود"}
                             </div>
                         </div>
-                        
+                                                
+                       {product.consumerPrice && (
+                           <div className="flex justify-between items-center border-t pt-3">
+                                 <p className="text-sm text-muted-foreground flex items-center gap-1"><User size={14}/> قیمت مصرف‌کننده</p>
+                                 <p className="text-md font-bold text-gray-700">{toPersianDigits(product.consumerPrice)} ریال</p>
+                             </div>
+                        )}
+
                         <Separator />
-                        
+
                         <div className="flex justify-between items-center pt-2">
                             <p className="text-sm text-muted-foreground">قیمت</p>
                             <div className="text-left">
                                 {product.discountPercentage > 0 && (
                                     <div className="flex items-center gap-2 justify-end">
-                                        <Badge variant="destructive">%{product.discountPercentage}</Badge>
+                                        <Badge variant="destructive">%{toPersianDigits(product.discountPercentage)}</Badge>
                                         <p className="text-lg text-gray-400 line-through">{toPersianDigits(product.price)} ریال</p>
                                     </div>
                                 )}

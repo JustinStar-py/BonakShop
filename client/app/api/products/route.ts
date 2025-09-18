@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     const {
       name, price, description, image, categoryId, available,
       discountPercentage, unit, stock, supplierId, distributorId,
-      isFeatured // <-- CHANGE: isFeatured از body دریافت شد
+      isFeatured, consumerPrice // <-- متغیر جدید را از body بگیرید
     } = body;
 
     if (!name || !price || !categoryId || !supplierId || !distributorId) {
@@ -91,7 +91,8 @@ export async function POST(req: Request) {
             discountPercentage: parseInt(discountPercentage, 10) || 0,
             unit,
             stock: Number(stock),
-            isFeatured: Boolean(isFeatured) // <-- CHANGE: isFeatured به دیتابیس ارسال شد
+            isFeatured: Boolean(isFeatured),
+            consumerPrice: consumerPrice ? parseFloat(consumerPrice) : null // <-- فیلد جدید را اضافه کنید
         }
     });
 

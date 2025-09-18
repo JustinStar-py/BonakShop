@@ -62,7 +62,7 @@ export default function ProductManagementPage() {
     setEditingProduct(product || {
       name: "", price: "", description: "", categoryId: "", image: "",
       available: true, discountPercentage: "0", unit: "عدد", stock: "",
-      supplierId: "", distributorId: "", isFeatured: false // <-- CHANGE: Initial value for new product
+      supplierId: "", distributorId: "", isFeatured: false, consumerPrice: ""
     });
     setIsDialogOpen(true);
   };
@@ -163,7 +163,8 @@ export default function ProductManagementPage() {
               {/* ... Other form fields ... */}
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>نام محصول</Label><Input value={editingProduct.name} onChange={e => handleFormChange('name', e.target.value)} required /></div>
-                <div><Label>قیمت (ریال)</Label><Input type="number" value={editingProduct.price} onChange={e => handleFormChange('price', e.target.value)} required /></div>
+                <div><Label>قیمت فروش (ریال)</Label><Input type="number" value={editingProduct.price} onChange={e => handleFormChange('price', e.target.value)} required /></div>
+                <div><Label>قیمت مصرف‌کننده (ریال)</Label><Input type="number" value={editingProduct.consumerPrice || ''} onChange={e => handleFormChange('consumerPrice', e.target.value)} /></div>
                 <div><Label>تخفیف (٪)</Label><Input type="number" value={editingProduct.discountPercentage} onChange={e => handleFormChange('discountPercentage', e.target.value)} /><p className="text-xs text-green-600 mt-2">قیمت بعد از تخفیف: {discountedPrice.toLocaleString('fa-IR')} ریال</p></div>
                 <div><Label>دسته‌بندی</Label><Select value={editingProduct.categoryId} onValueChange={val => handleFormChange('categoryId', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>تولیدکننده</Label><Select value={editingProduct.supplierId} onValueChange={val => handleFormChange('supplierId', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
