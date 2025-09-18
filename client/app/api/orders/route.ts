@@ -1,4 +1,4 @@
-// FILE: app/api/orders/route.ts (FINAL GUARANTEED FIX)
+// FILE: app/api/orders/route.ts (CORRECTED)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     }
 }
 
-
+// --- (POST function is updated) ---
 export async function POST(req: Request) {
     const session = await getSession();
     if (!session.user) {
@@ -37,19 +37,12 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        // deliveryDate is now expected to be a 'YYYY-MM-DD' string
         const { items, totalPrice, deliveryDate, settlementId, notes } = body;
 
-        if (
-            !Array.isArray(items) || items.length === 0 ||
-            totalPrice === undefined || !deliveryDate || !settlementId
-        ) {
+        if (!Array.isArray(items) || items.length === 0 || totalPrice === undefined || !deliveryDate || !settlementId) {
             return NextResponse.json({ error: "Missing required order data" }, { status: 400 });
         }
         
-        // --- FIX: The server now receives a string and creates a new Date from it. ---
-        // Creating a new Date from a 'YYYY-MM-DD' string correctly interprets it
-        // as UTC midnight, preventing any timezone shift. This is the most reliable method.
         const safeDeliveryDate = new Date(deliveryDate);
 
         const newOrder = await prisma.$transaction(async (tx) => {
@@ -57,7 +50,7 @@ export async function POST(req: Request) {
                 data: {
                     userId,
                     totalPrice,
-                    deliveryDate: safeDeliveryDate, // Use the newly created Date object
+                    deliveryDate: safeDeliveryDate,
                     settlementId,
                     notes,
                     items: {
@@ -65,6 +58,7 @@ export async function POST(req: Request) {
                             productName: item.productName,
                             quantity: item.quantity,
                             price: item.price,
+                            productId: item.productId,
                         })),
                     },
                 },

@@ -1,4 +1,4 @@
-// FILE: app/api/products/route.ts (Updated for Admin Pagination & Search)
+// FILE: app/api/products/route.ts (Updated for Status Filter)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -7,10 +7,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "15"); // تعداد آیتم در هر صفحه
+    const limit = parseInt(searchParams.get("limit") || "15");
     const searchTerm = searchParams.get("search") || "";
     const categoryId = searchParams.get("categoryId") || "";
     const supplierId = searchParams.get("supplierId") || "";
+    const status = searchParams.get("status") || "all"; // <-- فیلتر جدید
 
     const skip = (page - 1) * limit;
 
@@ -32,6 +33,16 @@ export async function GET(request: Request) {
     if (supplierId) {
       whereClause.supplierId = supplierId;
     }
+
+    // --- NEW: Logic for status filter ---
+    if (status === 'available') {
+        whereClause.available = true;
+    } else if (status === 'unavailable') {
+        whereClause.available = false;
+    } else if (status === 'featured') {
+        whereClause.isFeatured = true;
+    }
+    // if status is 'all', we don't add any specific filter for it
 
     const products = await prisma.product.findMany({
       where: whereClause,
@@ -60,7 +71,6 @@ export async function GET(request: Request) {
   }
 }
 
-// ... POST function remains unchanged ...
 export async function POST(req: Request) {
   try {
     const session = await getSession();

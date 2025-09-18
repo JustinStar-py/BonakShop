@@ -101,9 +101,9 @@ export default function OrdersPage() {
 
     if (orders.length === 0) {
         return (
-            <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-4">هیچ سفارشی ثبت نکرده‌اید</h2>
-                <Button onClick={() => router.push('/')}>شروع خرید</Button>
+            <div className="text-center p-8 mt-25">
+                <h2 className="text-md font-bold mb-4">هیچ سفارشی ثبت نکرده‌اید</h2>
+                <Button className="bg-teal-600 text-white" onClick={() => router.push('/')}>شروع خرید</Button>
             </div>
         );
     }

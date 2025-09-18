@@ -1,4 +1,4 @@
-// FILE: app/admin/products/page.tsx (FINAL with Search & Pagination)
+// FILE: app/admin/products/page.tsx (FINAL with Status Filter, Search & Pagination)
 "use client";
 
 import { useState, useEffect, useMemo, FormEvent, ChangeEvent, useCallback } from "react";
@@ -40,8 +40,9 @@ export default function ProductManagementPage() {
     const [addEntity, setAddEntity] = useState<{ type: EntityType | null, isOpen: boolean }>({ type: null, isOpen: false });
     const [newEntityName, setNewEntityName] = useState("");
     
-    // Search and Pagination states
+    // Search, Filter, and Pagination states
     const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -52,11 +53,11 @@ export default function ProductManagementPage() {
         return Number(editingProduct.price) * (1 - discount / 100);
     }, [editingProduct?.price, editingProduct?.discountPercentage]);
     
-    // Fetch function now handles pagination and search
-    const fetchProducts = useCallback(async (page: number, search: string) => {
+    // Fetch function now handles pagination, search and status filter
+    const fetchProducts = useCallback(async (page: number, search: string, status: string) => {
         setIsLoading(true);
         try {
-            const res = await apiClient.get(`/products?page=${page}&limit=15&search=${search}`);
+            const res = await apiClient.get(`/products?page=${page}&limit=15&search=${search}&status=${status}`);
             setProducts(res.data.products || []);
             setTotalPages(res.data.totalPages || 1);
             setCurrentPage(res.data.currentPage || 1);
@@ -85,14 +86,8 @@ export default function ProductManagementPage() {
     }, []);
     
     useEffect(() => {
-        // Reset to page 1 when search term changes
-        fetchProducts(1, debouncedSearchTerm);
-    }, [debouncedSearchTerm, fetchProducts]);
-
-    useEffect(() => {
-        // Fetch products for the current page when it changes
-        fetchProducts(currentPage, debouncedSearchTerm);
-    }, [currentPage, fetchProducts]);
+        fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
+    }, [currentPage, debouncedSearchTerm, statusFilter, fetchProducts]);
 
 
     const handleOpenDialog = (product: any | null = null) => {
@@ -161,7 +156,7 @@ export default function ProductManagementPage() {
         };
         try {
             await apiClient({ url, method, data: body });
-            await fetchProducts(currentPage, debouncedSearchTerm); // Refresh current page
+            await fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
             setIsDialogOpen(false);
         } catch (error) { alert(`خطا در ذخیره محصول: ${error}`); } 
         finally { setActionLoading(false); }
@@ -172,7 +167,7 @@ export default function ProductManagementPage() {
         setActionLoading(true);
         try {
             await apiClient.delete(`/products/${productId}`);
-            await fetchProducts(currentPage, debouncedSearchTerm); // Refresh current page
+            await fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
             setDeleteDialog({ isOpen: false, productId: null, productName: null });
         } catch (error) { alert(`خطا در حذف محصول: ${error}`); } 
         finally { setActionLoading(false); }
@@ -185,17 +180,33 @@ export default function ProductManagementPage() {
                 <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن محصول</Button>
             </div>
 
-            <div className="relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <Input 
-                    placeholder="جستجو در نام، دسته‌بندی یا شرکت..." 
-                    className="pr-10 w-full md:w-1/3" 
-                    value={searchTerm}
-                    onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setCurrentPage(1); // Reset to page 1 on new search
-                    }}
-                />
+            <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-grow">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Input 
+                        placeholder="جستجو در محصولات..." 
+                        className="pr-10" 
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    />
+                </div>
+                <Select value={statusFilter} onValueChange={(value) => {
+                    setStatusFilter(value);
+                    setCurrentPage(1);
+                }}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">همه وضعیت‌ها</SelectItem>
+                        <SelectItem value="available">موجود</SelectItem>
+                        <SelectItem value="unavailable">ناموجود</SelectItem>
+                        <SelectItem value="featured">ویژه</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             
             <Card>
@@ -233,7 +244,7 @@ export default function ProductManagementPage() {
                 </CardContent>
             </Card>
 
-            {totalPages > 1 && (
+             {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-4">
                     <Button variant="outline" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
                        <ChevronRight className="h-4 w-4" /> بعدی 
@@ -257,9 +268,9 @@ export default function ProductManagementPage() {
                                 <div><Label>قیمت فروش (ریال)</Label><Input type="number" value={editingProduct.price} onChange={e => handleFormChange('price', e.target.value)} required /></div>
                                 <div><Label>قیمت مصرف‌کننده (ریال)</Label><Input type="number" value={editingProduct.consumerPrice || ''} onChange={e => handleFormChange('consumerPrice', e.target.value)} /></div>
                                 <div><Label>تخفیف (٪)</Label><Input type="number" value={editingProduct.discountPercentage} onChange={e => handleFormChange('discountPercentage', e.target.value)} /><p className="text-xs text-green-600 mt-2">قیمت بعد از تخفیف: {formatPrice(discountedPrice)}</p></div>
-                                <div><Label>دسته‌بندی</Label><Select value={editingProduct.categoryId} onValueChange={val => handleSelectChange('category', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}<SelectItem value="add-new-category" className="text-blue-500 font-bold">افزودن دسته‌بندی جدید</SelectItem></SelectContent></Select></div>
-                                <div><Label>تولیدکننده</Label><Select value={editingProduct.supplierId} onValueChange={val => handleSelectChange('supplier', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}<SelectItem value="add-new-supplier" className="text-blue-500 font-bold">افزودن تولیدکننده جدید</SelectItem></SelectContent></Select></div>
-                                <div><Label>پخش‌کننده</Label><Select value={editingProduct.distributorId} onValueChange={val => handleSelectChange('distributor', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{distributors.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}<SelectItem value="add-new-distributor" className="text-blue-500 font-bold">افزودن پخش‌کننده جدید</SelectItem></SelectContent></Select></div>
+                                <div><Label>دسته‌بندی</Label><Select value={editingProduct.categoryId} onValueChange={val => handleSelectChange('category', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}<SelectItem value="add-new-category" className="text-blue-500 font-bold">افزودن دسته‌بندی جدید...</SelectItem></SelectContent></Select></div>
+                                <div><Label>تولیدکننده</Label><Select value={editingProduct.supplierId} onValueChange={val => handleSelectChange('supplier', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}<SelectItem value="add-new-supplier" className="text-blue-500 font-bold">افزودن تولیدکننده جدید...</SelectItem></SelectContent></Select></div>
+                                <div><Label>پخش‌کننده</Label><Select value={editingProduct.distributorId} onValueChange={val => handleSelectChange('distributor', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{distributors.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}<SelectItem value="add-new-distributor" className="text-blue-500 font-bold">افزودن پخش‌کننده جدید...</SelectItem></SelectContent></Select></div>
                                 <div><Label>موجودی</Label><Input type="number" value={editingProduct.stock} onChange={e => handleFormChange('stock', e.target.value)} required /></div>
                                 <div><Label>واحد</Label><Input value={editingProduct.unit} onChange={e => handleFormChange('unit', e.target.value)} required /></div>
                             </div>

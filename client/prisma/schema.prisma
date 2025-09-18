@@ -1,139 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Generator block specifies the Prisma Client generator to be used.
 generator client {
   provider = "prisma-client-js"
 }
 
+// Datasource block specifies the database connection.
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql" // Using PostgreSQL database.
+  url      = env("DATABASE_URL") // Connection URL is loaded from .env file.
 }
 
+// Model for product suppliers (e.g., Kalleh, Mihan).
 model Supplier {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  logo     String?
-  products Product[]
+  id       String    @id @default(cuid()) // Unique ID for the supplier.
+  name     String    @unique // Name of the supplier, must be unique.
+  logo     String?   // Optional URL for the supplier's logo.
+  products Product[] // Relation to all products from this supplier.
 }
 
+// Model for product distributors (e.g., Alghadir Distribution).
 model Distributor {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  logo     String?
-  products Product[]
+  id       String    @id @default(cuid()) // Unique ID for the distributor.
+  name     String    @unique // Name of the distributor, must be unique.
+  logo     String?   // Optional URL for the distributor's logo.
+  products Product[] // Relation to all products handled by this distributor.
 }
 
+// Model for settlement types (e.g., Cash, 1-month check).
 model Settlement {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  description String?
-  orders      Order[]
+  id          String  @id @default(cuid()) // Unique ID for the settlement type.
+  name        String  @unique // Name of the settlement type, must be unique.
+  description String? // Optional description.
+  orders      Order[] // Relation to all orders using this settlement type.
 }
 
+// Model for product categories (e.g., Dairy, Beverages).
 model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  icon     String?
-  image    String?
-  products Product[]
+  id       String    @id @default(cuid()) // Unique ID for the category.
+  name     String    @unique // Name of the category, must be unique.
+  icon     String?   // Optional emoji/icon for the category.
+  image    String?   // Optional URL for the category's image.
+  products Product[] // Relation to all products in this category.
 }
 
+// Main model for products.
 model Product {
-  id                 String      @id @default(cuid())
-  name               String
-  description        String?
-  price              Float
-  consumerPrice      Float?
-  image              String?
-  available          Boolean     @default(true)
-  discountPercentage Int         @default(0)
-  unit               String      @default("عدد")
-  stock              Int         @default(0)
-  categoryId         String
-  supplierId         String
-  distributorId      String
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @default(now()) @updatedAt
-  isFeatured         Boolean     @default(false)
-  category           Category    @relation(fields: [categoryId], references: [id])
-  distributor        Distributor @relation(fields: [distributorId], references: [id])
-  supplier           Supplier    @relation(fields: [supplierId], references: [id])
+  id                 String      @id @default(cuid()) // Unique ID for the product.
+  name               String      // Name of the product.
+  description        String?     // Optional description.
+  price              Float       // Sale price.
+  consumerPrice      Float?      // Optional consumer price.
+  image              String?     // Optional URL for the product's image.
+  available          Boolean     @default(true) // Availability status.
+  discountPercentage Int         @default(0) // Discount percentage.
+  unit               String      @default("عدد") // Unit of measurement (e.g., "carton", "bottle").
+  stock              Int         @default(0) // Current stock quantity.
+  isFeatured         Boolean     @default(false) // Flag for featured products.
+  createdAt          DateTime    @default(now()) // Timestamp of creation.
+  updatedAt          DateTime    @default(now()) @updatedAt // Timestamp of last update.
 
+  // Relations
+  categoryId         String      // Foreign key for Category.
+  category           Category    @relation(fields: [categoryId], references: [id])
+  supplierId         String      // Foreign key for Supplier.
+  supplier           Supplier    @relation(fields: [supplierId], references: [id])
+  distributorId      String      // Foreign key for Distributor.
+  distributor        Distributor @relation(fields: [distributorId], references: [id])
+  orderItems         OrderItem[] // Relation to order items (added for procurement fix).
+
+  // A product is unique based on its name and supplier.
   @@unique([name, supplierId])
 }
 
+// Model for customer orders.
 model Order {
-  id            String         @id @default(cuid())
-  totalPrice    Float
-  createdAt     DateTime       @default(now())
-  deliveryDate  DateTime
-  status        OrderStatus    @default(PENDING)
-  notes         String?
-  userId        String
-  settlementId  String
-  settlement    Settlement     @relation(fields: [settlementId], references: [id])
+  id            String         @id @default(cuid()) // Unique ID for the order.
+  totalPrice    Float          // Total price of the order.
+  deliveryDate  DateTime       // Scheduled delivery date.
+  status        OrderStatus    @default(PENDING) // Current status of the order.
+  notes         String?        // Optional notes from the customer.
+  createdAt     DateTime       @default(now()) // Timestamp of creation.
+  
+  // Relations
+  userId        String         // Foreign key for User.
   user          User           @relation(fields: [userId], references: [id])
-  items         OrderItem[]
-  returnRequest ReturnRequest?
+  settlementId  String         // Foreign key for Settlement.
+  settlement    Settlement     @relation(fields: [settlementId], references: [id])
+  items         OrderItem[]    // List of items in this order.
+  returnRequest ReturnRequest? // Optional relation to a return request.
 }
 
+// Model for items within an order.
 model OrderItem {
-  id                 String              @id @default(cuid())
-  productName        String
-  quantity           Int
-  price              Float
-  orderId            String
-  order              Order               @relation(fields: [orderId], references: [id])
-  returnRequestItems ReturnRequestItem[]
+  id          String  @id @default(cuid()) // Unique ID for the order item.
+  productName String  // Name of the product at the time of order.
+  quantity    Int     // Quantity ordered.
+  price       Float   // Price per unit at the time of order.
+
+  // Relations
+  orderId     String  // Foreign key for Order.
+  order       Order   @relation(fields: [orderId], references: [id])
+  
+  // --- FIX for Procurement Logic ---
+  productId   String  // Foreign key for Product. This is crucial for accurate tracking.
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  returnRequestItems ReturnRequestItem[] // Relation to items in a return request.
 }
 
+// Model for users (customers, admins, workers).
 model User {
-  id          String   @id @default(cuid())
-  phone       String   @unique
-  password    String
-  createdAt   DateTime @default(now())
-  name        String?
-  shopName    String?
-  shopAddress String?
-  landline    String?
-  latitude    Float?
-  longitude   Float?
-  role        Role     @default(CUSTOMER)
-  orders      Order[]
+  id          String   @id @default(cuid()) // Unique ID for the user.
+  phone       String   @unique // User's phone number, must be unique.
+  password    String   // Hashed password.
+  name        String?  // User's full name.
+  shopName    String?  // User's shop name.
+  shopAddress String?  // User's shop address.
+  landline    String?  // Optional landline phone number.
+  latitude    Float?   // Optional geographic latitude.
+  longitude   Float?   // Optional geographic longitude.
+  role        Role     @default(CUSTOMER) // User's role (determines permissions).
+  createdAt   DateTime @default(now()) // Timestamp of creation.
+  
+  // Relations
+  orders      Order[]  // List of all orders placed by this user.
 }
 
+// Model for return requests.
 model ReturnRequest {
-  id        String              @id @default(cuid())
-  createdAt DateTime            @default(now())
-  status    ReturnStatus        @default(REQUESTED)
-  reason    String?
-  orderId   String              @unique
-  order     Order               @relation(fields: [orderId], references: [id])
-  items     ReturnRequestItem[]
+  id        String       @id @default(cuid()) // Unique ID for the return request.
+  status    ReturnStatus @default(REQUESTED) // Current status of the return request.
+  reason    String?      // Optional reason for the return.
+  createdAt DateTime     @default(now()) // Timestamp of creation.
+
+  // Relations
+  orderId   String       @unique // Foreign key to the Order, one-to-one relation.
+  order     Order        @relation(fields: [orderId], references: [id])
+  items     ReturnRequestItem[] // List of items being returned.
 }
 
+// Model for items within a return request.
 model ReturnRequestItem {
-  id              String        @id @default(cuid())
-  quantity        Int
-  orderItemId     String
-  returnRequestId String
+  id              String        @id @default(cuid()) // Unique ID.
+  quantity        Int           // Quantity to be returned.
+
+  // Relations
+  orderItemId     String        // Foreign key to the original OrderItem.
   orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
+  returnRequestId String        // Foreign key to the ReturnRequest.
   returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id])
 }
 
+// Enum for possible order statuses.
 enum OrderStatus {
-  PENDING
-  SHIPPED
-  DELIVERED
-  CANCELED
+  PENDING   // Order placed, awaiting confirmation.
+  SHIPPED   // Order is out for delivery.
+  DELIVERED // Order has been delivered.
+  CANCELED  // Order has been canceled.
 }
 
+// Enum for user roles.
 enum Role {
-  CUSTOMER
-  ADMIN
-  WORKER
+  CUSTOMER // Standard user.
+  ADMIN    // Administrator with full access.
+  WORKER   // Delivery personnel.
 }
 
+// Enum for possible return request statuses.
 enum ReturnStatus {
-  REQUESTED
-  APPROVED
-  REJECTED
+  REQUESTED // Return has been requested by the customer.
+  APPROVED  // Return has been approved by an admin/worker.
+  REJECTED  // Return has been rejected.
 }
+

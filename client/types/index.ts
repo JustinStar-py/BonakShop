@@ -10,11 +10,8 @@ import type {
   ReturnRequestItem as PrismaReturnRequestItem,
   Supplier as PrismaSupplier,
   Distributor as PrismaDistributor
-  // <-- CHANGE: CartItem از این لیست حذف شد چون یک تایپ سفارشی است
 } from '@prisma/client';
 
-// A product item in the shopping cart, extending the base product with quantity
-// این تعریف کاملا صحیح است و باقی می‌ماند
 export type CartItem = PrismaProduct & {
   quantity: number;
 };

@@ -1,4 +1,4 @@
-// FILE: app/admin/procurement/page.tsx
+// FILE: app/admin/procurement/page.tsx (CORRECTED)
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -12,14 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Filter, X } from "lucide-react";
 
-type OrderWithRelations = Order & { user: { name: string | null; shopName: string | null; } };
+// --- Type Definitions ---
+type ProductWithRelations = Product & { supplier: Supplier; distributor: Distributor };
+type OrderItemWithProduct = OrderItem & { product: ProductWithRelations };
+type OrderForProcurement = Order & { user: { name: string | null; shopName: string | null; }; items: OrderItemWithProduct[] };
 interface ProcurementDetail { customerName: string; quantity: number; }
-interface ProcurementItem extends Product {
+interface ProcurementItem extends ProductWithRelations {
     neededDate: string;
     neededQuantity: number;
     details: ProcurementDetail[];
-    distributor: Distributor;
-    supplier: Supplier;
 }
 
 export default function ProcurementPage() {
@@ -37,40 +38,52 @@ export default function ProcurementPage() {
         const calculateProcurement = async () => {
             setIsLoading(true);
             try {
-                const [productsRes, ordersRes, distributorsRes] = await Promise.all([
-                    apiClient.get('/products'), apiClient.get('/admin/orders'), apiClient.get('/distributors')
+                const [ordersRes, distributorsRes, productsRes] = await Promise.all([
+                    apiClient.get('/admin/orders'),
+                    apiClient.get('/distributors'),
+                    apiClient.get('/products?limit=1000') // Fetch all products for filter dropdown
                 ]);
-                const products: (Product & { supplier: Supplier, distributor: Distributor })[] = productsRes.data.products;
-                const allOrders: OrderWithRelations[] = ordersRes.data;
+                
+                const allOrders: OrderForProcurement[] = ordersRes.data;
                 const distributors: Distributor[] = distributorsRes.data;
+                const allProductsForFilter: Product[] = productsRes.data.products;
 
-                setAllProducts(products);
                 setAllDistributors(distributors);
+                setAllProducts(allProductsForFilter);
 
                 const pendingOrders = allOrders.filter(o => o.status === 'PENDING' || o.status === 'SHIPPED');
-                const productDemand: Record<string, { product: any, details: ProcurementDetail[] }> = {};
+                const productDemand: Record<string, { product: ProductWithRelations, details: ProcurementDetail[], neededDate: string }> = {};
 
-                pendingOrders.forEach((order: any) => {
+                pendingOrders.forEach(order => {
                     const deliveryDateStr = new Date(order.deliveryDate).toISOString().split('T')[0];
-                    order.items.forEach((item: any) => {
-                        const product = products.find((p: Product) => p.name === item.productName);
+                    order.items.forEach(item => {
+                        const product = item.product;
                         if (product) {
                             const key = `${product.id}-${deliveryDateStr}`;
-                            if (!productDemand[key]) productDemand[key] = { product, details: [] };
-                            productDemand[key].details.push({ customerName: order.user.shopName || order.user.name || 'نامشخص', quantity: item.quantity });
+                            if (!productDemand[key]) {
+                                productDemand[key] = { product, details: [], neededDate: deliveryDateStr };
+                            }
+                            productDemand[key].details.push({
+                                customerName: order.user.shopName || order.user.name || 'نامشخص',
+                                quantity: item.quantity
+                            });
                         }
                     });
                 });
                 
-                const procurementList = Object.entries(productDemand).map(([key, { product, details }]) => ({
+                const procurementList = Object.values(productDemand).map(({ product, details, neededDate }) => ({
                     ...product,
-                    neededDate: key.split(product.id + '-')[1],
+                    neededDate: neededDate,
                     neededQuantity: details.reduce((sum, d) => sum + d.quantity, 0),
                     details
                 }));
+
                 setRawProcurementList(procurementList);
-            } catch (error) { console.error("Failed to calculate procurement list:", error); }
-            finally { setIsLoading(false); }
+            } catch (error) { 
+                console.error("Failed to calculate procurement list:", error); 
+            } finally { 
+                setIsLoading(false); 
+            }
         };
         calculateProcurement();
     }, []);
