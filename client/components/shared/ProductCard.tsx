@@ -61,10 +61,16 @@ export default function NewProductCard({
       </div>
 
       {/* Stock Badge */}
-      <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md">
+      <div className="absolute top-0 left-0 bg-blue-400 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md">
+        {product.unit} 
+      </div>
+      
+      {/* Stock Badge */}
+      <div className="absolute top-7 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tr-md">
         {toPersianDigits(product.stock)} 
         {/* {product.unit}  */}
       </div>
+
 
       <div className="flex-grow flex flex-col cursor-pointer" onClick={() => onSelectProduct(product)}>
         <div className="flex justify-center items-center h-28 cursor-pointer" onClick={handleImageClick}>

@@ -118,13 +118,13 @@ export default function ProductDetailPage() {
                             <div className="text-left">
                                 {product.discountPercentage > 0 && (
                                     <div className="flex items-center gap-2 justify-end">
-                                        <Badge variant="destructive">%{toPersianDigits(product.discountPercentage)}</Badge>
+                                        <Badge className="text-white bg-yellow-500">%{toPersianDigits(product.discountPercentage)}</Badge>
                                         <p className="text-lg text-gray-400 line-through">{toPersianDigits(product.price)} ریال</p>
                                     </div>
                                 )}
                                 <p className="text-lg font-extrabold text-blue-500">{toPersianDigits(discountedPrice)} ریال</p>
                             </div>
-                        </div>
+                        </div> 
                     </div>
                 </div>
 
