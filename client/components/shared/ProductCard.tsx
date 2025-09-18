@@ -64,7 +64,7 @@ export default function NewProductCard({
       {/* Stock Badge */}
       <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md">
         {toPersianDigits(product.stock)} 
-        {product.unit} 
+        {/* {product.unit}  */}
       </div>
 
 
@@ -103,8 +103,8 @@ export default function NewProductCard({
             </div>
           )}
           <div className="text-gray-800 font-bold text-xs text-right">
-            <span>{toPersianDigits(discountedPrice)}</span>
-            <span className="text-xs font-normal px-1">ریال</span>
+              <span>{toPersianDigits(discountedPrice)}</span>
+              <span className="text-xs font-normal px-1">ریال</span>
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export default function NewProductCard({
             onClick={() => onAddToCart(product)}
           >
             <Plus className="h-2 w-2" />
-            افزودن
+           افزودن  {product.unit !== "عدد" ? `(${product.unit})` : ""}
           </Button>
         ) : (
           <div className="flex items-center justify-center gap-2">
