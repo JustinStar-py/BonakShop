@@ -233,8 +233,8 @@ export default function HomePage() {
       <div className="p-4 flex justify-between items-center bg-gray-50 border-b sticky top-0 z-20">
         <h1 className="font-bold text-sm text-gray-700">سلام {user?.name?.trim().split(" ")[0]}!</h1>
         <div className="flex items-center">
-          {user?.role === 'ADMIN' && <Button className="text-teal-500" variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')}><LayoutDashboard className="h-7 w-7" strokeWidth={2.5} /></Button>}
-          {user?.role === 'WORKER' && <Button className="text-teal-500" variant="ghost" size="icon" onClick={() => router.push('/delivery')}><Truck className="h-7 w-7" strokeWidth={2.5} /></Button>}
+          {user?.role === 'ADMIN' && <Button className="text-teal-500 border-3 rounded-xl border-white-500" variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')}><LayoutDashboard className="h-7 w-7" strokeWidth={2.5} /></Button>}
+          {user?.role === 'WORKER' && <Button className="text-teal-500 border-3 rounded-xl border-white-500" variant="ghost" size="icon" onClick={() => router.push('/delivery')}><Truck className="h-7 w-7" strokeWidth={2.5} /></Button>}
           <Button className="text-teal-500 border-3 rounded-xl border-white-500 mx-2" variant="ghost" size="icon" onClick={() => router.push('/profile')}><UserIcon className="h-7 w-7" strokeWidth={2.75} /></Button>
           <Button variant="ghost" size="icon" onClick={logout} className="text-red-500 border-3 rounded-xl border-white-500"><LogOut className="h-7 w-7"strokeWidth={2.5} /></Button>
         </div>

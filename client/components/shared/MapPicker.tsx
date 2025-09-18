@@ -1,14 +1,17 @@
-// FILE: components/shared/MapPicker.tsx
-// FINAL VERSION: Fixed map centering issue in readOnly mode.
+// FILE: components/shared/MapPicker.tsx (FINAL UX IMPROVEMENTS)
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
-import { LatLngExpression, Icon, LatLngTuple } from 'leaflet';
-import { useEffect, useState } from 'react';
-import { LocateFixed } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { Icon, LatLngTuple, Map } from 'leaflet';
+import { useEffect, useState, useRef } from 'react';
+import { LocateFixed, Loader2 } from 'lucide-react'; // Loader2 is now imported
 import { Button } from '@/components/ui/button';
 
+// Import Leaflet CSS directly here to make the component self-contained
+import "leaflet/dist/leaflet.css";
 import "leaflet/dist/images/marker-shadow.png";
+
+// Define the default marker icon
 const DefaultIcon = new Icon({
     iconUrl: "/marker-icon.png",
     shadowUrl: "/marker-shadow.png",
@@ -16,6 +19,7 @@ const DefaultIcon = new Icon({
     iconAnchor: [12, 41]
 });
 
+// Define the props for our MapPicker component
 interface MapPickerProps {
     onLocationChange?: (lat: number, lng: number) => void;
     initialPosition?: LatLngTuple;
@@ -24,81 +28,128 @@ interface MapPickerProps {
     height?: string;
 }
 
-function DraggableMarker({ onLocationChange, initialPosition }: Pick<MapPickerProps, 'onLocationChange' | 'initialPosition'>) {
-    const [position, setPosition] = useState<LatLngExpression | null>(initialPosition || null);
-    const map = useMap();
-    
-    useEffect(() => {
-        if(initialPosition) map.flyTo(initialPosition, 15);
-    }, [initialPosition, map]);
-
+// An internal component to handle map click events cleanly
+function MapEventsController({ setPosition, onLocationChange }: {
+    setPosition: React.Dispatch<React.SetStateAction<LatLngTuple | null>>;
+    onLocationChange?: (lat: number, lng: number) => void;
+}) {
     useMapEvents({
         click(e) {
-            setPosition(e.latlng);
-            onLocationChange?.(e.latlng.lat, e.latlng.lng);
+            const { lat, lng } = e.latlng;
+            setPosition([lat, lng]);
+            onLocationChange?.(lat, lng);
         },
     });
-
-    return position === null ? null : (
-        <Marker position={position} icon={DefaultIcon} draggable={true} eventHandlers={{
-            dragend: (e) => {
-                const marker = e.target;
-                const newPos = marker.getLatLng();
-                setPosition(newPos);
-                onLocationChange?.(newPos.lat, newPos.lng);
-            }
-        }}>
-        </Marker>
-    );
-}
-
-function GoToCurrentLocationButton() {
-    const map = useMap();
-    const handleClick = () => {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => map.flyTo([pos.coords.latitude, pos.coords.longitude], 15),
-            () => alert("امکان دسترسی به موقعیت مکانی شما وجود ندارد.")
-        );
-    };
-    return (
-        <Button onClick={handleClick} size="icon" className="absolute top-2 right-2 z-[1000] h-8 w-8" type="button">
-            <LocateFixed className="h-4 w-4" />
-        </Button>
-    )
+    return null;
 }
 
 export default function MapPicker({ 
     onLocationChange, 
-    initialPosition = [32.2355764, 54.090075],
+    initialPosition,
     marker,
     readOnly = false,
-    height = 'h-64'
+    height = 'h-60' // --- FIX 1: Default height is now smaller (h-64 -> h-60) ---
 }: MapPickerProps) {
-    // FIX: If a marker is provided in readOnly mode, center the map on it.
-    const mapCenter = readOnly && marker ? marker.position : initialPosition;
+    const [markerPosition, setMarkerPosition] = useState<LatLngTuple | null>(initialPosition || null);
+    const mapRef = useRef<Map | null>(null);
+    // --- FIX 2: Added loading state for geolocation button ---
+    const [isLocating, setIsLocating] = useState(false);
 
-    const map = (
-        <MapContainer center={mapCenter} zoom={readOnly ? 15 : 13} style={{ height: '100%', width: '100%' }}>
-            <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            {readOnly && marker ? (
-                <Marker position={marker.position} icon={DefaultIcon}>
-                    <Popup>{marker.popupText}</Popup>
-                </Marker>
-            ) : (
-                <>
-                    <DraggableMarker onLocationChange={onLocationChange} initialPosition={initialPosition} />
-                    <GoToCurrentLocationButton />
-                </>
-            )}
-        </MapContainer>
-    );
+    useEffect(() => {
+        if (!readOnly && initialPosition) {
+            setMarkerPosition(initialPosition);
+            if (mapRef.current) {
+                mapRef.current.flyTo(initialPosition, 15);
+            }
+        }
+    }, [initialPosition, readOnly]);
+
+    // --- FIX 2: Updated handler with loading state ---
+    const handleFindMe = () => {
+        if (mapRef.current) {
+            setIsLocating(true); // Start loading
+            const map = mapRef.current;
+            map.locate().on("locationfound", function (e) {
+                const newPos: LatLngTuple = [e.latlng.lat, e.latlng.lng];
+                setMarkerPosition(newPos);
+                onLocationChange?.(newPos[0], newPos[1]);
+                map.flyTo(newPos, 15);
+                setIsLocating(false); // Stop loading on success
+            }).on("locationerror", function(){
+                alert("امکان دسترسی به موقعیت مکانی شما وجود ندارد.");
+                setIsLocating(false); // Stop loading on error
+            });
+        }
+    };
+    
+    const mapCenter = readOnly && marker ? marker.position : (initialPosition || [35.7219, 51.3347]);
 
     return (
-        <div className={`${height} w-full rounded-md overflow-hidden relative border`}>
-             {map}
+        <div className="flex flex-col gap-2">
+            {!readOnly && (
+                // --- FIX 2: Button JSX is now conditional based on loading state ---
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleFindMe}
+                    className="w-full"
+                    disabled={isLocating}
+                >
+                    {isLocating ? (
+                        <>
+                            در حال یافتن موقعیت...
+                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                        </>
+                    ) : (
+                        <>
+                            <LocateFixed className="ml-2 h-4 w-4" />
+                            پیدا کردن موقعیت مکانی من
+                        </>
+                    )}
+                </Button>
+            )}
+            <div className={`${height} w-full rounded-md overflow-hidden relative border z-0`}>
+                 <MapContainer 
+                    center={mapCenter} 
+                    zoom={13} 
+                    style={{ height: '100%', width: '100%' }}
+                    ref={mapRef}
+                >
+                    <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    
+                    {readOnly && marker ? (
+                         <Marker position={marker.position} icon={DefaultIcon}>
+                             <Popup>{marker.popupText}</Popup>
+                         </Marker>
+                    ) : (
+                        <>
+                            <MapEventsController 
+                                setPosition={setMarkerPosition} 
+                                onLocationChange={onLocationChange} 
+                            />
+                            {markerPosition && (
+                                <Marker 
+                                    position={markerPosition} 
+                                    icon={DefaultIcon} 
+                                    draggable={true}
+                                    eventHandlers={{
+                                        dragend: (e) => {
+                                            const markerInstance = e.target;
+                                            const newPos = markerInstance.getLatLng();
+                                            setMarkerPosition([newPos.lat, newPos.lng]);
+                                            onLocationChange?.(newPos.lat, newPos.lng);
+                                        }
+                                    }}
+                                />
+                            )}
+                        </>
+                    )}
+                </MapContainer>
+            </div>
         </div>
     );
 }
+

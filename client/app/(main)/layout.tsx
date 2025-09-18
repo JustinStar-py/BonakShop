@@ -1,9 +1,9 @@
-// FILE: app/(main)/layout.tsx
+// FILE: app/(main)/layout.tsx (FINAL CORRECTED LOGIC)
 "use client";
 
 import BottomNavigation from "@/components/layout/BottomNavigation";
 import { useAppContext } from "@/context/AppContext";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
@@ -14,20 +14,49 @@ export default function MainLayout({
 }) {
   const { user, isLoadingUser, getTotalItems } = useAppContext();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // اگر بارگذاری تمام شده و کاربری وجود ندارد، به صفحه لاگین هدایت کن
-    if (!isLoadingUser && !user) {
-      router.replace("/auth");
+    if (isLoadingUser) {
+      return; // Wait until user loading is complete
     }
-  }, [user, isLoadingUser, router]);
 
-  // تا زمانی که وضعیت احراز هویت مشخص نشده، یک اسپینر لودینگ نمایش بده
+    if (!user) {
+      router.replace("/auth");
+      return;
+    }
+    
+    // --- UPDATED LOGIC with new URL ---
+    const isProfileIncomplete = !user.name || !user.shopName;
+    const completeProfilePath = "/profile/complete"; // New path
+
+    if (isProfileIncomplete && pathname !== completeProfilePath) {
+      router.replace(completeProfilePath);
+    }
+    
+    if (!isProfileIncomplete && pathname === completeProfilePath) {
+        router.replace("/");
+    }
+
+  }, [user, isLoadingUser, router, pathname]);
+
   if (isLoadingUser) {
     return <LoadingSpinner message="در حال بررسی اطلاعات کاربری..." />;
   }
 
-  // اگر کاربر لاگین کرده بود، محتوای صفحه را به همراه نویگیشن نمایش بده
+  const isProfileIncomplete = user && (!user.name || !user.shopName);
+  const isOnCompleteProfilePage = pathname === "/profile/complete";
+
+
+  if (isProfileIncomplete && isOnCompleteProfilePage) {
+      return <>{children}</>;
+  }
+  
+  if (isProfileIncomplete) {
+      return <LoadingSpinner message="در حال انتقال به صفحه تکمیل اطلاعات..." />;
+  }
+
+  // If the user is fully authenticated and has a complete profile, show the main app layout.
   if (user) {
     return (
       <div className="pb-20">
@@ -37,5 +66,7 @@ export default function MainLayout({
     );
   }
 
+  // Fallback, should not be reached.
   return null;
 }
+
