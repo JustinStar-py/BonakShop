@@ -1,9 +1,13 @@
-// FILE: app/api/categories/[id]/route.ts
+// FILE: app/api/categories/[id]/route.ts (CORRECTED)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import cache from 'memory-cache';
 
-// Handles UPDATING an existing category
+// The cache key must be identical to the one in the main categories route.
+const CACHE_KEY = 'categories_cache';
+
+// --- FIX 1: The function signature is updated to correctly handle route parameters ---
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
@@ -26,6 +30,10 @@ export async function PUT(
       where: { id: categoryId },
       data: { name, icon, image },
     });
+    
+    // --- FIX 2: Invalidate the cache after a successful update ---
+    cache.del(CACHE_KEY);
+    
     return NextResponse.json(updatedCategory, { status: 200 });
 
   } catch (error) {
@@ -34,7 +42,7 @@ export async function PUT(
   }
 }
 
-// Handles DELETING an existing category
+// --- FIX 1: The function signature is updated here as well ---
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
@@ -46,6 +54,10 @@ export async function DELETE(
     }
     const categoryId = params.id;
     await prisma.category.delete({ where: { id: categoryId } });
+    
+    // --- FIX 2: Invalidate the cache after a successful deletion ---
+    cache.del(CACHE_KEY);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Category delete error:", error);
