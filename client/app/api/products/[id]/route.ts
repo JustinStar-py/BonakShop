@@ -2,7 +2,7 @@
 // FINAL VERSION: Handles discountPercentage in PUT requests.
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 
 export async function GET(
   req: Request,
@@ -37,8 +37,8 @@ export async function GET(
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const productId = params.id;
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+    const auth = await getAuthUserFromRequest(req);
+    if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -88,8 +88,8 @@ export async function PATCH(
   const productId = params.id;
 
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+    const auth = await getAuthUserFromRequest(req as Request);
+    if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     
@@ -117,8 +117,8 @@ export async function DELETE(
   const productId = params.id;
 
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+    const auth = await getAuthUserFromRequest(req as Request);
+    if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     await prisma.product.delete({ where: { id: productId } });

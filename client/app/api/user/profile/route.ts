@@ -2,13 +2,12 @@
 // Updated to handle optional latitude and longitude
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 
 export async function PUT(req: Request) {
   try {
-    const session = await getSession();
-
-    if (!session.isLoggedIn) {
+    const auth = await getAuthUserFromRequest(req);
+    if (!auth || !auth.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -24,7 +23,7 @@ export async function PUT(req: Request) {
 
     const updatedUser = await prisma.user.update({
       where: {
-        id: session.user.id,
+        id: auth.user.id,
       },
       data: {
         name,
@@ -36,8 +35,6 @@ export async function PUT(req: Request) {
       },
     });
 
-    session.user = updatedUser;
-    await session.save();
 
     const { password: _, ...userWithoutPassword } = updatedUser;
     return NextResponse.json(userWithoutPassword, { status: 200 });

@@ -2,7 +2,7 @@
 // Updated to handle status changes by ADMIN, WORKER, and CUSTOMER with proper permissions.
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 import { OrderStatus } from "@prisma/client";
 
 export async function PATCH(
@@ -10,14 +10,14 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn) {
+    const auth = await getAuthUserFromRequest(req);
+    if (!auth || !auth.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const orderId = params.id;
     const { status } = await req.json();
-    const userRole = session.user.role;
+    const userRole = auth.user.role;
 
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
@@ -27,7 +27,7 @@ export async function PATCH(
     // Permission checks
     if (userRole === 'CUSTOMER') {
         // Customers can only cancel their own PENDING orders.
-        if (order.userId !== session.user.id || status !== 'CANCELED' || order.status !== 'PENDING') {
+        if (order.userId !== auth.user.id || status !== 'CANCELED' || order.status !== 'PENDING') {
             return NextResponse.json({ error: "Action not allowed" }, { status: 403 });
         }
     } else if (userRole === 'WORKER') {

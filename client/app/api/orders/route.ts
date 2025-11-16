@@ -1,17 +1,17 @@
 // FILE: app/api/orders/route.ts (CORRECTED)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 
 // --- (GET function remains unchanged) ---
 export async function GET(request: Request) {
-    const session = await getSession();
-    if (!session.user) {
+    const auth = await getAuthUserFromRequest(request);
+    if (!auth || !auth.user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     try {
         const orders = await prisma.order.findMany({
-            where: { userId: session.user.id },
+            where: { userId: auth.user.id },
             include: { 
                 items: true,
                 returnRequest: {
@@ -29,11 +29,11 @@ export async function GET(request: Request) {
 
 // --- (POST function is updated) ---
 export async function POST(req: Request) {
-    const session = await getSession();
-    if (!session.user) {
+    const auth = await getAuthUserFromRequest(req);
+    if (!auth || !auth.user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = session.user.id;
+    const userId = auth.user.id;
 
     try {
         const body = await req.json();

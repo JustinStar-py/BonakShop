@@ -3,12 +3,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn) {
+    const auth = await getAuthUserFromRequest(req);
+    if (!auth || !auth.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Old and new passwords are required" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+    const user = await prisma.user.findUnique({ where: { id: auth.user.id } });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: auth.user.id },
       data: { password: hashedNewPassword },
     });
     

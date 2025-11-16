@@ -1,7 +1,7 @@
 // FILE: app/api/categories/[id]/route.ts (CORRECTED)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 import cache from 'memory-cache';
 
 // The cache key must be identical to the one in the main categories route.
@@ -13,8 +13,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+    const auth = await getAuthUserFromRequest(req as Request);
+    if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     
@@ -48,8 +48,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+    const auth = await getAuthUserFromRequest(req as Request);
+    if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const categoryId = params.id;

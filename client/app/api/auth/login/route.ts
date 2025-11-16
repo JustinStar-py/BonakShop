@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken"; // Import the jsonwebtoken library
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
 
 /**
  * Normalizes a given phone number to a standard format (e.g., 0912...).
@@ -68,13 +67,7 @@ export async function POST(req: Request) {
     );
     // --- END: JWT Generation ---
 
-    // 6. Create or update the server-side session (for web clients, can be kept for web compatibility)
-    const session = await getSession();
-    session.isLoggedIn = true;
-    session.user = user;
-    await session.save();
-
-    // 7. Remove the password from the user object before sending it back
+    // 6. Remove the password from the user object before sending it back
     const { password: _, ...userWithoutPassword } = user;
 
     // 8. Return user data along with the new tokens

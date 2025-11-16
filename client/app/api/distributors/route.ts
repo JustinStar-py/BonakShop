@@ -1,7 +1,7 @@
 // FILE: app/api/distributors/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 
 // GET all distributors
 export async function GET() {
@@ -16,8 +16,8 @@ export async function GET() {
 // POST a new distributor (Admin only)
 export async function POST(req: Request) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+    const auth = await getAuthUserFromRequest(req as Request);
+    if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

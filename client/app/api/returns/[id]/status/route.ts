@@ -2,7 +2,7 @@
 // Handles updating the status of a specific return request.
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 import { ReturnStatus } from "@prisma/client";
 
 export async function PATCH(
@@ -10,8 +10,8 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || (session.user.role !== 'ADMIN' && session.user.role !== 'WORKER')) {
+    const auth = await getAuthUserFromRequest(req);
+    if (!auth || (auth.user.role !== 'ADMIN' && auth.user.role !== 'WORKER')) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

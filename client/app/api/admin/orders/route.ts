@@ -1,12 +1,13 @@
 // FILE: app/api/admin/orders/route.ts (CORRECTED)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getAuthUserFromRequest } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+    const auth = await getAuthUserFromRequest(request);
+    // Note: this route is only for ADMIN.
+    if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

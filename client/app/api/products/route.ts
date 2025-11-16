@@ -1,8 +1,39 @@
-// FILE: app/api/products/route.ts (Updated for Status Filter)
+// FILE: app/api/products/route.ts
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { jwtVerify } from "jose";
 
+// نوع داده‌ای که از JWT انتظار داریم (بر اساس login)
+interface JwtUser {
+  id?: string;
+  role?: string;
+  phone?: string;
+}
+
+// گرفتن اطلاعات کاربر از روی JWT در هدر Authorization
+async function getUserFromRequest(req: Request): Promise<JwtUser | null> {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.split(" ")[1];
+  if (!token) return null;
+
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET!);
+    const { payload } = await jwtVerify(token, secret);
+
+    return {
+      id: payload.userId as string | undefined,
+      role: payload.role as string | undefined,
+      phone: payload.phone as string | undefined,
+    };
+  } catch (e) {
+    console.error("JWT verify failed in /api/products:", e);
+    return null;
+  }
+}
+
+// GET /api/products
+// لیست محصولات با سرچ، فیلتر دسته، تأمین‌کننده و status و صفحه‌بندی
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -11,7 +42,7 @@ export async function GET(request: Request) {
     const searchTerm = searchParams.get("search") || "";
     const categoryId = searchParams.get("categoryId") || "";
     const supplierId = searchParams.get("supplierId") || "";
-    const status = searchParams.get("status") || "all"; // <-- فیلتر جدید
+    const status = searchParams.get("status") || "all"; // فیلتر جدید
 
     const skip = (page - 1) * limit;
 
@@ -19,10 +50,10 @@ export async function GET(request: Request) {
 
     if (searchTerm) {
       whereClause.OR = [
-        { name: { contains: searchTerm, mode: 'insensitive' } },
-        { description: { contains: searchTerm, mode: 'insensitive' } },
-        { supplier: { name: { contains: searchTerm, mode: 'insensitive' } } },
-        { category: { name: { contains: searchTerm, mode: 'insensitive' } } },
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { description: { contains: searchTerm, mode: "insensitive" } },
+        { supplier: { name: { contains: searchTerm, mode: "insensitive" } } },
+        { category: { name: { contains: searchTerm, mode: "insensitive" } } },
       ];
     }
 
@@ -34,15 +65,15 @@ export async function GET(request: Request) {
       whereClause.supplierId = supplierId;
     }
 
-    // --- NEW: Logic for status filter ---
-    if (status === 'available') {
-        whereClause.available = true;
-    } else if (status === 'unavailable') {
-        whereClause.available = false;
-    } else if (status === 'featured') {
-        whereClause.isFeatured = true;
+    // فیلتر status
+    if (status === "available") {
+      whereClause.available = true;
+    } else if (status === "unavailable") {
+      whereClause.available = false;
+    } else if (status === "featured") {
+      whereClause.isFeatured = true;
     }
-    // if status is 'all', we don't add any specific filter for it
+    // اگر status = all باشد، فیلتر اضافه نمی‌کنیم
 
     const products = await prisma.product.findMany({
       where: whereClause,
@@ -54,7 +85,7 @@ export async function GET(request: Request) {
         distributor: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -67,49 +98,73 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Failed to fetch products:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
+// POST /api/products
+// فقط ADMIN می‌تواند محصول جدید اضافه کند (بر اساس JWT)
 export async function POST(req: Request) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || session.user.role !== 'ADMIN') {
+    const authUser = await getUserFromRequest(req);
+
+    // اگر توکن نامعتبر بود یا نقش ADMIN نبود → Forbidden
+    if (!authUser || authUser.role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    
+
     const body = await req.json();
     const {
-      name, price, description, image, categoryId, available,
-      discountPercentage, unit, stock, supplierId, distributorId,
-      isFeatured, consumerPrice
+      name,
+      price,
+      description,
+      image,
+      categoryId,
+      available,
+      discountPercentage,
+      unit,
+      stock,
+      supplierId,
+      distributorId,
+      isFeatured,
+      consumerPrice,
     } = body;
 
+    // فیلدهای ضروری
     if (!name || !price || !categoryId || !supplierId || !distributorId) {
-        return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const product = await prisma.product.create({
-        data: {
-            name,
-            price: parseFloat(price),
-            description,
-            image,
-            categoryId,
-            supplierId,
-            distributorId,
-            available: Boolean(available),
-            discountPercentage: parseInt(discountPercentage, 10) || 0,
-            unit,
-            stock: Number(stock),
-            isFeatured: Boolean(isFeatured),
-            consumerPrice: consumerPrice ? parseFloat(consumerPrice) : null
-        }
+      data: {
+        name,
+        price: parseFloat(price),
+        description,
+        image,
+        categoryId,
+        supplierId,
+        distributorId,
+        available: Boolean(available),
+        discountPercentage: parseInt(discountPercentage, 10) || 0,
+        unit,
+        stock: Number(stock),
+        isFeatured: Boolean(isFeatured),
+        consumerPrice: consumerPrice ? parseFloat(consumerPrice) : null,
+      },
     });
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("Product creation error:", error);
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create product" },
+      { status: 500 },
+    );
   }
 }
