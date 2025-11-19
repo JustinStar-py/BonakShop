@@ -21,8 +21,12 @@ export const metadata: Metadata = {
   description: "اپلیکیشن سفارش عمده مواد غذایی برای فروشگاه‌های کوچک",
   icons: {
     icon: "/logo.png",
+  },
+  other: {
+    enamad: "49236033", // اضافه کردن تگ اینماد
   }
 };
+
 
 // Root layout component
 export default function RootLayout({
