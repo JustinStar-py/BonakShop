@@ -17,7 +17,7 @@ import 'leaflet/dist/leaflet.css';
 
 // Define metadata for the application
 export const metadata: Metadata = {
-  title: "49236033",
+  title: "۴۹۲۳۶۰۳۳",
   description: "اپلیکیشن سفارش عمده مواد غذایی برای فروشگاه‌های کوچک",
   icons: {
     icon: "/logo.png",
