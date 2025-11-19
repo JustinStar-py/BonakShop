@@ -1,19 +1,22 @@
-// FILE: app/(main)/products/[id]/page.tsx (CORRECTED)
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import apiClient from "@/lib/apiClient";
-import type { Product, Supplier, Category } from "@prisma/client";
+import type { Product, Supplier, Category } from "@prisma/client"; // اطمینان از مسیر درست تایپ‌ها
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, Plus, Minus, Building, Tag, Package, Box, User } from "lucide-react";
+import { 
+    ArrowRight, Plus, Minus, Building2, Layers, 
+    Package, Box, User, ShoppingBag, Share2, ShieldCheck
+} from "lucide-react";
 import Image from "next/image";
 import toPersianDigits from "@/utils/persianNum";
 
+// تعریف تایپ ترکیبی
 type ProductDetails = Product & {
     supplier: Supplier;
     category: Category;
@@ -49,14 +52,14 @@ export default function ProductDetailPage() {
     const quantityInCart = cartItem?.quantity || 0;
 
     if (isLoading) {
-        return <LoadingSpinner message="در حال بارگذاری جزئیات محصول..." />;
+        return <LoadingSpinner message="در حال بارگذاری جزئیات..." />;
     }
 
     if (error || !product) {
         return (
-            <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-4">{error || "محصولی یافت نشد"}</h2>
-                <Button onClick={() => router.back()}>بازگشت</Button>
+            <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+                <h2 className="text-xl font-bold text-gray-700">{error || "محصولی یافت نشد"}</h2>
+                <Button onClick={() => router.back()} variant="outline">بازگشت به فروشگاه</Button>
             </div>
         );
     }
@@ -64,89 +67,174 @@ export default function ProductDetailPage() {
     const discountedPrice = product.price * (1 - product.discountPercentage / 100);
 
     return (
-        <div className="max-w-4xl mx-auto pb-24">
-            <header className="p-4 flex items-center border-b">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowRight />
+        <div className="min-h-screen bg-gray-50 pb-32">
+            
+            {/* --- HEADER --- */}
+            <header className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-md border-b border-gray-100/50">
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => router.back()}>
+                    <ArrowRight className="w-6 h-6 text-gray-700"/>
                 </Button>
-                <h1 className="font-bold text-md mr-4">{product.name}</h1>
+                <span className="font-bold text-sm text-gray-800 truncate max-w-[200px]">{product.name}</span>
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
+                    <Share2 className="w-5 h-5 text-gray-500"/>
+                </Button>
             </header>
 
-            <main className="p-4">
-                <div className="bg-white rounded-lg shadow-sm p-4">
-                    <div className="flex justify-center items-center h-48 mb-6">
-                        <Image src={product.image || "/placeholder.jpg"} alt={product.name} width={200} height={200} className="object-contain max-h-full"/>
+            <main>
+                {/* --- IMAGE SECTION --- */}
+                <div className="relative bg-white pb-10 pt-6 rounded-b-[2.5rem] shadow-sm overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#f1f5f9_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
+                    
+                    <div className="relative z-10 flex justify-center items-center h-56 sm:h-72">
+                        <Image 
+                            src={product.image || "/placeholder.jpg"} 
+                            alt={product.name} 
+                            width={300} 
+                            height={300} 
+                            className="object-contain max-h-full drop-shadow-xl hover:scale-105 transition-transform duration-500"
+                        />
                     </div>
 
-                    <div className="space-y-4 text-right">
-                        <h2 className="text-lg font-semibold">{product.name}</h2>
-                        {/* The product description is rendered here if it exists */}
-                        {product.description && (
-                           <p className="text-sm text-muted-foreground">{product.description}</p>
+                    {/* Badges on Image */}
+                    <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
+                        {product.discountPercentage > 0 && (
+                            <Badge className="bg-red-500 hover:bg-red-600 text-white border-none px-3 py-1 rounded-full text-xs shadow-md">
+                                {toPersianDigits(product.discountPercentage)}% تخفیف
+                            </Badge>
                         )}
-                        
-                        <Separator />
-                        
-                        <div className="flex flex-wrap items-center gap-4 text-sm">
-                            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
-                                <Building size={16} className="text-gray-500"/>
-                                <strong>شرکت:</strong> {product.supplier.name}
-                            </div>
-                            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
-                                <Tag size={16} className="text-gray-500"/>
-                                <strong>دسته:</strong> {product.category.name}
-                            </div>
-                            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
-                                <Package size={16} className="text-gray-500"/>
-                                <strong>واحد:</strong> {product.unit}
-                            </div>
-                            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
-                                <Box size={16} className="text-gray-500"/>
-                                <strong>موجودی:</strong> {product.stock > 0 ? `${toPersianDigits(product.stock)} عدد` : "ناموجود"}
-                            </div>
-                        </div>
-                                                
-                       {product.consumerPrice && (
-                           <div className="flex justify-between items-center border-t pt-3">
-                                 <p className="text-sm text-muted-foreground flex items-center gap-1"><User size={14}/> قیمت مصرف‌کننده</p>
-                                 <p className="text-md font-bold text-gray-700">{toPersianDigits(product.consumerPrice)} ریال</p>
-                             </div>
+                        {product.isFeatured && (
+                            <Badge className="bg-amber-400 hover:bg-amber-500 text-white border-none px-3 py-1 rounded-full text-xs shadow-md">
+                                پیشنهاد ویژه
+                            </Badge>
                         )}
-
-                        <Separator />
-
-                        <div className="flex justify-between items-center pt-2">
-                            <p className="text-sm text-muted-foreground">قیمت</p>
-                            <div className="text-left">
-                                {product.discountPercentage > 0 && (
-                                    <div className="flex items-center gap-2 justify-end">
-                                        <Badge className="text-white bg-yellow-500">%{toPersianDigits(product.discountPercentage)}</Badge>
-                                        <p className="text-lg text-gray-400 line-through">{toPersianDigits(product.price)} ریال</p>
-                                    </div>
-                                )}
-                                <p className="text-lg font-extrabold text-blue-500">{toPersianDigits(discountedPrice)} ریال</p>
-                            </div>
-                        </div> 
                     </div>
                 </div>
 
-                <div className="fixed bottom-20 left-0 right-0 p-4 bg-white border-t shadow-lg max-w-4xl mx-auto z-40">
-                    {!product.available ? (
-                        <Button className="w-full" size="lg" disabled>ناموجود</Button>
-                    ) : quantityInCart === 0 ? (
-                        <Button className="w-full bg-blue-500 text-white" size="lg" onClick={() => addToCart(product)}>افزودن به سبد خرید</Button>
-                    ) : (
-                        <div className="flex items-center justify-between">
-                            <p className="font-semibold">در سبد خرید</p>
-                            <div className="flex items-center gap-3">
-                                <Button className="bg-teal-500 text-white" size="icon" onClick={() => updateCartQuantity(product.id, quantityInCart + 1)}><Plus /></Button>
-                                <span className="text-xl font-bold w-10 text-center">{toPersianDigits(quantityInCart)}</span>
-                                <Button variant="outline" size="icon" onClick={() => updateCartQuantity(product.id, quantityInCart - 1)}><Minus /></Button>
-                            </div>
+                {/* --- INFO SECTION --- */}
+                <div className="px-5 mt-6 space-y-6">
+                    
+                    {/* Title & Brand */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center gap-1 bg-teal-50 text-teal-700 px-2.5 py-1 rounded-lg text-[10px] font-bold">
+                                <Building2 size={12}/> {product.supplier.name}
+                            </span>
+                            {!product.available && (
+                                <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">
+                                    ناموجود
+                                </span>
+                            )}
+                        </div>
+                        <h1 className="text-xl font-black text-gray-800 leading-snug">{product.name}</h1>
+                    </div>
+
+                    {/* Price Box */}
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center">
+                        <span className="text-gray-500 text-sm font-medium">قیمت مصرف‌کننده</span>
+                        <div className="flex flex-col items-end">
+                            {product.consumerPrice ? (
+                                <div className="flex items-center gap-1">
+                                    <User size={14} className="text-gray-400"/>
+                                    <span className="text-lg font-bold text-gray-700">{toPersianDigits(product.consumerPrice)}</span>
+                                    <span className="text-xs text-gray-400">ریال</span>
+                                </div>
+                            ) : (
+                                <span className="text-xs text-gray-400">---</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Attributes Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Layers size={12}/> دسته‌بندی</span>
+                            <span className="font-bold text-gray-700 text-sm">{product.category.name}</span>
+                        </div>
+                        <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Package size={12}/> واحد فروش</span>
+                            <span className="font-bold text-gray-700 text-sm">{product.unit}</span>
+                        </div>
+                        <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Box size={12}/> موجودی انبار</span>
+                            <span className={`font-bold text-sm ${product.stock > 0 ? "text-teal-600" : "text-red-500"}`}>
+                                {product.stock > 0 ? `${toPersianDigits(product.stock)} عدد` : "تمام شده"}
+                            </span>
+                        </div>
+                        <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><ShieldCheck size={12}/> اصالت کالا</span>
+                            <span className="font-bold text-gray-700 text-sm">تایید شده</span>
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    {product.description && (
+                        <div className="bg-white p-4 rounded-2xl border border-gray-100">
+                            <h3 className="font-bold text-sm text-gray-800 mb-2">توضیحات محصول</h3>
+                            <p className="text-sm text-gray-500 leading-relaxed text-justify">
+                                {product.description}
+                            </p>
                         </div>
                     )}
                 </div>
             </main>
+
+            {/* --- FIXED FOOTER (Action Bar) --- */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 px-6 pb-6 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-[1.5rem]">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col">
+                        {product.discountPercentage > 0 && (
+                            <span className="text-xs text-gray-400 line-through decoration-red-400 decoration-2">
+                                {toPersianDigits(product.price)}
+                            </span>
+                        )}
+                        <div className="flex items-center gap-1 text-gray-800">
+                            <span className="text-2xl font-black">{toPersianDigits(discountedPrice)}</span>
+                            <span className="text-xs font-medium text-gray-500">ریال</span>
+                        </div>
+                    </div>
+                    {product.discountPercentage > 0 && (
+                        <Badge variant="destructive" className="rounded-lg px-2">
+                            سود شما: {toPersianDigits(product.price - discountedPrice)}
+                        </Badge>
+                    )}
+                </div>
+
+                {!product.available ? (
+                    <Button className="w-full h-12 rounded-xl bg-gray-100 text-gray-400 font-bold text-md hover:bg-gray-200" disabled>
+                        ناموجود در انبار
+                    </Button>
+                ) : quantityInCart === 0 ? (
+                    <Button 
+                        className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-md shadow-lg shadow-teal-200 active:scale-[0.98] transition-transform" 
+                        onClick={() => addToCart(product)}
+                    >
+                        <ShoppingBag className="mr-2 h-5 w-5"/> افزودن به سبد خرید
+                    </Button>
+                ) : (
+                    <div className="flex items-center justify-between bg-teal-50 rounded-2xl p-1.5 border border-teal-100 h-14">
+                        <Button 
+                            className="w-12 h-full rounded-xl bg-white text-teal-700 hover:bg-teal-100 shadow-sm border border-teal-100" 
+                            size="icon" 
+                            onClick={() => updateCartQuantity(product.id, quantityInCart + 1)}
+                        >
+                            <Plus className="h-6 w-6"/>
+                        </Button>
+                        
+                        <div className="flex flex-col items-center">
+                            <span className="font-black text-xl text-teal-800 leading-none">{toPersianDigits(quantityInCart)}</span>
+                            <span className="text-[10px] text-teal-600 font-medium">در سبد</span>
+                        </div>
+
+                        <Button 
+                            className="w-12 h-full rounded-xl bg-white text-red-500 hover:bg-red-50 shadow-sm border border-red-100" 
+                            size="icon" 
+                            onClick={() => updateCartQuantity(product.id, quantityInCart - 1)}
+                        >
+                            <Minus className="h-6 w-6"/>
+                        </Button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

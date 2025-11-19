@@ -1,4 +1,4 @@
-// FILE: app/(main)/page.tsx (FINAL VERSION WITH BANNERS & ICONS)
+// FILE: app/(main)/page.tsx (FIXED)
 "use client";
 
 import { useState, useEffect, useCallback, ElementType } from "react";
@@ -10,57 +10,37 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-// --- NEW: Import desired icons ---
 import { 
-    Search, Loader2, User as UserIcon, LayoutDashboard, Truck, LogOut, ArrowLeft,
-    Star, TrendingUp, Sparkles,
-    LayoutGridIcon
+    Search, Loader2, User as UserIcon, Truck, LayoutDashboard,
+    Star, TrendingUp, Sparkles, ArrowLeft, ShoppingBag, LayoutGridIcon
 } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
-// --- Type Definitions ---
 type ProductWithRelations = Product & { supplier: Supplier };
 
-// --- Reusable Product Carousel Component (Updated) ---
+// --- Carousel Component ---
 function ProductCarousel({ 
-    title, 
-    icon: Icon, // <-- FIX: Destructure the new icon prop
-    products, 
-    cart,
-    onAddToCart,
-    onUpdateQuantity,
-    onSelectProduct,
-    onImageClick,
-    onSupplierClick 
-}: { 
-    title: string;
-    icon?: ElementType; // <-- FIX: Add optional icon prop
-    products: ProductWithRelations[];
-    cart: CartItem[];
-    onAddToCart: (product: Product) => void;
-    onUpdateQuantity: (productId: string, newQuantity: number) => void;
-    onSelectProduct: (product: Product) => void;
-    onImageClick: (imageUrl: string) => void;
-    onSupplierClick: (supplierId: string) => void;
-}) {
+    title, icon: Icon, products, cart, onAddToCart, onUpdateQuantity, onSelectProduct, onImageClick, onSupplierClick 
+}: any) {
     if (!products || products.length === 0) return null;
     return (
-        <div className="py-2">
-            {/* --- FIX: Title section now supports an icon --- */}
-            <div className="flex items-center gap-2 mb-4 px-4">
-                {Icon && <Icon className="h-6 w-6 text-teal-500" />}
-                <h2 className="text-lg font-semibold text-teal-500">{title}</h2>
+        <div className="py-4 my-2 border-t border-b border-gray-300">
+            <div className="flex items-center justify-between px-4 mb-4">
+                <div className="flex items-center gap-2">
+                    {Icon && <div className="p-1.5 bg-teal-50 rounded-lg text-teal-600"><Icon className="h-5 w-5" /></div>}
+                    <h2 className="text-md font-bold text-gray-800">{title}</h2>
+                </div>
+                <Button variant="ghost" size="sm" className="text-xs text-teal-600 h-8 px-2 hover:bg-teal-50 hover:text-teal-700">مشاهده همه <ArrowLeft className="w-3 h-3 mr-1"/></Button>
             </div>
-
-            <div className="flex space-x-4 space-x-reverse overflow-x-auto px-2 pb-4">
-                {products.map(product => (
-                    <div key={product.id} className="flex-shrink-0 w-44">
+            <div className="flex gap-x-4 overflow-x-auto px-2 pb-6 -mb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {products.map((product: any) => (
+                    <div key={product.id} className="flex-shrink-0 w-[160px]">
                         <ProductCard 
                             product={product}
-                            cartItem={cart.find(ci => ci.id === product.id)}
+                            cartItem={cart.find((ci:any) => ci.id === product.id)}
                             onAddToCart={onAddToCart}
                             onUpdateQuantity={onUpdateQuantity}
                             onSelectProduct={onSelectProduct}
@@ -74,64 +54,44 @@ function ProductCarousel({
     );
 }
 
-// --- Dialog component for viewing images ---
 function ImageDialog({ imageUrl, onClose }: { imageUrl: string | null; onClose: () => void }) {
     if (!imageUrl) return null;
     return (
         <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className="p-2 bg-white shadow-lg rounded-lg max-w-lg w-full">
-                <img src={imageUrl} alt="نمایش بزرگتر محصول" className="w-full h-auto rounded-lg object-contain" />
+            <DialogContent className="p-0 bg-transparent border-none shadow-none max-w-sm w-full flex justify-center outline-none">
+                <div className="relative bg-white p-2 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
+                     <img src={imageUrl} alt="Product" className="w-full h-auto rounded-2xl object-contain max-h-[60vh]" />
+                     <button onClick={onClose} className="absolute -top-3 -right-3 bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center shadow-lg font-bold border border-gray-100 hover:bg-gray-100 transition-colors">✕</button>
+                </div>
             </DialogContent>
         </Dialog>
     );
 }
 
-// --- Main Home Page Component ---
 export default function HomePage() {
   const { user, cart, addToCart, updateCartQuantity, logout } = useAppContext();
   const router = useRouter();
 
-  // --- BANNER CONTROLS ---
- const banners = [
-  {
-    id: 1,
-    image: "https://studiomani.ir/wp-content/uploads/2019/05/istak-non-alcoholic-beer-02.jpg",
-    link: "/products?supplierId=cmeg3ib2h0000jy04qsat2ejr",
-    active: true,
-  },
-  {
-    id: 2,
-    image: "https://www.digikala.com/mag/wp-content/uploads/2024/03/9b6907ac-5dd5-4fcd-b4c8-3a0874fcb16d-22-pickles.jpg",
-    link: "/products?categoryId=cmd8x3h5k0000jm047c3bv2zk",
-    active: true,
-  },
-  {
-    id: 3,
-    image: "/assets/banners/banner3.jpg",
-    link: "https://example.com/page3",
-    active: false, // This banner will not be shown
-  },
-];
-  // --- END OF BANNER CONTROLS ---
+  const banners = [
+    { id: 1, image: "https://studiomani.ir/wp-content/uploads/2019/05/istak-non-alcoholic-beer-02.jpg", link: "/products?supplierId=cmeg3ib2h0000jy04qsat2ejr", active: true },
+    { id: 2, image: "https://www.digikala.com/mag/wp-content/uploads/2024/03/9b6907ac-5dd5-4fcd-b4c8-3a0874fcb16d-22-pickles.jpg", link: "/products?categoryId=cmd8x3h5k0000jm047c3bv2zk", active: true },
+  ];
 
-  // Data states
+  // States
   const [paginatedProducts, setPaginatedProducts] = useState<ProductWithRelations[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<ProductWithRelations[]>([]);
   const [bestsellerProducts, setBestsellerProducts] = useState<ProductWithRelations[]>([]);
   const [newestProducts, setNewestProducts] = useState<ProductWithRelations[]>([]);
   
-  // Control states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
 
-  // Pagination states
+  // Search & Pagination
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  // Search states
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [isSearching, setIsSearching] = useState(false);
@@ -139,80 +99,55 @@ export default function HomePage() {
   const fetchPaginatedProducts = useCallback(async (pageNum: number, search: string, isNewSearch = false) => {
     setIsLoadingMore(true);
     if (isNewSearch) setIsSearching(true);
-    
     try {
       const response = await apiClient.get(`/products?page=${pageNum}&limit=12&search=${search}`);
       const newProducts = response.data.products;
-
       setPaginatedProducts(prev => {
         if (isNewSearch) return newProducts;
         const existingIds = new Set(prev.map(p => p.id));
         return [...prev, ...newProducts.filter((p: Product) => !existingIds.has(p.id))];
       });
-
       setHasMore(newProducts.length > 0);
       setPage(isNewSearch ? 2 : p => p + 1);
-
-    } catch (err) {
-      setError("خطا در بارگذاری محصولات.");
-    } finally {
-      setIsLoadingMore(false);
-      if (isNewSearch) setIsSearching(false);
-    }
+    } catch (err) { setError("خطا در بارگذاری محصولات."); } 
+    finally { setIsLoadingMore(false); if (isNewSearch) setIsSearching(false); }
   }, []);
 
-  // Initial data load effect
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsLoading(true);
       try {
-        const [categoriesRes, featuredRes, newestRes, bestsellersRes, initialProductsRes] = await Promise.all([
+        const [catRes, featRes, newRes, bestRes, prodRes] = await Promise.all([
           apiClient.get('/categories'),
           apiClient.get('/products/lists?type=featured'),
           apiClient.get('/products/lists?type=newest'),
           apiClient.get('/products/lists?type=bestsellers'),
           apiClient.get('/products?page=1&limit=12&search=')
         ]);
-        
-        setCategories(categoriesRes.data);
-        setFeaturedProducts(featuredRes.data);
-        setNewestProducts(newestRes.data);
-        setBestsellerProducts(bestsellersRes.data);
-        setPaginatedProducts(initialProductsRes.data.products);
-        setHasMore(initialProductsRes.data.products.length > 0);
+        setCategories(catRes.data);
+        setFeaturedProducts(featRes.data);
+        setNewestProducts(newRes.data);
+        setBestsellerProducts(bestRes.data);
+        setPaginatedProducts(prodRes.data.products);
+        setHasMore(prodRes.data.products.length > 0);
         setPage(2);
-
-      } catch (err) {
-        setError("خطا در دریافت اطلاعات فروشگاه.");
-      } finally {
-        setIsLoading(false);
-      }
+      } catch (err) { setError("خطا در دریافت اطلاعات فروشگاه."); } 
+      finally { setIsLoading(false); }
     };
     fetchInitialData();
   }, []);
 
-  // Search effect
   useEffect(() => {
     if (isLoading) return;
     fetchPaginatedProducts(1, debouncedSearchTerm, true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm]);
 
-  const handleSelectProduct = (product: Product) => {
-    router.push(`/products/${product.id}`);
-  };
-  
-  const handleSupplierClick = (supplierId: string) => {
-    router.push(`/products?supplierId=${supplierId}`);
-  };
+  const handleSelectProduct = (product: Product) => router.push(`/products/${product.id}`);
+  const handleSupplierClick = (supplierId: string) => router.push(`/products?supplierId=${supplierId}`);
 
   const handleScroll = useCallback(() => {
-    if (window.innerHeight + document.documentElement.scrollTop < document.documentElement.offsetHeight - 200 || isLoadingMore || !hasMore) {
-      return;
-    }
-    if (!debouncedSearchTerm) {
-        fetchPaginatedProducts(page, "");
-    }
+    if (window.innerHeight + document.documentElement.scrollTop < document.documentElement.offsetHeight - 200 || isLoadingMore || !hasMore) return;
+    if (!debouncedSearchTerm) fetchPaginatedProducts(page, "");
   }, [page, hasMore, isLoadingMore, debouncedSearchTerm, fetchPaginatedProducts]);
 
   useEffect(() => {
@@ -220,129 +155,141 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  if (isLoading) {
-    return <LoadingSpinner message="در حال بارگذاری فروشگاه..." />;
-  }
+  if (isLoading) return <LoadingSpinner message="در حال چیدن قفسه‌ها..." />;
+  if (error) return <div className="flex flex-col items-center justify-center h-[80vh] text-red-500 gap-2"><div className="text-lg font-bold">خطا</div>{error}<Button onClick={() => window.location.reload()} variant="outline">تلاش مجدد</Button></div>;
 
-  if (error) {
-    return <div className="text-center text-red-500 p-4">{error}</div>;
-  }
+  const userName = user?.name ? user.name.trim().split(" ")[0] : "کاربر";
 
   return (
-    <div className="pb-24">
-      <div className="p-4 flex justify-between items-center bg-gray-50 border-b sticky top-0 z-20">
-        <h1 className="font-bold text-sm text-gray-700">سلام {user?.name?.trim().split(" ")[0]}!</h1>
-        <div className="flex items-center">
-          {user?.role === 'ADMIN' && <Button className="text-teal-500 border-3 rounded-xl border-white-500" variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')}><LayoutDashboard className="h-7 w-7" strokeWidth={2.5} /></Button>}
-          {user?.role === 'WORKER' && <Button className="text-teal-500 border-3 rounded-xl border-white-500" variant="ghost" size="icon" onClick={() => router.push('/delivery')}><Truck className="h-7 w-7" strokeWidth={2.5} /></Button>}
-          <Button className="text-teal-500 border-3 rounded-xl border-white-500 mx-2" variant="ghost" size="icon" onClick={() => router.push('/profile')}><UserIcon className="h-7 w-7" strokeWidth={2.75} /></Button>
-          <Button variant="ghost" size="icon" onClick={logout} className="text-red-500 border-3 rounded-xl border-white-500"><LogOut className="h-7 w-7"strokeWidth={2.5} /></Button>
+    <div className="pb-24 bg-gray-50 min-h-screen">
+      
+      {/* --- STICKY HEADER SECTION --- */}
+      <div className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
+        <div className="flex justify-between items-center px-4 pt-3 pb-2">
+            <div className="flex items-center gap-3">
+                 <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 font-bold shadow-sm border border-teal-200">
+                    {userName[0]}
+                 </div>
+                 <div className="flex flex-col">
+                     <span className="text-[10px] text-gray-500">خوش آمدید</span>
+                     <span className="text-sm font-bold text-gray-800">{userName}</span>
+                 </div>
+            </div>
+            <div className="flex items-center gap-1">
+                {user?.role === 'ADMIN' && <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => router.push('/admin/dashboard')}><LayoutDashboard className="h-5 w-5 text-gray-600" /></Button>}
+                {user?.role === 'WORKER' && <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => router.push('/delivery')}><Truck className="h-5 w-5 text-gray-600" /></Button>}
+                <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-gray-100" onClick={() => router.push('/profile')}><UserIcon className="h-6 w-6 text-gray-700" /></Button>
+                <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-gray-100" onClick={() => router.push('/cart')}>
+                    <ShoppingBag className="h-6 w-6 text-gray-700" />
+                    {cart.length > 0 && <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span></span>}
+                </Button>
+            </div>
         </div>
-      </div>
-
-      <div className="p-4">
-        <div className="relative">
-          {isSearching ? (
-            <Loader2 className="absolute right-4 top-3 h-5 w-5 text-gray-400 animate-spin" />
-          ) : (
-            <Search className="absolute right-4 top-3 h-5 w-5 text-gray-400" />
-          )}
-          <Input 
-            placeholder="جستجوی محصولات..." 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
-            className="pr-12 pl-4 h-12 text-lg rounded-2xl" 
-          />
+        <div className="px-4 pb-3">
+            <div className="relative group">
+                {isSearching ? (
+                    <Loader2 className="absolute right-3 top-3 h-5 w-5 text-teal-500 animate-spin" />
+                ) : (
+                    <Search className="absolute right-3 top-3 h-5 w-5 text-gray-400 group-focus-within:text-teal-600 transition-colors" />
+                )}
+                <Input 
+                    placeholder="جستجو در هزاران محصول..." 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                    className="pr-10 pl-4 h-11 text-sm rounded-xl bg-gray-100/80 border-transparent focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all shadow-inner" 
+                />
+            </div>
         </div>
       </div>
 
       {debouncedSearchTerm ? (
-        <div className="p-4">
-          <h2 className="text-md font-bold text-gray-700 mb-4">نتایج جستجو</h2>
-          <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 animate-in fade-in slide-in-from-bottom-2">
+          <h2 className="text-sm font-bold text-gray-500 mb-4 flex items-center gap-2"><Search size={16}/> نتایج جستجو</h2>
+          <div className="grid grid-cols-2 gap-3">
             {paginatedProducts.map(p => <ProductCard key={p.id} product={p} cartItem={cart.find(ci => ci.id === p.id)} onAddToCart={addToCart} onUpdateQuantity={updateCartQuantity} onSelectProduct={handleSelectProduct} onImageClick={setViewingImage} onSupplierClick={handleSupplierClick}/>)}
           </div>
-          {isLoadingMore && paginatedProducts.length === 0 && <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>}
+          {isLoadingMore && <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-teal-500"/></div>}
         </div>
       ) : (
         <>
+         {/* BANNER */}
           {banners[0].active && (
-            <div className="px-4 pb-4">
+            <div className="px-4 mb-4 mt-6">
              <Link href={banners[0].link} passHref>
-                <div className="relative w-full h-24 sm:h-32 rounded-lg overflow-hidden shadow-md cursor-pointer">
-                  <Image
-                    src={banners[0].image}
-                    alt="Banner 1"
-                    layout="fill"
-                    objectFit="cover"
-                    className="w-full h-full"
-                  />
+                <div className="relative w-full aspect-[3/1] rounded-2xl overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98]">
+                  <Image src={banners[0].image} alt="Special Offer" fill className="object-cover" />
               </div>
             </Link>
             </div>
           )}
-          
-          <div className="py-4">
-            <div className="flex items-center gap-2 mb-4 px-4 items-stretch">
-              <LayoutGridIcon className="h-6 w-6 text-teal-500" />
-                <h2 className="flex text-md font-semibold text-teal-500 mb-4">
-                   دسته‌بندی‌ها
-                </h2>
-            </div>
-            <div className="flex space-x-4 space-x-reverse overflow-x-auto px-4 pb-4">
-              {categories.map(c => (
-                <div
-                  key={c.id}
-                  className="flex flex-col items-center justify-start flex-shrink-0 w-20 cursor-pointer group"
-                  onClick={() => router.push(`/products?categoryId=${c.id}`)}
-                >
-                  <div className="h-20 w-20 rounded-full flex items-center justify-center mb-2 border-2 border-teal-600 group-hover:border-green-500 transition-colors">
-                    <div className="h-18 w-18 rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-green-400 overflow-hidden">
-                      {c.image ? (
-                        <Image
-                          src={c.image}
-                          alt={c.name}
-                          width={64}
-                          height={64}
-                          loading="lazy"
-                          className="h-full w-full object-cover rounded-full"
-                        />
-                      ) : (
-                        <span className="text-3xl">{c.icon}</span>
-                      )}
+
+         {/* CATEGORIES */}
+        <div className="py-4 mb-2 border-b border-gray-300">
+          <div className="flex gap-5 overflow-x-auto px-4 pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {categories.map(c => (
+              <div 
+                key={c.id} 
+                className="flex flex-col items-center flex-shrink-0 gap-2 cursor-pointer group" 
+                onClick={() => router.push(`/products?categoryId=${c.id}`)}
+              >
+                
+                {/* کانتینر حلقه‌ها */}
+                <div className="relative">
+                  {/* حلقه گرادینت (خارجی‌ترین) */}
+                  <div className="p-[3px] rounded-full bg-gradient-to-tr from-teal-400 to-stone-600 group-hover:from-teal-500 group-hover:to-blue-500 transition-all duration-300 shadow-md group-hover:shadow-lg">
+                    {/* فاصله بین گرادینت و فیلی */}
+                    <div className="bg-white p-[2px] rounded-full">
+                      {/* حلقه فیلی نازک‌تر */}
+                      <div className="border-[2px] border-gray-300 rounded-full p-[1px] group-hover:border-teal-500 transition-all duration-300">
+                        {/* حلقه سفید داخلی */}
+                        <div className="bg-white p-[2px] rounded-full">
+                          {/* تصویر */}
+                          <div className="h-14 w-14 rounded-full overflow-hidden bg-gray-50 relative">
+                            {c.image ? (
+                              <Image 
+                                src={c.image} 
+                                alt={c.name} 
+                                fill 
+                                className="object-cover transform group-hover:scale-110 transition-transform duration-500" 
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xl text-gray-400">
+                                {c.icon || "📦"}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <span className="text-xs text-center font-medium text-gray-700 group-hover:text-green-600 transition-colors">
-                    {c.name}
-                  </span>
                 </div>
-              ))}
-            </div>
+                
+                <span className="text-[11px] font-semibold text-gray-600 truncate w-16 text-center group-hover:text-teal-600 transition-colors">
+                  {c.name}
+                </span>
+              </div>
+            ))}
           </div>
-
+        </div>
+          
+          {/* --- CAROUSELS WITH CORRECTED PROPS --- */}
           <ProductCarousel 
-            title="پیشنهاد ما"
+            title="پیشنهاد ویژه" 
             icon={Star}
             products={featuredProducts} 
-            cart={cart}
+            cart={cart} 
             onAddToCart={addToCart}
             onUpdateQuantity={updateCartQuantity}
             onSelectProduct={handleSelectProduct}
-            onImageClick={setViewingImage}
             onSupplierClick={handleSupplierClick}
+            onImageClick={setViewingImage}
           />
 
-          {banners[1].active && (
-            <div className="px-4 pb-4">
+           {banners[1].active && (
+            <div className="px-4 mb-5">
              <Link href={banners[1].link} passHref>
-                <div className="relative w-full h-24 sm:h-32 rounded-lg overflow-hidden shadow-md cursor-pointer">
-                  <Image
-                    src={banners[1].image}
-                    alt="Banner 2"
-                    layout="fill"
-                    objectFit="cover"
-                    className="w-full h-full"
-                  />
+                <div className="relative w-full aspect-[3/1] rounded-2xl overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98]">
+                  <Image src={banners[1].image} alt="Banner 2" fill className="object-cover" />
               </div>
             </Link>
             </div>
@@ -352,37 +299,46 @@ export default function HomePage() {
             title="پرفروش‌ترین‌ها" 
             icon={TrendingUp}
             products={bestsellerProducts} 
-            cart={cart}
+            cart={cart} 
             onAddToCart={addToCart}
             onUpdateQuantity={updateCartQuantity}
             onSelectProduct={handleSelectProduct}
-            onImageClick={setViewingImage}
             onSupplierClick={handleSupplierClick}
+            onImageClick={setViewingImage}
           />
+
           <ProductCarousel 
-            title="جدیدترین‌ها" 
+            title="تازه رسیده" 
             icon={Sparkles}
             products={newestProducts} 
-            cart={cart}
+            cart={cart} 
             onAddToCart={addToCart}
             onUpdateQuantity={updateCartQuantity}
             onSelectProduct={handleSelectProduct}
-            onImageClick={setViewingImage}
             onSupplierClick={handleSupplierClick}
+            onImageClick={setViewingImage}
           />
           
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-md font-semibold text-teal-500">همه محصولات</h2>
-              <Button variant="ghost" className="text-green-600" onClick={() => router.push('/products')}>
-                مشاهده همه
-               <ArrowLeft className="mr-2 h-4 w-4" /></Button>
+          {/* --- INFINITE GRID --- */}
+          <div className="bg-white rounded-t-[2rem] shadow-[0_-10px_30px_rgba(0,0,0,0.03)] border-t border-gray-100 mt-2">
+            <div className="p-4">
+                <div className="flex justify-between items-center mb-5 mt-2">
+                  <h2 className="text-md font-bold text-gray-800 flex items-center gap-2"><LayoutGridIcon className="text-teal-500" size={18}/> همه محصولات</h2>
+                  <Button variant="ghost" className="text-teal-600 text-xs hover:bg-teal-50" onClick={() => router.push('/products')}>
+                    مشاهده لیست کامل <ArrowLeft className="mr-1 h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {paginatedProducts.map(p => <ProductCard key={p.id} product={p} cartItem={cart.find(ci => ci.id === p.id)} onAddToCart={addToCart} onUpdateQuantity={updateCartQuantity} onSelectProduct={handleSelectProduct} onImageClick={setViewingImage} onSupplierClick={handleSupplierClick} />)}
+                </div>
+                {isLoadingMore && <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-teal-500 w-8 h-8"/></div>}
+                {!hasMore && paginatedProducts.length > 0 && (
+                    <div className="text-center py-10 text-gray-400 text-xs flex flex-col items-center gap-2">
+                        <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+                        <p>تمام محصولات نمایش داده شدند</p>
+                    </div>
+                )}
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {paginatedProducts.map(p => <ProductCard key={p.id} product={p} cartItem={cart.find(ci => ci.id === p.id)} onAddToCart={addToCart} onUpdateQuantity={updateCartQuantity} onSelectProduct={handleSelectProduct} onImageClick={setViewingImage} onSupplierClick={handleSupplierClick} />)}
-            </div>
-            {isLoadingMore && <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>}
-            {!hasMore && paginatedProducts.length > 0 && <p className="text-center text-gray-500 py-4">به پایان لیست رسیدید.</p>}
           </div>
         </>
       )}

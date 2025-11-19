@@ -1,11 +1,9 @@
-// FILE: components/shared/ProductCard.tsx
 "use client";
 
 import type { Product, Supplier } from "@/types";
 import type { CartItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, ShoppingBag } from "lucide-react"; // آیکون جدید اضافه شد
 import Image from "next/image";
 import { useState } from "react";
 import toPersianDigits from "@/utils/persianNum";
@@ -17,7 +15,7 @@ interface NewProductCardProps {
   onSelectProduct: (product: Product) => void;
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onImageClick: (imageUrl: string) => void;
-  onSupplierClick: (supplierId: string) => void; // <-- CHANGE: Prop جدید اضافه شد
+  onSupplierClick: (supplierId: string) => void;
 }
 
 export default function NewProductCard({
@@ -27,7 +25,7 @@ export default function NewProductCard({
   onSelectProduct,
   onUpdateQuantity,
   onImageClick,
-  onSupplierClick, // <-- CHANGE: Prop جدید اضافه شد
+  onSupplierClick,
 }: NewProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const quantityInCart = cartItem?.quantity || 0;
@@ -36,113 +34,100 @@ export default function NewProductCard({
 
   const handleImageClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (product.image) {
-      onImageClick(product.image);
-    }
+    if (product.image) onImageClick(product.image);
   };
 
-  // <-- CHANGE: تابع جدید برای مدیریت کلیک روی نام شرکت
   const handleSupplierClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // جلوگیری از اجرای رویداد کلیک کارت اصلی
+    e.stopPropagation();
     onSupplierClick(product.supplier.id);
   };
 
-
   return (
-    <Card className="overflow-hidden gap-0 h-[290px] border-2 border-gray-200 hover:border-green-200 transition-colors rounded-lg flex flex-col justify-between relative p-2 font-sans">
+    <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-teal-100 transition-all duration-300 flex flex-col h-[310px] overflow-hidden font-sans">
       
-      {/* Supplier Name Badge */}
-      {/* v-- CHANGE: این بخش برای کلیک کردن تغییر کرده است */}
-      <div 
-        onClick={handleSupplierClick}
-        className="absolute top-0 right-0 bg-teal-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-md cursor-pointer hover:bg-teal-600 transition-colors"
-      >
-        {product.supplier.name}
-      </div>
+      {/* بج تخفیف (فقط اگر تخفیف باشد) */}
+      {hasDiscount && (
+        <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+           ٪{toPersianDigits(product.discountPercentage)}
+        </div>
+      )}
 
+      {/* بج موجودی (فقط اگر کم باشد) */}
+      {product.stock < 10 && product.stock > 0 && (
+         <div className="absolute top-2 right-2 z-10 bg-orange-100 text-orange-600 text-[10px] font-bold px-2 py-1 rounded-full border border-orange-200">
+            فقط {toPersianDigits(product.stock)} عدد
+         </div>
+      )}
 
-      {/* Stock Badge */}
-      <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg rounded-tl-md">
-        {toPersianDigits(product.stock)} 
-        {/* {product.unit}  */}
-      </div>
-
-
-      <div className="flex-grow flex flex-col cursor-pointer" onClick={() => onSelectProduct(product)}>
-        <div className="flex justify-center items-center h-28 cursor-pointer" onClick={handleImageClick}>
+      {/* بخش تصویر و اطلاعات کلیک‌خور */}
+      <div className="flex-grow p-3 flex flex-col cursor-pointer" onClick={() => onSelectProduct(product)}>
+        <div className="relative w-full h-32 flex items-center justify-center mb-3 rounded-xl overflow-hidden" onClick={handleImageClick}>
           <Image
             src={imageError ? "/placeholder.jpg" : product.image || "/placeholder.jpg"}
             alt={product.name}
-            width={100}
-            height={100}
-            loading="lazy"
+            fill
+            className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
             onError={() => setImageError(true)}
-            className="object-contain max-h-full"
           />
         </div>
 
-        <h3 className="font-medium text-gray-700 text-xs leading-tight line-clamp-2 mt-2">
+        <h3 className="font-bold text-gray-800 text-sm leading-tight line-clamp-2 min-h-[2.5rem] mb-1">
           {product.name}
         </h3>
+        
+        {/* نام شرکت (ظریف‌تر) */}
+        <div 
+          onClick={handleSupplierClick} 
+          className="text-xs text-gray-400 hover:text-teal-600 transition-colors truncate mb-auto"
+        >
+          {product.supplier.name}
+        </div>
       </div>
 
-      <div className="pt-2">
-                {/* خط بالای قیمت */}
-        <hr className="border-gray-300 my-1" />
-
-        {/* بخش قیمت چسبیده به پایین */}
-        <div className="flex flex-col items-end pb-2">
-          {hasDiscount && (
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs text-white bg-yellow-500 font-bold px-2 py-0.5 rounded-md">
-                ٪{toPersianDigits(product.discountPercentage)}
-              </span>
-              <span className="text-xs text-gray-400 line-through">
-                {toPersianDigits(product.price)}
-              </span>
-            </div>
-          )}
-          <div className="text-gray-800 font-bold text-xs text-right">
-              <span>{toPersianDigits(discountedPrice)}</span>
-              <span className="text-xs font-normal px-1">ریال</span>
-          </div>
+      {/* بخش قیمت و دکمه */}
+      <div className="p-3 pt-0 bg-white">
+        <div className="flex flex-col items-end mb-3">
+           {hasDiscount && (
+             <span className="text-xs text-gray-400 line-through decoration-red-400">
+               {toPersianDigits(product.price)}
+             </span>
+           )}
+           <div className="flex items-center gap-1 text-gray-800">
+              <span className="font-extrabold text-base">{toPersianDigits(discountedPrice)}</span>
+              <span className="text-[10px] text-gray-500">ریال</span>
+           </div>
         </div>
 
         {!product.available ? (
-          <Button size="sm" variant="outline" className="w-full h-9 rounded-xl font-bold bg-red-900 text-white disabled:bg-red-700 disabled:opacity-100" disabled>
+          <Button className="w-full h-10 rounded-xl bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100" disabled>
             ناموجود
           </Button>
         ) : quantityInCart === 0 ? (
           <Button
-            size="sm"
-            className="w-full bg-blue-500 hover:bg-blue-500 h-9 rounded-lg font-bold gap-0.5 text-xs"
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white h-10 rounded-xl shadow-md shadow-teal-200 active:scale-95 transition-all"
             onClick={() => onAddToCart(product)}
           >
-            <Plus className="h-2 w-2" />
-           افزودن  {product.unit !== "عدد" ? `(${product.unit})` : ""}
+            <ShoppingBag className="w-4 h-4 ml-2" />
+            افزودن
           </Button>
         ) : (
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="default"
-              size="icon"
-              className="h-9 w-9 rounded-full bg-blue-500 hover:bg-green-700"
+          <div className="flex items-center justify-between bg-teal-50 rounded-xl p-1 h-10 border border-teal-100">
+            <button
+              className="w-8 h-8 flex items-center justify-center bg-white text-teal-600 rounded-lg shadow-sm active:bg-teal-100 transition-colors"
               onClick={() => onUpdateQuantity(product.id, quantityInCart + 1)}
             >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <span className="font-bold text-lg w-8 text-center">{toPersianDigits(quantityInCart)}</span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-full"
+              <Plus className="w-4 h-4" />
+            </button>
+            <span className="font-bold text-teal-700 text-lg">{toPersianDigits(quantityInCart)}</span>
+            <button
+              className="w-8 h-8 flex items-center justify-center bg-white text-red-500 rounded-lg shadow-sm active:bg-red-50 transition-colors"
               onClick={() => onUpdateQuantity(product.id, quantityInCart - 1)}
             >
-              <Minus className="h-4 w-4" />
-            </Button>
+              <Minus className="w-4 h-4" />
+            </button>
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

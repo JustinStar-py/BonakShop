@@ -1,9 +1,8 @@
-// FILE: app/(main)/orders/page.tsx (Updated Layout)
 "use client";
 
 import { useState, useEffect } from "react";
 import apiClient from "@/lib/apiClient";
-import type { Order, OrderItem, OrderStatus } from "@prisma/client";
+import type { Order, OrderItem } from "@prisma/client";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import {
     Accordion,
@@ -11,7 +10,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog,
@@ -25,38 +23,17 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
-import { RefreshCw, XCircle, Calendar, StickyNote } from "lucide-react";
+import { RefreshCw, XCircle, StickyNote, CalendarCheck, ShoppingBag } from "lucide-react";
 import { ReturnRequestDialog } from "@/components/shared/ReturnRequestDialog";
 import toPersianDigits from "@/utils/persianNum";
+import OrderCard from "@/components/shared/OrderCard"; // ایمپورت کارت جدید
 
-// --- Type Definitions ---
+// تایپ‌های مورد نیاز
 type OrderWithItems = Order & {
     items: OrderItem[];
     returnRequest: { id: string } | null;
 };
 
-// --- Helper Functions ---
-const getStatusVariant = (status: string) => {
-    switch (status) {
-        case 'PENDING': return 'default';
-        case 'SHIPPED': return 'secondary';
-        case 'DELIVERED': return 'success';
-        case 'CANCELED': return 'destructive';
-        default: return 'outline';
-    }
-};
-
-const translateStatus = (status: string) => {
-    const translations: { [key: string]: string } = {
-        PENDING: "در انتظار تایید",
-        SHIPPED: "ارسال شده",
-        DELIVERED: "تحویل شده",
-        CANCELED: "لغو شده",
-    };
-    return translations[status] || status;
-};
-
-// --- Main Component ---
 export default function OrdersPage() {
     const [orders, setOrders] = useState<OrderWithItems[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -68,7 +45,10 @@ export default function OrdersPage() {
         setIsLoading(true);
         try {
             const response = await apiClient.get('/orders');
-            const sortedOrders = response.data.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            // مرتب‌سازی بر اساس جدیدترین
+            const sortedOrders = response.data.sort((a: Order, b: Order) => 
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
             setOrders(sortedOrders);
         } catch (err) {
             setError("خطا در دریافت تاریخچه سفارشات.");
@@ -84,96 +64,114 @@ export default function OrdersPage() {
     const handleCancelOrder = async (orderId: string) => {
         try {
             await apiClient.patch(`/orders/${orderId}/status`, { status: "CANCELED" });
-            alert("سفارش با موفقیت لغو شد.");
-            fetchOrders(); // Refresh the list
+            fetchOrders(); 
         } catch (e: any) {
             alert(e.response?.data?.error || "خطا در لغو سفارش");
         }
     };
 
-    if (isLoading) {
-        return <LoadingSpinner message="در حال بارگذاری سفارشات..." />;
-    }
-
-    if (error) {
-        return <div className="text-center text-red-500 p-4">{error}</div>;
-    }
+    if (isLoading) return <LoadingSpinner message="در حال بارگذاری سفارشات..." />;
+    
+    if (error) return <div className="text-center text-red-500 p-8">{error}</div>;
 
     if (orders.length === 0) {
         return (
-            <div className="text-center p-8 mt-25">
-                <h2 className="text-md font-bold mb-4">هیچ سفارشی ثبت نکرده‌اید</h2>
-                <Button className="bg-teal-600 text-white" onClick={() => router.push('/')}>شروع خرید</Button>
+            <div className="flex flex-col items-center justify-center h-[70vh] p-4">
+                <div className="bg-teal-50 p-6 rounded-full mb-4">
+                    <ShoppingBag className="w-12 h-12 text-teal-500" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-700 mb-2">هنوز سفارشی ثبت نکرده‌اید</h2>
+                <p className="text-gray-400 text-sm mb-6 text-center">محصولات متنوع ما را مشاهده کنید و اولین سفارش خود را ثبت کنید.</p>
+                <Button className="bg-teal-600 text-white rounded-xl h-12 px-8" onClick={() => router.push('/')}>
+                    شروع خرید
+                </Button>
             </div>
         );
     }
 
     return (
-        <div className="p-4">
-            <h1 className="text-md font-bold text-right mb-6">تاریخچه سفارشات</h1>
-            <Accordion type="single" collapsible className="w-full space-y-4">
-                {orders.map((order, index) => (
-                    <AccordionItem key={order.id} value={order.id} className="bg-white rounded-lg shadow-sm border data-[state=open]:shadow-md">
-                        <AccordionTrigger className="w-full text-right px-4 py-3 hover:no-underline">
-                            <div className="flex justify-between items-center w-full">
-                                <div className="flex flex-col items-start gap-1">
-                                    <span className="font-semibold">سفارش {toPersianDigits(orders.length - index)}#</span>
-                                    <span className="text-xs text-gray-500">
-                                        ثبت: {new Date(order.createdAt).toLocaleDateString('fa-IR')}
-                                    </span>
-                                </div>
-                                <Badge variant={getStatusVariant(order.status) as any}>{translateStatus(order.status)}</Badge>
-                            </div>
+        <div className="pb-24 min-h-screen bg-gray-50 p-4">
+            <h1 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <CalendarCheck className="w-6 h-6 text-teal-600"/>
+                تاریخچه سفارشات
+            </h1>
+
+            <Accordion type="single" collapsible className="w-full space-y-3">
+                {orders.map((order) => (
+                    <AccordionItem 
+                        key={order.id} 
+                        value={order.id} 
+                        className="border-none" // حذف بوردر پیش‌فرض آکاردئون چون کارت خودش بوردر دارد
+                    >
+                        {/* اینجا از OrderCard به عنوان تریگر استفاده می‌کنیم */}
+                        <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div]:ring-2 [&[data-state=open]>div]:ring-teal-500">
+                            <OrderCard order={order} />
                         </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-4">
-                            <div className="pt-3 border-t space-y-3">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="font-semibold text-gray-600">مجموع مبلغ:</span>
-                                    <span className="font-bold text-md">{toPersianDigits(order.totalPrice)} تومان</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="font-semibold text-gray-600 flex items-center gap-2"><Calendar size={16} /> تاریخ تحویل:</span>
-                                    <span className="font-semibold">{new Date(order.deliveryDate).toLocaleDateString('fa-IR')}</span>
+                        
+                        <AccordionContent className="px-1 py-2">
+                            <div className="bg-white rounded-xl border border-gray-200 p-4 mt-2 shadow-inner">
+                                <div className="flex justify-between items-center text-sm mb-3 pb-3 border-b border-dashed">
+                                    <span className="text-gray-500">تاریخ تحویل مقرر:</span>
+                                    <span className="font-medium text-gray-800">
+                                        {new Date(order.deliveryDate).toLocaleDateString('fa-IR')}
+                                    </span>
                                 </div>
 
                                 {order.notes && (
-                                    <div className="text-sm text-gray-700 bg-yellow-50 p-2 rounded-md border border-yellow-200">
-                                        <p className="font-semibold flex items-center gap-2"><StickyNote size={16} /> توضیحات:</p>
-                                        <p className="pt-1">{order.notes}</p>
+                                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mb-4">
+                                        <div className="flex items-center gap-2 text-yellow-700 text-xs font-bold mb-1">
+                                            <StickyNote size={14} />
+                                            توضیحات شما:
+                                        </div>
+                                        <p className="text-xs text-gray-700 leading-relaxed">{order.notes}</p>
                                     </div>
                                 )}
                                 
-                                <h4 className="font-semibold mb-2 pt-2">اقلام سفارش:</h4>
-                                <ul className="space-y-2">
+                                <h4 className="font-bold text-sm text-gray-700 mb-3">اقلام سفارش:</h4>
+                                <div className="space-y-2 mb-4">
                                     {order.items.map((item: OrderItem) => (
-                                        <li key={item.id} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-md">
-                                            <span>{item.productName}</span>
-                                            <span className="text-gray-600 px-2 border-b-4 border-teal-200">{toPersianDigits(item.quantity)}</span>
-                                        </li>
+                                        <div key={item.id} className="flex justify-between items-center text-xs bg-gray-50 p-2 rounded-lg">
+                                            <span className="text-gray-700 truncate ml-2">{item.productName}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-500">{toPersianDigits(item.price)} ریال</span>
+                                                <span className="bg-white border px-2 py-0.5 rounded text-gray-800 font-bold">
+                                                    {toPersianDigits(item.quantity)}
+                                                </span>
+                                            </div>
+                                        </div>
                                     ))}
-                                </ul>
+                                </div>
                                 
-                                <div className="flex flex-wrap gap-2 pt-4 border-t">
-                                    {/* --- UPDATED BUTTONS SECTION --- */}
+                                <div className="flex flex-wrap gap-3 pt-2">
                                     {order.status === 'PENDING' && (
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="destructive" size="sm" className="gap-2"><XCircle size={16}/> لغو سفارش</Button>
+                                                <Button variant="destructive" className="flex-1 h-10 rounded-xl text-xs">
+                                                    <XCircle size={16} className="ml-2"/> لغو سفارش
+                                                </Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
-                                                <AlertDialogHeader><AlertDialogTitle>آیا از لغو سفارش اطمینان دارید؟</AlertDialogTitle></AlertDialogHeader>
-                                                <AlertDialogDescription>این عمل غیرقابل بازگشت است.</AlertDialogDescription>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>لغو سفارش</AlertDialogTitle>
+                                                    <AlertDialogDescription>آیا اطمینان دارید؟ این عملیات قابل بازگشت نیست.</AlertDialogDescription>
+                                                </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleCancelOrder(order.id)}>تایید و لغو</AlertDialogAction>
+                                                    <AlertDialogAction onClick={() => handleCancelOrder(order.id)} className="bg-red-600">
+                                                        بله، لغو شود
+                                                    </AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
                                     )}
 
                                     {order.status === 'DELIVERED' && !order.returnRequest && (
-                                        <Button variant="outline" size="sm" className="gap-2 text-orange-600 border-orange-400 hover:bg-orange-50 hover:text-orange-700" onClick={() => setSelectedOrderForReturn(order)}>
-                                            <RefreshCw size={16}/> ثبت مرجوعی
+                                        <Button 
+                                            variant="outline" 
+                                            className="flex-1 h-10 rounded-xl text-xs border-orange-300 text-orange-600 hover:bg-orange-50"
+                                            onClick={() => setSelectedOrderForReturn(order)}
+                                        >
+                                            <RefreshCw size={16} className="ml-2"/> درخواست مرجوعی
                                         </Button>
                                     )}
                                 </div>

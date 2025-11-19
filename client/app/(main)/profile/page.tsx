@@ -1,4 +1,3 @@
-// FILE: app/(main)/profile/page.tsx
 "use client";
 
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
@@ -11,30 +10,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, User, ShieldCheck, MapPin, LogOut, ChevronLeft, Store, Phone } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import toPersianDigits from "@/utils/persianNum";
 
-// MapPicker به صورت داینامیک وارد می‌شود تا سمت سرور رندر نشود
+// MapPicker dynamic import
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
     ssr: false,
-    loading: () => <div className="h-64 w-full bg-gray-200 animate-pulse rounded-md flex items-center justify-center"><p>در حال بارگذاری نقشه...</p></div>
+    loading: () => <div className="h-48 w-full bg-gray-100 animate-pulse rounded-xl flex items-center justify-center text-gray-400 text-sm">در حال بارگذاری نقشه...</div>
 });
 
+type ViewState = 'DASHBOARD' | 'EDIT_INFO' | 'CHANGE_PASS';
+
 export default function ProfilePage() {
-    const { user, setUser, isLoadingUser } = useAppContext();
+    const { user, setUser, isLoadingUser, logout } = useAppContext();
     const router = useRouter();
     
-    // State for form data
+    // مدیریت نمای فعلی (داشبورد یا فرم‌ها)
+    const [currentView, setCurrentView] = useState<ViewState>('DASHBOARD');
+    
     const [formData, setFormData] = useState({ name: "", shopName: "", shopAddress: "", landline: "", latitude: null as number | null, longitude: null as number | null });
     const [passwordData, setPasswordData] = useState({ oldPassword: "", newPassword: "", confirmNewPassword: "" });
     
-    // State for UI feedback
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    // وقتی اطلاعات کاربر از کانتکست بارگذاری شد، فرم را با آن پر کن
     useEffect(() => {
         if (user) {
             setFormData({
@@ -48,6 +49,12 @@ export default function ProfilePage() {
         }
     }, [user]);
 
+    // پاک کردن پیام‌ها هنگام تغییر ویو
+    useEffect(() => {
+        setError("");
+        setSuccess("");
+    }, [currentView]);
+
     const handleInfoChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -60,14 +67,15 @@ export default function ProfilePage() {
         setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
     };
     
-    // ارسال فرم اطلاعات پروفایل
     const handleInfoSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setIsLoading(true); setError(""); setSuccess("");
         try {
             const res = await apiClient.put('/user/profile', formData);
-            setUser(res.data); // آپدیت اطلاعات کاربر در کانتکست سراسری
+            setUser(res.data);
             setSuccess("اطلاعات با موفقیت به‌روز شد.");
+            // بعد از ۱ ثانیه برگرد به داشبورد
+            setTimeout(() => setCurrentView('DASHBOARD'), 1500);
         } catch (err: any) { 
             setError(err.response?.data?.error || "خطا در ذخیره اطلاعات"); 
         } finally { 
@@ -75,22 +83,20 @@ export default function ProfilePage() {
         }
     };
 
-    // ارسال فرم تغییر رمز عبور
     const handlePasswordSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (passwordData.newPassword.length < 6) {
-            setError("رمز عبور جدید باید حداقل ۶ کاراکتر باشد.");
-            return;
+            setError("رمز عبور جدید باید حداقل ۶ کاراکتر باشد."); return;
         }
         if (passwordData.newPassword !== passwordData.confirmNewPassword) { 
-            setError("رمز عبور جدید و تکرار آن مطابقت ندارند."); 
-            return; 
+            setError("رمز عبور جدید و تکرار آن مطابقت ندارند."); return; 
         }
         setIsLoading(true); setError(""); setSuccess("");
         try {
             const res = await apiClient.post('/user/change-password', passwordData);
             setSuccess(res.data.message);
             setPasswordData({ oldPassword: "", newPassword: "", confirmNewPassword: "" });
+            setTimeout(() => setCurrentView('DASHBOARD'), 1500);
         } catch (err: any) { 
             setError(err.response?.data?.error || "خطا در تغییر رمز عبور"); 
         } finally { 
@@ -98,52 +104,136 @@ export default function ProfilePage() {
         }
     };
     
-    if (isLoadingUser || !user) {
-        return <LoadingSpinner message="در حال بارگذاری اطلاعات..." />;
-    }
-
+    if (isLoadingUser || !user) return <LoadingSpinner message="در حال بارگذاری..." />;
+    
     const initialMapPosition = (user.latitude && user.longitude) ? [user.latitude, user.longitude] as [number, number] : undefined;
 
+    // --- RENDER: VIEW 1 - DASHBOARD ---
+    if (currentView === 'DASHBOARD') {
+        return (
+            <div className="pb-24 min-h-screen bg-gray-50">
+                {/* Header Card */}
+                <div className="bg-gradient-to-br from-teal-600 to-teal-800 text-white pt-8 pb-12 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
+                     <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30">
+                             <User className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-lg font-bold">{user.name || "کاربر جدید"}</h1>
+                            <p className="text-teal-100 text-sm mt-1 flex items-center gap-1 opacity-90">
+                                <Phone className="w-3 h-3" />
+                                {toPersianDigits(Number(user.phone))}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Menu List */}
+                <div className="px-4 -mt-6 relative z-20 space-y-3">
+                    <button onClick={() => setCurrentView('EDIT_INFO')} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group active:scale-95 transition-all">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-blue-50 text-blue-600"><Store className="w-5 h-5" /></div>
+                            <span className="text-sm font-medium text-gray-700">اطلاعات فروشگاه و آدرس</span>
+                        </div>
+                        <ChevronLeft className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                    </button>
+
+                    <button onClick={() => setCurrentView('CHANGE_PASS')} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group active:scale-95 transition-all">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-orange-50 text-orange-600"><ShieldCheck className="w-5 h-5" /></div>
+                            <span className="text-sm font-medium text-gray-700">امنیت و تغییر رمز عبور</span>
+                        </div>
+                        <ChevronLeft className="w-5 h-5 text-gray-300 group-hover:text-orange-500 transition-colors" />
+                    </button>
+
+                    <button onClick={logout} className="w-full bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center justify-center gap-2 text-red-600 mt-8 hover:bg-red-100 transition-colors">
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-bold text-sm">خروج از حساب</span>
+                    </button>
+                    
+                    <div className="text-center pt-6 text-gray-400 text-xs">
+                         BonakShop App v1.0.0
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // --- RENDER: VIEW 2 & 3 - FORMS ---
+    const isEditInfo = currentView === 'EDIT_INFO';
+    const title = isEditInfo ? "اطلاعات فروشگاه" : "تغییر رمز عبور";
+
     return (
-        <div className="pb-20">
-            <header className="sticky top-0 bg-white z-10 p-4 border-b flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowRight className="h-6 w-6" />
+        <div className="pb-20 min-h-screen bg-white">
+            <header className="sticky top-0 bg-white/80 backdrop-blur-md z-20 p-4 border-b flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => setCurrentView('DASHBOARD')}>
+                    <ArrowRight className="h-6 w-6 text-gray-700" />
                 </Button>
-                <h1 className="text-md font-bold">پروفایل من</h1>
+                <h1 className="text-md font-bold text-gray-800">{title}</h1>
             </header>
 
-            <main className="p-4 space-y-8">
-                <Card>
-                    <CardHeader><CardTitle>ویرایش اطلاعات</CardTitle></CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleInfoSubmit} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label htmlFor="name">نام و نام خانوادگی</Label><Input id="name" name="name" value={formData.name} onChange={handleInfoChange} /></div>
-                                <div className="space-y-2"><Label htmlFor="shopName">نام فروشگاه</Label><Input id="shopName" name="shopName" value={formData.shopName} onChange={handleInfoChange} /></div>
+            <main className="p-6">
+                {isEditInfo ? (
+                    <form onSubmit={handleInfoSubmit} className="space-y-5">
+                        <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name" className="text-gray-600">نام و نام خانوادگی</Label>
+                                <Input id="name" name="name" value={formData.name} onChange={handleInfoChange} className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white" />
                             </div>
-                            <div className="space-y-2"><Label htmlFor="shopAddress">آدرس</Label><Textarea id="shopAddress" name="shopAddress" value={formData.shopAddress || ''} onChange={handleInfoChange} /></div>
-                            <div className="space-y-2"><Label htmlFor="landline">تلفن ثابت</Label><Input id="landline" name="landline" value={formData.landline || ''} onChange={handleInfoChange} /></div>
-                            <div className="space-y-2"><Label>موقعیت مکانی روی نقشه (اختیاری)</Label><MapPicker onLocationChange={handleLocationChange} initialPosition={initialMapPosition} /></div>
-                            <Button type="submit" disabled={isLoading}>{isLoading ? "در حال ذخیره..." : "ذخیره اطلاعات"}</Button>
-                        </form>
-                    </CardContent>
-                </Card>
+                            <div className="space-y-2">
+                                <Label htmlFor="shopName" className="text-gray-600">نام فروشگاه</Label>
+                                <Input id="shopName" name="shopName" value={formData.shopName} onChange={handleInfoChange} className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white" />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="landline" className="text-gray-600">تلفن ثابت</Label>
+                            <Input id="landline" name="landline" value={formData.landline || ''} onChange={handleInfoChange} className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white" placeholder="021..." />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="shopAddress" className="text-gray-600">آدرس دقیق</Label>
+                            <Textarea id="shopAddress" name="shopAddress" value={formData.shopAddress || ''} onChange={handleInfoChange} className="min-h-[100px] rounded-xl bg-gray-50 border-gray-200 focus:bg-white" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-2 text-gray-600"><MapPin size={16}/> موقعیت روی نقشه</Label>
+                            <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                                <MapPicker onLocationChange={handleLocationChange} initialPosition={initialMapPosition} />
+                            </div>
+                        </div>
+                        
+                        <div className="pt-4">
+                            <Button type="submit" className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-md shadow-lg shadow-teal-200" disabled={isLoading}>
+                                {isLoading ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                            </Button>
+                        </div>
+                    </form>
+                ) : (
+                    <form onSubmit={handlePasswordSubmit} className="space-y-5">
+                         <div className="space-y-2">
+                            <Label htmlFor="oldPassword">رمز عبور فعلی</Label>
+                            <Input type="password" id="oldPassword" name="oldPassword" required value={passwordData.oldPassword} onChange={handlePasswordChange} className="h-12 rounded-xl" />
+                        </div>
+                        <div className="bg-blue-50 p-4 rounded-xl text-blue-700 text-xs leading-5 mb-2">
+                            رمز عبور جدید باید حداقل ۶ کاراکتر باشد و شامل حروف و اعداد باشد تا امنیت بیشتری داشته باشد.
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="newPassword">رمز عبور جدید</Label>
+                            <Input type="password" id="newPassword" name="newPassword" required value={passwordData.newPassword} onChange={handlePasswordChange} className="h-12 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmNewPassword">تکرار رمز عبور جدید</Label>
+                            <Input type="password" id="confirmNewPassword" name="confirmNewPassword" required value={passwordData.confirmNewPassword} onChange={handlePasswordChange} className="h-12 rounded-xl" />
+                        </div>
+                        <div className="pt-4">
+                            <Button type="submit" className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-md shadow-lg shadow-orange-200" disabled={isLoading}>
+                                {isLoading ? "در حال تغییر..." : "تغییر رمز عبور"}
+                            </Button>
+                        </div>
+                    </form>
+                )}
 
-                <Card>
-                    <CardHeader><CardTitle>تغییر رمز عبور</CardTitle></CardHeader>
-                    <CardContent>
-                        <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                            <div className="space-y-2"><Label htmlFor="oldPassword">رمز عبور فعلی</Label><Input type="password" id="oldPassword" name="oldPassword" required value={passwordData.oldPassword} onChange={handlePasswordChange} /></div>
-                            <div className="space-y-2"><Label htmlFor="newPassword">رمز عبور جدید</Label><Input type="password" id="newPassword" name="newPassword" required value={passwordData.newPassword} onChange={handlePasswordChange} /></div>
-                            <div className="space-y-2"><Label htmlFor="confirmNewPassword">تکرار رمز عبور جدید</Label><Input type="password" id="confirmNewPassword" name="confirmNewPassword" required value={passwordData.confirmNewPassword} onChange={handlePasswordChange} /></div>
-                            <Button type="submit" disabled={isLoading}>{isLoading ? "در حال تغییر..." : "تغییر رمز عبور"}</Button>
-                        </form>
-                    </CardContent>
-                </Card>
-
-                {error && <p className="text-sm text-red-500 text-center p-2 bg-red-100 rounded-md">{error}</p>}
-                {success && <p className="text-sm text-green-600 text-center p-2 bg-green-100 rounded-md">{success}</p>}
+                {error && <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 text-center animate-in fade-in slide-in-from-bottom-2">{error}</div>}
+                {success && <div className="mt-4 p-4 bg-green-50 text-green-600 rounded-xl text-sm border border-green-100 text-center animate-in fade-in slide-in-from-bottom-2">{success}</div>}
             </main>
         </div>
     );

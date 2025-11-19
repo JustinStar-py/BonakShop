@@ -129,6 +129,16 @@ label {
    padding: 5px;
 }
 
+@layer base {
+  body {
+    @apply bg-gray-50 text-foreground antialiased selection:bg-teal-100 selection:text-teal-900;
+  }
+}
+
+* {
+    @apply outline-none ring-0; 
+}
+
 /* Custom Loader Animation */
 .loader {
   position: relative;
