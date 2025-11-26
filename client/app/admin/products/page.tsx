@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Pencil, PlusCircle, Trash2, Upload, Star, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatToToman } from "@/utils/toman";
 
 function formatPrice(price: number) {
     if (typeof price !== 'number' || isNaN(price)) return "۰ ریال";
@@ -36,9 +37,12 @@ export default function ProductManagementPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
-    const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; productId: string | null; productName: string | null }>({ isOpen: false, productId: null, productName: null });
+    const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; productId: string | null; productName: string | null; }>({ isOpen: false, productId: null, productName: null });
     const [addEntity, setAddEntity] = useState<{ type: EntityType | null, isOpen: boolean }>({ type: null, isOpen: false });
     const [newEntityName, setNewEntityName] = useState("");
+    const [priceInToman, setPriceInToman] = useState('');
+    const [consumerPriceInToman, setConsumerPriceInToman] = useState('');
+    const [discountedPriceInToman, setDiscountedPriceInToman] = useState('');
     
     // Search, Filter, and Pagination states
     const [searchTerm, setSearchTerm] = useState("");
@@ -52,6 +56,14 @@ export default function ProductManagementPage() {
         const discount = Number(editingProduct.discountPercentage) || 0;
         return Number(editingProduct.price) * (1 - discount / 100);
     }, [editingProduct?.price, editingProduct?.discountPercentage]);
+
+    useEffect(() => {
+        if (editingProduct) {
+            setPriceInToman(formatToToman(editingProduct.price));
+            setConsumerPriceInToman(formatToToman(editingProduct.consumerPrice));
+            setDiscountedPriceInToman(formatToToman(discountedPrice));
+        }
+    }, [editingProduct, discountedPrice]);
     
     // Fetch function now handles pagination, search and status filter
     const fetchProducts = useCallback(async (page: number, search: string, status: string) => {
@@ -101,6 +113,17 @@ export default function ProductManagementPage() {
 
     const handleFormChange = (field: string, value: any) => {
         setEditingProduct((prev: any) => ({ ...prev, [field]: value }));
+
+        if (field === 'price') {
+            setPriceInToman(formatToToman(value));
+        } else if (field === 'consumerPrice') {
+            setConsumerPriceInToman(formatToToman(value));
+        } else if (field === 'discountPercentage') {
+            const price = editingProduct?.price || 0;
+            const discount = Number(value) || 0;
+            const newDiscountedPrice = Number(price) * (1 - discount / 100);
+            setDiscountedPriceInToman(formatToToman(newDiscountedPrice));
+        }
     };
 
     const handleSelectChange = (field: EntityType, value: string) => {
@@ -265,9 +288,21 @@ export default function ProductManagementPage() {
                         <form onSubmit={handleSubmit} className="space-y-4 pt-4 max-h-[80vh] overflow-y-auto p-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div><Label>نام محصول</Label><Input value={editingProduct.name} onChange={e => handleFormChange('name', e.target.value)} required /></div>
-                                <div><Label>قیمت فروش (ریال)</Label><Input type="number" value={editingProduct.price} onChange={e => handleFormChange('price', e.target.value)} required /></div>
-                                <div><Label>قیمت مصرف‌کننده (ریال)</Label><Input type="number" value={editingProduct.consumerPrice || ''} onChange={e => handleFormChange('consumerPrice', e.target.value)} /></div>
-                                <div><Label>تخفیف (٪)</Label><Input type="number" value={editingProduct.discountPercentage} onChange={e => handleFormChange('discountPercentage', e.target.value)} /><p className="text-xs text-green-600 mt-2">قیمت بعد از تخفیف: {formatPrice(discountedPrice)}</p></div>
+                                <div>
+                                    <Label>قیمت فروش (ریال)</Label>
+                                    <Input type="number" value={editingProduct.price} onChange={e => handleFormChange('price', e.target.value)} required />
+                                    <p className="text-xs text-gray-500 mt-1">{priceInToman}</p>
+                                </div>
+                                <div>
+                                    <Label>قیمت مصرف‌کننده (ریال)</Label>
+                                    <Input type="number" value={editingProduct.consumerPrice || ''} onChange={e => handleFormChange('consumerPrice', e.target.value)} />
+                                    <p className="text-xs text-gray-500 mt-1">{consumerPriceInToman}</p>
+                                </div>
+                                <div>
+                                    <Label>تخفیف (٪)</Label>
+                                    <Input type="number" value={editingProduct.discountPercentage} onChange={e => handleFormChange('discountPercentage', e.target.value)} />
+                                    <p className="text-xs text-green-600 mt-1">قیمت بعد از تخفیف: {discountedPriceInToman}</p>
+                                </div>
                                 <div><Label>دسته‌بندی</Label><Select value={editingProduct.categoryId} onValueChange={val => handleSelectChange('category', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}<SelectItem value="add-new-category" className="text-blue-500 font-bold">افزودن دسته‌بندی جدید...</SelectItem></SelectContent></Select></div>
                                 <div><Label>تولیدکننده</Label><Select value={editingProduct.supplierId} onValueChange={val => handleSelectChange('supplier', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}<SelectItem value="add-new-supplier" className="text-blue-500 font-bold">افزودن تولیدکننده جدید...</SelectItem></SelectContent></Select></div>
                                 <div><Label>پخش‌کننده</Label><Select value={editingProduct.distributorId} onValueChange={val => handleSelectChange('distributor', val)} required><SelectTrigger><SelectValue placeholder="انتخاب..." /></SelectTrigger><SelectContent>{distributors.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}<SelectItem value="add-new-distributor" className="text-blue-500 font-bold">افزودن پخش‌کننده جدید...</SelectItem></SelectContent></Select></div>

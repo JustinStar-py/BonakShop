@@ -17,13 +17,10 @@ import 'leaflet/dist/leaflet.css';
 
 // Define metadata for the application
 export const metadata: Metadata = {
-  title: "۴۹۲۳۶۰۳۳",
+  title: "فروشگاه بهار نارون",
   description: "اپلیکیشن سفارش عمده مواد غذایی برای فروشگاه‌های کوچک",
   icons: {
     icon: "/logo.png",
-  },
-  other: {
-    enamad: "49236033", // اضافه کردن تگ اینماد
   }
 };
 
