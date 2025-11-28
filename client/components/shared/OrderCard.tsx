@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Package, ChevronLeft, CreditCard } from "lucide-react";
 import toPersianDigits from "@/utils/persianNum";
 import { Order, OrderItem } from "@prisma/client";
+import { formatToToman } from "@/utils/toman";
 
 // تعریف دقیق تایپ ورودی طبق دیتای شما
 type OrderCardProps = {
@@ -59,8 +60,7 @@ export default function OrderCard({ order }: OrderCardProps) {
         <div className="flex flex-col">
           <span className="text-[10px] text-gray-400">مبلغ کل</span>
           <div className="flex items-center gap-1 text-teal-700">
-            <span className="font-bold text-lg">{toPersianDigits(order.totalPrice)}</span>
-            <span className="text-xs">ریال</span>
+            <span className="font-bold text-lg">{formatToToman(order.totalPrice)}</span>
           </div>
         </div>
         

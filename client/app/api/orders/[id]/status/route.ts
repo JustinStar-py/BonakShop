@@ -31,8 +31,12 @@ export async function PATCH(
             return NextResponse.json({ error: "Action not allowed" }, { status: 403 });
         }
     } else if (userRole === 'WORKER') {
+        const isShippedOrDelivered = new Set<OrderStatus>([
+          OrderStatus.SHIPPED,
+          OrderStatus.DELIVERED,
+        ]).has(order.status);
         // Workers can only manage SHIPPED or DELIVERED statuses
-        if (![OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(order.status) && status !== 'DELIVERED') {
+        if (!isShippedOrDelivered || status !== OrderStatus.DELIVERED) {
             return NextResponse.json({ error: "Workers can only confirm delivery for shipped orders" }, { status: 403 });
         }
     }

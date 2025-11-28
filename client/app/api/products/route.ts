@@ -42,7 +42,10 @@ export async function GET(request: Request) {
     const searchTerm = searchParams.get("search") || "";
     const categoryId = searchParams.get("categoryId") || "";
     const supplierId = searchParams.get("supplierId") || "";
+    const distributorId = searchParams.get("distributorId") || "";
     const status = searchParams.get("status") || "all"; // فیلتر جدید
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const order = (searchParams.get("order") || "desc").toLowerCase() === "asc" ? "asc" : "desc";
 
     const skip = (page - 1) * limit;
 
@@ -57,11 +60,15 @@ export async function GET(request: Request) {
       ];
     }
 
-    if (categoryId) {
+    if (distributorId && distributorId !== "all") {
+      whereClause.distributorId = distributorId;
+    }
+
+    if (categoryId && categoryId !== "all") {
       whereClause.categoryId = categoryId;
     }
 
-    if (supplierId) {
+    if (supplierId && supplierId !== "all") {
       whereClause.supplierId = supplierId;
     }
 
@@ -75,6 +82,15 @@ export async function GET(request: Request) {
     }
     // اگر status = all باشد، فیلتر اضافه نمی‌کنیم
 
+    let orderBy: any = { createdAt: order };
+    if (sortBy === "price") {
+      orderBy = { price: order };
+    } else if (sortBy === "createdAt") {
+      orderBy = { createdAt: order };
+    } else if (sortBy === "discount") {
+      orderBy = { discountPercentage: order };
+    }
+
     const products = await prisma.product.findMany({
       where: whereClause,
       skip: skip,
@@ -84,9 +100,7 @@ export async function GET(request: Request) {
         supplier: true,
         distributor: true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy,
     });
 
     const totalProducts = await prisma.product.count({ where: whereClause });
@@ -95,6 +109,7 @@ export async function GET(request: Request) {
       products,
       totalPages: Math.ceil(totalProducts / limit),
       currentPage: page,
+      totalProducts,
     });
   } catch (error) {
     console.error("Failed to fetch products:", error);

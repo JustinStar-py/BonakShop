@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { ShamsiCalendar } from "@/components/shared/ShamsiCalendar";
 import toPersianDigits from "@/utils/persianNum";
+import { formatToToman } from "@/utils/toman";
 
 const getTodayDateString = (): string => {
     const today = new Date();
@@ -166,8 +167,7 @@ export default function CartPage() {
                         <div className="flex-1 flex flex-col justify-center">
                             <span className="text-[10px] text-gray-400">مبلغ قابل پرداخت</span>
                             <div className="flex items-center gap-1">
-                                <span className="font-bold text-lg text-gray-800">{toPersianDigits(getTotalPrice())}</span>
-                                <span className="text-xs text-gray-500">ریال</span>
+                                <span className="font-bold text-lg text-gray-800">{formatToToman(getTotalPrice())}</span>
                             </div>
                         </div>
                         <Button 
@@ -225,7 +225,7 @@ export default function CartPage() {
                                                 %{toPersianDigits(item.discountPercentage)}
                                             </span>
                                         )}
-                                        <span>فی: {toPersianDigits(finalPrice)}</span>
+                                        <span>فی: {formatToToman(finalPrice)}</span>
                                     </div>
                                 </div>
                                 
@@ -240,7 +240,7 @@ export default function CartPage() {
                                         </Button>
                                     </div>
                                     <span className="font-bold text-teal-700 text-sm">
-                                        {toPersianDigits(lineItemTotal)} <span className="text-[10px] font-normal text-gray-400">ریال</span>
+                                        {formatToToman(lineItemTotal)}
                                     </span>
                                 </div>
                              </div>
@@ -257,14 +257,13 @@ export default function CartPage() {
                         {getOriginalTotalPrice() - getTotalPrice() > 0 && (
                              <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5">
                                 <span>سود شما:</span>
-                                <span className="text-red-500 font-bold">{toPersianDigits(getOriginalTotalPrice() - getTotalPrice())}</span>
+                                <span className="text-red-500 font-bold">{formatToToman(getOriginalTotalPrice() - getTotalPrice())}</span>
                             </div>
                         )}
                         {!((getOriginalTotalPrice() - getTotalPrice() > 0)) && <span className="text-[10px] text-gray-400">مبلغ قابل پرداخت</span>}
                         
                         <div className="flex items-center gap-1">
-                            <span className="font-bold text-lg text-gray-800">{toPersianDigits(getTotalPrice())}</span>
-                            <span className="text-xs text-gray-500">ریال</span>
+                            <span className="font-bold text-lg text-gray-800">{formatToToman(getTotalPrice())}</span>
                         </div>
                     </div>
                     

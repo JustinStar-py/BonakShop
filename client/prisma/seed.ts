@@ -61,7 +61,7 @@ async function main() {
   const products = await prisma.product.createManyAndReturn({
     data: [
       {
-        name: "هات داگ پنیری آندره", price: 1500000,
+        name: "هات داگ پنیری آندره", price: 150000,
         image: "https://api.snapp.market/media/cache/product-image/1687259469_247343_1_260x260.jpg",
         categoryId: categoryMap.get("سوسیس و کالباس")!,
         supplierId: supplierMap.get("آندره")!,
@@ -69,7 +69,7 @@ async function main() {
         stock: 100, unit: "بسته"
       },
       {
-        name: "کالباس خشک کاله", price: 2200000,
+        name: "کالباس خشک کاله", price: 220000,
         image: "https://api.snapp.market/media/cache/product-image/1608722744_419208_1_260x260.jpg",
         categoryId: categoryMap.get("سوسیس و کالباس")!,
         supplierId: supplierMap.get("کاله")!,
@@ -77,7 +77,7 @@ async function main() {
         stock: 50, unit: "کیلوگرم"
       },
       {
-        name: "تخم مرغ ۲۰ عددی سیمرغ", price: 980000,
+        name: "تخم مرغ ۲۰ عددی سیمرغ", price: 98000,
         image: "https://api.snapp.market/media/cache/product-image/1608722744_419208_1_260x260.jpg",
         categoryId: categoryMap.get("تخم مرغ")!,
         supplierId: supplierMap.get("سیمرغ")!,
@@ -85,7 +85,7 @@ async function main() {
         stock: 200, unit: "بسته", discountPercentage: 10
       },
       {
-        name: "پنیر پیتزا موزارلا کاله", price: 2100000,
+        name: "پنیر پیتزا موزارلا کاله", price: 210000,
         image: "https://img.beroozmart.com/unsafe/files/shop/product/661c44bfac8045bfb5fcfe380213a0a9.jpg",
         categoryId: categoryMap.get("لبنیات")!,
         supplierId: supplierMap.get("کاله")!,
@@ -93,7 +93,7 @@ async function main() {
         stock: 80, unit: "کیلوگرم"
       },
       {
-        name: "شیر کم چرب ۱ لیتری میهن", price: 450000,
+        name: "شیر کم چرب ۱ لیتری میهن", price: 45000,
         image: "https://api.snapp.market/media/cache/product-image/1687259469_247343_1_260x260.jpg",
         categoryId: categoryMap.get("لبنیات")!,
         supplierId: supplierMap.get("میهن")!,
@@ -146,8 +146,8 @@ async function main() {
       totalPrice: (hotdog.price * 2) + milk.price,
       items: {
         create: [
-          { productName: hotdog.name, quantity: 2, price: hotdog.price },
-          { productName: milk.name, quantity: 1, price: milk.price },
+          { productId: hotdog.id, productName: hotdog.name, quantity: 2, price: hotdog.price },
+          { productId: milk.id, productName: milk.name, quantity: 1, price: milk.price },
         ]
       }
     }
@@ -164,7 +164,7 @@ async function main() {
       totalPrice: eggPriceWithDiscount * 5,
       items: {
         create: [
-          { productName: egg.name, quantity: 5, price: eggPriceWithDiscount },
+          { productId: egg.id, productName: egg.name, quantity: 5, price: eggPriceWithDiscount },
         ]
       }
     }

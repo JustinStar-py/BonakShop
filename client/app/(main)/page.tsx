@@ -1,18 +1,18 @@
 // FILE: app/(main)/page.tsx (FIXED)
 "use client";
 
-import { useState, useEffect, useCallback, ElementType } from "react";
+import { useState, useEffect, useCallback, ElementType, useRef } from "react";
 import { useAppContext } from "@/context/AppContext";
 import apiClient from "@/lib/apiClient";
 import type { Product, Category, Supplier, CartItem } from "@/types";
 import ProductCard from "@/components/shared/ProductCard";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
     Search, Loader2, User as UserIcon, Truck, LayoutDashboard,
-    Star, TrendingUp, Sparkles, ArrowLeft, ShoppingBag, LayoutGridIcon
+    Star, TrendingUp, Sparkles, ArrowLeft, ShoppingBag, LayoutGridIcon,
+    ArrowUp
 } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
@@ -23,7 +23,7 @@ type ProductWithRelations = Product & { supplier: Supplier };
 
 // --- Carousel Component ---
 function ProductCarousel({ 
-    title, icon: Icon, products, cart, onAddToCart, onUpdateQuantity, onSelectProduct, onImageClick, onSupplierClick 
+    title, icon: Icon, products, cart, onAddToCart, onUpdateQuantity, onSelectProduct, onImageClick, onSupplierClick, onViewAll 
 }: any) {
     if (!products || products.length === 0) return null;
     return (
@@ -33,7 +33,9 @@ function ProductCarousel({
                     {Icon && <div className="p-1.5 bg-teal-50 rounded-lg text-teal-600"><Icon className="h-5 w-5" /></div>}
                     <h2 className="text-md font-bold text-gray-800">{title}</h2>
                 </div>
-                <Button variant="ghost" size="sm" className="text-xs text-teal-600 h-8 px-2 hover:bg-teal-50 hover:text-teal-700">مشاهده همه <ArrowLeft className="w-3 h-3 mr-1"/></Button>
+                <Button variant="ghost" size="sm" className="text-xs text-teal-600 h-8 px-2 hover:bg-teal-50 hover:text-teal-700" onClick={onViewAll}>
+                  مشاهده همه <ArrowLeft className="w-3 h-3 mr-1"/>
+                </Button>
             </div>
             <div className="flex gap-x-4 overflow-x-auto px-2 pb-6 -mb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {products.map((product: any) => (
@@ -93,14 +95,15 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  const [isSearching, setIsSearching] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const debouncedSearchTerm = useDebounce("", 500);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollTick = useRef(false);
 
-  const fetchPaginatedProducts = useCallback(async (pageNum: number, search: string, isNewSearch = false) => {
+  const fetchPaginatedProducts = useCallback(async (pageNum: number, search: string, categoryId = "all", isNewSearch = false) => {
     setIsLoadingMore(true);
-    if (isNewSearch) setIsSearching(true);
     try {
-      const response = await apiClient.get(`/products?page=${pageNum}&limit=12&search=${search}`);
+      const response = await apiClient.get(`/products?page=${pageNum}&limit=12&search=${search}&categoryId=${categoryId === "all" ? "" : categoryId}`);
       const newProducts = response.data.products;
       setPaginatedProducts(prev => {
         if (isNewSearch) return newProducts;
@@ -110,7 +113,7 @@ export default function HomePage() {
       setHasMore(newProducts.length > 0);
       setPage(isNewSearch ? 2 : p => p + 1);
     } catch (err) { setError("خطا در بارگذاری محصولات."); } 
-    finally { setIsLoadingMore(false); if (isNewSearch) setIsSearching(false); }
+    finally { setIsLoadingMore(false); }
   }, []);
 
   useEffect(() => {
@@ -139,19 +142,27 @@ export default function HomePage() {
 
   useEffect(() => {
     if (isLoading) return;
-    fetchPaginatedProducts(1, debouncedSearchTerm, true);
-  }, [debouncedSearchTerm]);
+    fetchPaginatedProducts(1, "", selectedCategory, true);
+  }, [selectedCategory, isLoading, fetchPaginatedProducts]);
 
   const handleSelectProduct = (product: Product) => router.push(`/products/${product.id}`);
   const handleSupplierClick = (supplierId: string) => router.push(`/products?supplierId=${supplierId}`);
 
   const handleScroll = useCallback(() => {
-    if (window.innerHeight + document.documentElement.scrollTop < document.documentElement.offsetHeight - 200 || isLoadingMore || !hasMore) return;
-    if (!debouncedSearchTerm) fetchPaginatedProducts(page, "");
-  }, [page, hasMore, isLoadingMore, debouncedSearchTerm, fetchPaginatedProducts]);
+    if (scrollTick.current) return;
+    scrollTick.current = true;
+    requestAnimationFrame(() => {
+      const nearingBottom = window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 200;
+      if (nearingBottom && !isLoadingMore && hasMore) {
+        fetchPaginatedProducts(page, "", selectedCategory);
+      }
+      setShowScrollTop(window.scrollY > 400);
+      scrollTick.current = false;
+    });
+  }, [page, hasMore, isLoadingMore, selectedCategory, fetchPaginatedProducts]);
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
@@ -167,15 +178,18 @@ export default function HomePage() {
       <div className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
         <div className="flex justify-between items-center px-4 pt-3 pb-2">
             <div className="flex items-center gap-3">
-                 <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 font-bold shadow-sm border border-teal-200">
-                    {userName[0]}
-                 </div>
-                 <div className="flex flex-col">
-                     <span className="text-[10px] text-gray-500">خوش آمدید</span>
-                     <span className="text-sm font-bold text-gray-800">{userName}</span>
-                 </div>
+                <div className="h-10 w-10 rounded-md border border-gray-200 overflow-hidden flex items-center justify-center">
+                    <Image src="/logo.png" alt="بهار نارون" width={40} height={40} className="object-contain" priority />
+                </div>
+                <div className="flex flex-col leading-tight">
+                    <span className="text-[10px] text-gray-500">خوش آمدید</span>
+                    <span className="text-sm font-bold text-gray-800">{userName}</span>
+                </div>
             </div>
             <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => router.push('/products')}>
+                    <Search className="h-5 w-5 text-gray-600" />
+                </Button>
                 {user?.role === 'ADMIN' && <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => router.push('/admin/dashboard')}><LayoutDashboard className="h-5 w-5 text-gray-600" /></Button>}
                 {user?.role === 'WORKER' && <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => router.push('/delivery')}><Truck className="h-5 w-5 text-gray-600" /></Button>}
                 <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-gray-100" onClick={() => router.push('/profile')}><UserIcon className="h-6 w-6 text-gray-700" /></Button>
@@ -185,21 +199,7 @@ export default function HomePage() {
                 </Button>
             </div>
         </div>
-        <div className="px-4 pb-3">
-            <div className="relative group">
-                {isSearching ? (
-                    <Loader2 className="absolute right-3 top-3 h-5 w-5 text-teal-500 animate-spin" />
-                ) : (
-                    <Search className="absolute right-3 top-3 h-5 w-5 text-gray-400 group-focus-within:text-teal-600 transition-colors" />
-                )}
-                <Input 
-                    placeholder="جستجو در هزاران محصول..." 
-                    value={searchTerm} 
-                    onChange={(e) => setSearchTerm(e.target.value)} 
-                    className="pr-10 pl-4 h-11 text-sm rounded-xl bg-gray-100/80 border-transparent focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all shadow-inner" 
-                />
-            </div>
-        </div>
+        <div className="px-4 pb-3"></div>
       </div>
 
       {debouncedSearchTerm ? (
@@ -212,16 +212,32 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-         {/* BANNER */}
-          {banners[0].active && (
-            <div className="px-4 mb-4 mt-6">
-             <Link href={banners[0].link} passHref>
-                <div className="relative w-full aspect-[3/1] rounded-2xl overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.98]">
-                  <Image src={banners[0].image} alt="Special Offer" fill className="object-cover" />
+         {/* HERO / BANNER */}
+          <div className="px-4 mt-6">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-400 text-white shadow-xl">
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_20%,white,transparent_35%),radial-gradient(circle_at_80%_0%,white,transparent_25%),radial-gradient(circle_at_40%_60%,white,transparent_25%)]" />
+              <div className="relative p-5 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] mb-1 text-white/80">بهار نارون</p>
+                  <h1 className="text-xl font-black leading-tight mb-2">خرید سریع، قیمت به‌روز</h1>
+                  <p className="text-sm text-white/85 mb-4">دسته‌بندی دلخواهت را انتخاب کن و در چند کلیک سفارش بده.</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button size="sm" variant="secondary" className="rounded-full bg-white text-teal-700 hover:bg-white/90" onClick={() => router.push('/products')}>
+                      <ShoppingBag className="w-4 h-4 ml-1" /> شروع خرید
+                    </Button>
+                    <Button size="sm" variant="outline" className="rounded-full border-white/70 text-teal-700 hover:bg-white/10" onClick={() => router.push('/orders')}>
+                      سفارش‌های من
+                    </Button>
+                  </div>
+                </div>
+                {banners[0]?.active && (
+                  <div className="hidden sm:block w-40 h-28 relative">
+                    <Image src={banners[0].image} alt="promo" fill className="object-cover rounded-2xl shadow-lg" loading="lazy" />
+                  </div>
+                )}
               </div>
-            </Link>
             </div>
-          )}
+          </div>
 
          {/* CATEGORIES */}
         <div className="py-4 mb-2 border-b border-gray-300">
@@ -229,8 +245,14 @@ export default function HomePage() {
             {categories.map(c => (
               <div 
                 key={c.id} 
-                className="flex flex-col items-center flex-shrink-0 gap-2 cursor-pointer group" 
-                onClick={() => router.push(`/products?categoryId=${c.id}`)}
+                className={`flex flex-col items-center flex-shrink-0 gap-2 cursor-pointer group ${selectedCategory === c.id ? "opacity-100" : "opacity-80 hover:opacity-100"}`} 
+                onClick={() => {
+                  const next = selectedCategory === c.id ? "all" : c.id;
+                  setSelectedCategory(next);
+                  setPaginatedProducts([]);
+                  setPage(1);
+                  fetchPaginatedProducts(1, debouncedSearchTerm, next, true);
+                }}
               >
                 
                 {/* کانتینر حلقه‌ها */}
@@ -283,6 +305,7 @@ export default function HomePage() {
             onSelectProduct={handleSelectProduct}
             onSupplierClick={handleSupplierClick}
             onImageClick={setViewingImage}
+            onViewAll={() => router.push('/products?sort=bestselling')}
           />
 
            {banners[1].active && (
@@ -305,6 +328,7 @@ export default function HomePage() {
             onSelectProduct={handleSelectProduct}
             onSupplierClick={handleSupplierClick}
             onImageClick={setViewingImage}
+            onViewAll={() => router.push('/products?sort=bestselling')}
           />
 
           <ProductCarousel 
@@ -317,6 +341,7 @@ export default function HomePage() {
             onSelectProduct={handleSelectProduct}
             onSupplierClick={handleSupplierClick}
             onImageClick={setViewingImage}
+            onViewAll={() => router.push('/products?sort=newest')}
           />
           
           {/* --- INFINITE GRID --- */}
@@ -341,6 +366,15 @@ export default function HomePage() {
             </div>
           </div>
         </>
+      )}
+      {showScrollTop && (
+        <Button
+          size="icon"
+          className="fixed bottom-24 right-4 rounded-full bg-white text-teal-600 hover:bg-teal-50 border border-teal-100"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <ArrowUp className="w-5 h-5" />
+        </Button>
       )}
       <ImageDialog imageUrl={viewingImage} onClose={() => setViewingImage(null)} />
     </div>

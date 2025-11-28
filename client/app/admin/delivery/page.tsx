@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Package, RefreshCw, FileText, MapPin, Phone, Building, User as UserIconLucide } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import dynamic from 'next/dynamic';
+import { formatToToman } from "@/utils/toman";
 
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
     ssr: false,
@@ -24,7 +25,7 @@ type OrderWithRelations = Order & { user: { name: string | null; shopName: strin
 type ReturnForDelivery = ReturnRequest & { order: { user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; } }, items: (ReturnRequestItem & { orderItem: { productName: string } })[] };
 
 // Helper Functions
-const formatPrice = (price: number) => price.toLocaleString("fa-IR") + " ریال";
+const formatPrice = (price: number) => formatToToman(price) || "۰ تومان";
 const getOrderStatusInfo = (status: OrderStatus) => ({ PENDING: { text: "در حال بررسی", variant: "secondary" as "secondary" }, SHIPPED: { text: "ارسال شده", variant: "default" as "default" }, DELIVERED: { text: "تحویل داده شد", variant: "default" as "default" }, CANCELED: { text: "لغو شده", variant: "destructive" as "destructive" } }[status]);
 const getReturnStatusInfo = (status: ReturnStatus) => ({ REQUESTED: { text: "درخواست شده", variant: "secondary" as "secondary" }, APPROVED: { text: "تایید شده", variant: "default" as "default" }, REJECTED: { text: "رد شده", variant: "destructive" as "destructive" } }[status]);
 

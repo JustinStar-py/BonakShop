@@ -27,6 +27,7 @@ import { RefreshCw, XCircle, StickyNote, CalendarCheck, ShoppingBag } from "luci
 import { ReturnRequestDialog } from "@/components/shared/ReturnRequestDialog";
 import toPersianDigits from "@/utils/persianNum";
 import OrderCard from "@/components/shared/OrderCard"; // ایمپورت کارت جدید
+import { formatToToman } from "@/utils/toman";
 
 // تایپ‌های مورد نیاز
 type OrderWithItems = Order & {
@@ -133,7 +134,7 @@ export default function OrdersPage() {
                                         <div key={item.id} className="flex justify-between items-center text-xs bg-gray-50 p-2 rounded-lg">
                                             <span className="text-gray-700 truncate ml-2">{item.productName}</span>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-gray-500">{toPersianDigits(item.price)} ریال</span>
+                                                <span className="text-gray-500">{formatToToman(item.price)}</span>
                                                 <span className="bg-white border px-2 py-0.5 rounded text-gray-800 font-bold">
                                                     {toPersianDigits(item.quantity)}
                                                 </span>

@@ -7,11 +7,12 @@ import { Loader2 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import apiClient from "@/lib/apiClient";
 import { useAppContext } from "@/context/AppContext"; // <-- CHANGE: useAppContext وارد شد
+import { formatToToman } from "@/utils/toman";
 
 // Helper function to format currency
 function formatPrice(price: number) {
-    if (typeof price !== 'number' || isNaN(price)) return "۰ ریال";
-    return price.toLocaleString('fa-IR') + " ریال";
+    const formatted = formatToToman(price);
+    return formatted || "۰ تومان";
 }
 
 export default function DashboardHomePage() {

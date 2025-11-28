@@ -152,7 +152,7 @@ export default function ProfilePage() {
                     </button>
                     
                     <div className="text-center pt-6 text-gray-400 text-xs">
-                         BonakShop App v1.0.0
+                        Behar Naron App v1.0.0
                     </div>
                 </div>
             </div>

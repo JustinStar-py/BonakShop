@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import toPersianDigits from "@/utils/persianNum";
+import { formatToToman } from "@/utils/toman";
 
 // تعریف تایپ ترکیبی
 type ProductDetails = Product & {
@@ -135,8 +136,7 @@ export default function ProductDetailPage() {
                             {product.consumerPrice ? (
                                 <div className="flex items-center gap-1">
                                     <User size={14} className="text-gray-400"/>
-                                    <span className="text-lg font-bold text-gray-700">{toPersianDigits(product.consumerPrice)}</span>
-                                    <span className="text-xs text-gray-400">ریال</span>
+                                    <span className="text-lg font-bold text-gray-700">{formatToToman(product.consumerPrice)}</span>
                                 </div>
                             ) : (
                                 <span className="text-xs text-gray-400">---</span>
@@ -184,17 +184,16 @@ export default function ProductDetailPage() {
                     <div className="flex flex-col">
                         {product.discountPercentage > 0 && (
                             <span className="text-xs text-gray-400 line-through decoration-red-400 decoration-2">
-                                {toPersianDigits(product.price)}
+                                {formatToToman(product.price)}
                             </span>
                         )}
                         <div className="flex items-center gap-1 text-gray-800">
-                            <span className="text-2xl font-black">{toPersianDigits(discountedPrice)}</span>
-                            <span className="text-xs font-medium text-gray-500">ریال</span>
+                            <span className="text-2xl font-black">{formatToToman(discountedPrice)}</span>
                         </div>
                     </div>
                     {product.discountPercentage > 0 && (
                         <Badge variant="destructive" className="rounded-lg px-2">
-                            سود شما: {toPersianDigits(product.price - discountedPrice)}
+                            سود شما: {formatToToman(product.price - discountedPrice)}
                         </Badge>
                     )}
                 </div>

@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "@/context/AppContext";
 import type { Order, ReturnRequest, OrderItem, ReturnRequestItem, OrderStatus, ReturnStatus } from "@prisma/client";
 import { LatLngTuple } from "leaflet";
+import { formatToToman } from "@/utils/toman";
 
 // --- Type Definitions ---
 type OrderForDelivery = Order & {
@@ -33,7 +34,7 @@ const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
 });
 
 // --- Utility Functions ---
-const formatPrice = (p: number) => p.toLocaleString("fa-IR", { useGrouping: false }) + " ریال";
+const formatPrice = (p: number) => formatToToman(p) || "۰ تومان";
 
 const getOrderStatusInfo = (status: OrderStatus): { text: string; variant: "default" | "secondary" | "destructive" } => {
     const map = {

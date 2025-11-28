@@ -4,12 +4,17 @@ import type { ProductFilters, SortOption } from '../types';
 
 export function useFilters() {
   const searchParams = useSearchParams();
+  const initialSort = (() => {
+    const sort = searchParams.get('sort');
+    const allowed: SortOption[] = ['newest', 'bestselling', 'priceAsc', 'priceDesc'];
+    return (allowed.includes(sort as SortOption) ? sort : 'newest') as SortOption;
+  })();
   
   const [filters, setFilters] = useState<ProductFilters>({
     category: searchParams.get('categoryId') || 'all',
     supplier: searchParams.get('supplierId') || 'all',
     search: '',
-    sort: 'newest',
+    sort: initialSort,
   });
 
   const updateFilter = useCallback((key: keyof ProductFilters, value: string | SortOption) => {

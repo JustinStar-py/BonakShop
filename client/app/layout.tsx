@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl">
-      <body className={`${vazirmatn.variable} font-sans antialiased`}> {/* Apply the font variable */}
+      <body className={`${vazirmatn.variable} font-sans antialiased bg-slate-50 text-slate-900`}> {/* Apply the font variable */}
         <SpeedInsights/>
         <AppProvider>
           {children}

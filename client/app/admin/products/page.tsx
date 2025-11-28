@@ -14,13 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Pencil, PlusCircle, Trash2, Upload, Star, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Trash2, Upload, Star, Search, ChevronLeft, ChevronRight, DollarSign, Percent } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatToToman } from "@/utils/toman";
 
 function formatPrice(price: number) {
-    if (typeof price !== 'number' || isNaN(price)) return "۰ ریال";
-    return price.toLocaleString('fa-IR') + " ریال";
+    const formatted = formatToToman(price);
+    return formatted || "۰ تومان";
 }
 
 type ProductWithRelations = Product & { category: Category, supplier: Supplier, distributor: Distributor };
@@ -32,6 +32,7 @@ export default function ProductManagementPage() {
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [distributors, setDistributors] = useState<Distributor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [totalProducts, setTotalProducts] = useState(0);
     
     // Dialog states
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,6 +44,21 @@ export default function ProductManagementPage() {
     const [priceInToman, setPriceInToman] = useState('');
     const [consumerPriceInToman, setConsumerPriceInToman] = useState('');
     const [discountedPriceInToman, setDiscountedPriceInToman] = useState('');
+    const [isBulkUpdateDialogOpen, setIsBulkUpdateDialogOpen] = useState(false);
+    const [bulkReductionType, setBulkReductionType] = useState<'percentage' | 'fixed'>('percentage');
+    const [bulkReductionValue, setBulkReductionValue] = useState('');
+    const [bulkDirection, setBulkDirection] = useState<'increase' | 'decrease'>('decrease');
+    const [categoryFilter, setCategoryFilter] = useState<string>("all");
+    const [supplierFilter, setSupplierFilter] = useState<string>("all");
+    const [distributorFilter, setDistributorFilter] = useState<string>("all");
+    const [categorySearch, setCategorySearch] = useState("");
+    const [supplierSearch, setSupplierSearch] = useState("");
+    const [distributorSearch, setDistributorSearch] = useState("");
+
+    const stopSelectTypeahead = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        // Prevent Radix Select from interpreting typed keys as typeahead selection
+        e.stopPropagation();
+    };
     
     // Search, Filter, and Pagination states
     const [searchTerm, setSearchTerm] = useState("");
@@ -66,13 +82,26 @@ export default function ProductManagementPage() {
     }, [editingProduct, discountedPrice]);
     
     // Fetch function now handles pagination, search and status filter
-    const fetchProducts = useCallback(async (page: number, search: string, status: string) => {
+    const fetchProducts = useCallback(async (
+        page: number,
+        search: string,
+        status: string,
+        categoryId?: string,
+        supplierId?: string,
+        distributorId?: string
+    ) => {
+        const resolvedCategory = categoryId && categoryId !== "all" ? categoryId : "";
+        const resolvedSupplier = supplierId && supplierId !== "all" ? supplierId : "";
+        const resolvedDistributor = distributorId && distributorId !== "all" ? distributorId : "";
         setIsLoading(true);
         try {
-            const res = await apiClient.get(`/products?page=${page}&limit=15&search=${search}&status=${status}`);
+            const res = await apiClient.get(
+                `/products?page=${page}&limit=15&search=${search}&status=${status}&categoryId=${resolvedCategory}&supplierId=${resolvedSupplier}&distributorId=${resolvedDistributor}`
+            );
             setProducts(res.data.products || []);
             setTotalPages(res.data.totalPages || 1);
             setCurrentPage(res.data.currentPage || 1);
+            setTotalProducts(res.data.totalProducts || 0);
         } catch (e) {
             console.error("Failed to fetch products:", e);
         } finally {
@@ -98,8 +127,15 @@ export default function ProductManagementPage() {
     }, []);
     
     useEffect(() => {
-        fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
-    }, [currentPage, debouncedSearchTerm, statusFilter, fetchProducts]);
+        fetchProducts(
+            currentPage,
+            debouncedSearchTerm,
+            statusFilter,
+                categoryFilter || undefined,
+                supplierFilter || undefined,
+                distributorFilter || undefined
+        );
+    }, [currentPage, debouncedSearchTerm, statusFilter, categoryFilter, supplierFilter, distributorFilter, fetchProducts]);
 
 
     const handleOpenDialog = (product: any | null = null) => {
@@ -179,7 +215,14 @@ export default function ProductManagementPage() {
         };
         try {
             await apiClient({ url, method, data: body });
-            await fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
+            await fetchProducts(
+                currentPage,
+                debouncedSearchTerm,
+                statusFilter,
+                categoryFilter || undefined,
+                supplierFilter || undefined,
+                distributorFilter || undefined
+            );
             setIsDialogOpen(false);
         } catch (error) { alert(`خطا در ذخیره محصول: ${error}`); } 
         finally { setActionLoading(false); }
@@ -196,11 +239,67 @@ export default function ProductManagementPage() {
         finally { setActionLoading(false); }
     };
 
+    const handleBulkPriceUpdate = async () => {
+        if (!bulkReductionValue) return;
+        setActionLoading(true);
+        try {
+            await apiClient.post('/products/bulk-update-price', {
+                reductionType: bulkReductionType,
+                reductionValue: parseFloat(bulkReductionValue),
+                direction: bulkDirection,
+                categoryId: categoryFilter !== "all" ? categoryFilter : undefined,
+                supplierId: supplierFilter !== "all" ? supplierFilter : undefined,
+                distributorId: distributorFilter !== "all" ? distributorFilter : undefined,
+                status: statusFilter,
+                searchTerm: debouncedSearchTerm,
+            });
+            await fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
+            setIsBulkUpdateDialogOpen(false);
+            setBulkReductionValue('');
+        } catch (error) {
+            alert(`خطا در بروزرسانی قیمت‌ها: ${error}`);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const openBulkDialog = (preset?: { direction?: 'increase' | 'decrease'; type?: 'percentage' | 'fixed' }) => {
+        if (preset?.direction) setBulkDirection(preset.direction);
+        if (preset?.type) setBulkReductionType(preset.type);
+        setIsBulkUpdateDialogOpen(true);
+    };
+
+    const handleBulkDelete = async () => {
+        const ok = window.confirm("آیا از حذف گروهی محصولات (بر اساس فیلتر فعلی) مطمئن هستید؟ این عملیات قابل بازگشت نیست.");
+        if (!ok) return;
+        setActionLoading(true);
+        try {
+            await apiClient.post('/products/bulk-delete', {
+                categoryId: categoryFilter !== "all" ? categoryFilter : undefined,
+                supplierId: supplierFilter !== "all" ? supplierFilter : undefined,
+                distributorId: distributorFilter !== "all" ? distributorFilter : undefined,
+                status: statusFilter,
+                searchTerm: debouncedSearchTerm,
+            });
+            await fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
+        } catch (error) {
+            alert(`خطا در حذف گروهی: ${error}`);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">مدیریت محصولات</h1>
-                <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن محصول</Button>
+                <div className="flex flex-wrap gap-2 justify-end">
+                    <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن محصول</Button>
+                    <Button onClick={() => openBulkDialog()} variant="outline" className="border-teal-500 text-teal-700 hover:bg-teal-50"><DollarSign className="ml-2 h-4 w-4" />تغییر قیمت گروهی</Button>
+                    <Button onClick={() => openBulkDialog({ direction: 'decrease', type: 'percentage' })} variant="secondary" className="bg-amber-50 text-amber-700 hover:bg-amber-100"><Percent className="ml-2 h-4 w-4" />اعمال تخفیف گروهی</Button>
+                    <Button onClick={handleBulkDelete} variant="destructive" disabled={actionLoading}><Trash2 className="ml-2 h-4 w-4" />حذف گروهی</Button>
+                </div>
             </div>
 
             <div className="flex flex-col md:flex-row gap-4">
@@ -228,6 +327,74 @@ export default function ProductManagementPage() {
                         <SelectItem value="available">موجود</SelectItem>
                         <SelectItem value="unavailable">ناموجود</SelectItem>
                         <SelectItem value="featured">ویژه</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Select value={categoryFilter} onValueChange={(val) => { setCategoryFilter(val); setCurrentPage(1); setCategorySearch(""); }}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="همه دسته‌بندی‌ها" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <div className="px-3 py-2">
+                            <Input
+                                placeholder="جستجوی دسته‌بندی..."
+                                value={categorySearch}
+                                onChange={(e) => setCategorySearch(e.target.value)}
+                                onKeyDown={stopSelectTypeahead}
+                            />
+                        </div>
+                        <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
+                        {categories
+                            .filter((c) => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
+                            .map((c) => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={supplierFilter} onValueChange={(val) => { setSupplierFilter(val); setCurrentPage(1); setSupplierSearch(""); }}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="همه تولیدکننده‌ها" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <div className="px-3 py-2">
+                            <Input
+                                placeholder="جستجوی تولیدکننده..."
+                                value={supplierSearch}
+                                onChange={(e) => setSupplierSearch(e.target.value)}
+                                onKeyDown={stopSelectTypeahead}
+                            />
+                        </div>
+                        <SelectItem value="all">همه تولیدکننده‌ها</SelectItem>
+                        {suppliers
+                            .filter((s) => s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
+                            .map((s) => (
+                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={distributorFilter} onValueChange={(val) => { setDistributorFilter(val); setCurrentPage(1); setDistributorSearch(""); }}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="همه پخش‌کننده‌ها" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <div className="px-3 py-2">
+                            <Input
+                                placeholder="جستجوی پخش‌کننده..."
+                                value={distributorSearch}
+                                onChange={(e) => setDistributorSearch(e.target.value)}
+                                onKeyDown={stopSelectTypeahead}
+                            />
+                        </div>
+                        <SelectItem value="all">همه پخش‌کننده‌ها</SelectItem>
+                        {distributors
+                            .filter((d) => d.name.toLowerCase().includes(distributorSearch.toLowerCase()))
+                            .map((d) => (
+                                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                            ))}
                     </SelectContent>
                 </Select>
             </div>
@@ -289,12 +456,12 @@ export default function ProductManagementPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div><Label>نام محصول</Label><Input value={editingProduct.name} onChange={e => handleFormChange('name', e.target.value)} required /></div>
                                 <div>
-                                    <Label>قیمت فروش (ریال)</Label>
+                                    <Label>قیمت فروش (تومان)</Label>
                                     <Input type="number" value={editingProduct.price} onChange={e => handleFormChange('price', e.target.value)} required />
                                     <p className="text-xs text-gray-500 mt-1">{priceInToman}</p>
                                 </div>
                                 <div>
-                                    <Label>قیمت مصرف‌کننده (ریال)</Label>
+                                    <Label>قیمت مصرف‌کننده (تومان)</Label>
                                     <Input type="number" value={editingProduct.consumerPrice || ''} onChange={e => handleFormChange('consumerPrice', e.target.value)} />
                                     <p className="text-xs text-gray-500 mt-1">{consumerPriceInToman}</p>
                                 </div>
@@ -339,6 +506,65 @@ export default function ProductManagementPage() {
                     <DialogFooter>
                         <DialogClose asChild><Button type="button" variant="secondary">انصراف</Button></DialogClose>
                         <Button onClick={handleAddNewEntity} disabled={actionLoading || !newEntityName}>{actionLoading ? <Loader2 className="animate-spin" /> : "ذخیره"}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isBulkUpdateDialogOpen} onOpenChange={setIsBulkUpdateDialogOpen}>
+                <DialogContent dir="rtl">
+                    <DialogHeader>
+                        <DialogTitle>تغییر قیمت گروهی</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <p>
+                            این عملیات قیمت
+                            <span className="font-bold px-1">{(totalProducts || products.length).toLocaleString('fa-IR')}</span>
+                            محصول مطابق فیلترهای فعلی (جستجو، وضعیت، دسته‌بندی، تولیدکننده، پخش‌کننده) را یکجا به‌روز می‌کند.
+                        </p>
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                            <Label>جهت تغییر:</Label>
+                            <Select value={bulkDirection} onValueChange={(value: 'increase' | 'decrease') => setBulkDirection(value)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="decrease">کاهش</SelectItem>
+                                    <SelectItem value="increase">افزایش</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                            <Label>نوع تغییر:</Label>
+                            <Select value={bulkReductionType} onValueChange={(value: 'percentage' | 'fixed') => setBulkReductionType(value)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="percentage">درصدی (٪)</SelectItem>
+                                    <SelectItem value="fixed">مقدار ثابت (تومان)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>مقدار تغییر:</Label>
+                            <Input
+                                type="number"
+                                value={bulkReductionValue}
+                                onChange={e => setBulkReductionValue(e.target.value)}
+                                placeholder={bulkReductionType === 'percentage' ? "مثلاً ۱۰ برای ۱۰٪" : "مثلاً ۵۰۰۰ برای ۵ هزار تومان"}
+                            />
+                            <p className="text-[11px] text-gray-500 mt-1">
+                                {bulkReductionType === 'percentage'
+                                    ? "درصد افزایش/کاهش روی قیمت فعلی هر محصول اعمال می‌شود."
+                                    : "مقدار ثابت به تومان روی قیمت فعلی هر محصول اعمال می‌شود."}
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setIsBulkUpdateDialogOpen(false)}>انصراف</Button>
+                        <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={handleBulkPriceUpdate} disabled={actionLoading || !bulkReductionValue}>
+                            {actionLoading ? <Loader2 className="animate-spin" /> : "تایید و اجرا"}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
