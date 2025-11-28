@@ -19,7 +19,7 @@ interface AppContextType {
 
     user: User | null;
     setUser: (user: User | null) => void;
-    login: (phone: string, password: string) => Promise<boolean>;
+    login: (phone: string, password?: string, tokens?: { accessToken: string; refreshToken: string; user: User }) => Promise<boolean>;
     logout: () => void;
     isLoadingUser: boolean;
     error: string | null;
@@ -57,16 +57,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, []);
 
 
-    const login = async (phone: string, password: string): Promise<boolean> => {
+    const login = async (phone: string, password?: string, tokens?: { accessToken: string; refreshToken: string; user: User }): Promise<boolean> => {
         setIsLoadingUser(true);
         setError(null);
         try {
-            const response = await apiClient.post('/auth/login', { phone, password });
-            const { user, accessToken, refreshToken } = response.data;
-            localStorage.setItem('accessToken', accessToken);
-            localStorage.setItem('refreshToken', refreshToken);
-            setUser(user);
-            return true;
+            if (tokens) {
+                localStorage.setItem('accessToken', tokens.accessToken);
+                localStorage.setItem('refreshToken', tokens.refreshToken);
+                setUser(tokens.user);
+                return true;
+            } else {
+                const response = await apiClient.post('/auth/login', { phone, password });
+                const { user, accessToken, refreshToken } = response.data;
+                localStorage.setItem('accessToken', accessToken);
+                localStorage.setItem('refreshToken', refreshToken);
+                setUser(user);
+                return true;
+            }
         } catch (err: any) {
             setError(err.response?.data?.error || "خطای ورود");
             return false;
