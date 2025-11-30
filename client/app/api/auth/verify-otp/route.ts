@@ -61,11 +61,23 @@ export async function POST(req: Request) {
     cache.del(`otp:${normalizedPhone}`);
 
     const { password, ...userWithoutPassword } = user;
-    return NextResponse.json({
+    
+    const response = NextResponse.json({
       user: userWithoutPassword,
       accessToken,
-      refreshToken,
     });
+
+    response.cookies.set({
+      name: 'refreshToken',
+      value: refreshToken,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 24 * 60 * 60, // 60 days in seconds
+    });
+
+    return response;
   } catch (error) {
     console.error("verify-otp error:", error);
     return NextResponse.json({ error: "خطای داخلی سرور" }, { status: 500 });

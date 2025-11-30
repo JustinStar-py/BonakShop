@@ -6,6 +6,8 @@ import { useAppContext } from "@/context/AppContext";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useCartValidator } from "@/hooks/useCartValidator";
+import CartValidationModal from "@/components/shared/CartValidationModal";
 
 export default function MainLayout({
   children,
@@ -15,6 +17,9 @@ export default function MainLayout({
   const { user, isLoadingUser, getTotalItems } = useAppContext();
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Integrate Cart Validator
+  const { changes, applyChanges, clearChanges } = useCartValidator();
 
   useEffect(() => {
     if (isLoadingUser) {
@@ -62,6 +67,14 @@ export default function MainLayout({
       <div className="pb-20">
         {children}
         <BottomNavigation totalCartItems={getTotalItems()} />
+        
+        {/* Cart Validation Modal - Global Check */}
+        <CartValidationModal 
+          open={changes.length > 0}
+          changes={changes}
+          onConfirm={applyChanges}
+          onCancel={clearChanges}
+        />
       </div>
     );
   }

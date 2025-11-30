@@ -2,9 +2,9 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Package, ChevronLeft, CreditCard } from "lucide-react";
-import toPersianDigits from "@/utils/persianNum";
+import toPersianDigits from "@/utils/numberFormatter";
 import { Order, OrderItem } from "@prisma/client";
-import { formatToToman } from "@/utils/toman";
+import { formatToToman } from "@/utils/currencyFormatter";
 
 // تعریف دقیق تایپ ورودی طبق دیتای شما
 type OrderCardProps = {
@@ -46,11 +46,11 @@ export default function OrderCard({ order }: OrderCardProps) {
       {/* ردیف وسط: اطلاعات کلیدی */}
       <div className="grid grid-cols-2 gap-4 py-2">
         <div className="flex items-center gap-2 text-gray-600">
-          <Calendar className="w-4 h-4 text-teal-500" />
+          <Calendar className="w-4 h-4 text-green-500" />
           <span className="text-xs">{date}</span>
         </div>
         <div className="flex items-center gap-2 text-gray-600 justify-end">
-          <Package className="w-4 h-4 text-teal-500" />
+          <Package className="w-4 h-4 text-green-500" />
           <span className="text-xs">{toPersianDigits(order.items.length)} قلم کالا</span>
         </div>
       </div>
@@ -59,12 +59,12 @@ export default function OrderCard({ order }: OrderCardProps) {
       <div className="flex justify-between items-center mt-3 pt-2 border-t border-dashed border-gray-100">
         <div className="flex flex-col">
           <span className="text-[10px] text-gray-400">مبلغ کل</span>
-          <div className="flex items-center gap-1 text-teal-700">
+          <div className="flex items-center gap-1 text-green-700">
             <span className="font-bold text-lg">{formatToToman(order.totalPrice)}</span>
           </div>
         </div>
         
-        <div className="flex items-center text-teal-500 text-xs font-bold group-hover:-translate-x-1 transition-transform">
+        <div className="flex items-center text-green-500 text-xs font-bold group-hover:-translate-x-1 transition-transform">
           مشاهده جزئیات
           <ChevronLeft className="w-4 h-4 mr-1" />
         </div>

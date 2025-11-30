@@ -43,7 +43,7 @@ export const FilterSheet = memo(function FilterSheet({
         >
           <SlidersHorizontal size={20} className="text-gray-600" />
           {activeFiltersCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+            <span className="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
               {activeFiltersCount}
             </span>
           )}
@@ -114,7 +114,7 @@ export const FilterSheet = memo(function FilterSheet({
 
           <div className="sticky bottom-0 bg-white pt-4 pb-8 border-t mt-8">
             <Button
-              className="w-full bg-teal-600 hover:bg-teal-700 h-12 text-lg rounded-xl shadow-lg shadow-teal-100"
+              className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg rounded-xl shadow-lg shadow-green-100"
               onClick={() => onOpenChange(false)}
             >
               مشاهده نتایج
@@ -139,7 +139,7 @@ const CategoryBadge = memo(function CategoryBadge({
     <Badge
       variant={isSelected ? 'default' : 'outline'}
       className={`cursor-pointer h-9 px-4 rounded-lg transition-all ${
-        isSelected ? 'bg-teal-500 hover:bg-teal-600' : 'hover:bg-gray-100'
+        isSelected ? 'bg-green-500 hover:bg-green-600' : 'hover:bg-gray-100'
       }`}
       onClick={onClick}
     >
@@ -161,7 +161,7 @@ const SupplierItem = memo(function SupplierItem({
     <div
       className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
         isSelected
-          ? 'border-teal-500 bg-teal-50 text-teal-700'
+          ? 'border-green-500 bg-green-50 text-green-700'
           : 'border-gray-200 hover:border-gray-300'
       }`}
       onClick={onClick}

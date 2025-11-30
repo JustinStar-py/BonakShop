@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Package, RefreshCw, FileText, MapPin, Phone, Building, User as UserIconLucide } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import dynamic from 'next/dynamic';
-import { formatToToman } from "@/utils/toman";
+import { formatToToman } from "@/utils/currencyFormatter";
 
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
     ssr: false,

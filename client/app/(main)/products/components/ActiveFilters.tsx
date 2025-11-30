@@ -36,7 +36,7 @@ export const ActiveFilters = memo(function ActiveFilters({
         <FilterChip
           label={categories.find((c) => c.id === categoryId)?.name || ''}
           onRemove={onRemoveCategory}
-          color="teal"
+          color="green"
         />
       )}
       {supplierId !== 'all' && (
@@ -53,13 +53,13 @@ export const ActiveFilters = memo(function ActiveFilters({
 interface FilterChipProps {
   label: string;
   onRemove: () => void;
-  color: 'blue' | 'teal' | 'purple';
+  color: 'blue' | 'green' | 'purple';
 }
 
 const FilterChip = memo(function FilterChip({ label, onRemove, color }: FilterChipProps) {
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600',
-    teal: 'bg-teal-50 text-teal-600',
+    green: 'bg-green-50 text-green-600',
     purple: 'bg-purple-50 text-purple-600',
   };
 

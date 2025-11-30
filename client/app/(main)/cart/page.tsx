@@ -13,8 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ShamsiCalendar } from "@/components/shared/ShamsiCalendar";
-import toPersianDigits from "@/utils/persianNum";
-import { formatToToman } from "@/utils/toman";
+import toPersianDigits from "@/utils/numberFormatter";
+import { formatToToman } from "@/utils/currencyFormatter";
 
 const getTodayDateString = (): string => {
     const today = new Date();
@@ -99,12 +99,12 @@ export default function CartPage() {
     if (cart.length === 0 && !isCheckout) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-8">
-                <div className="bg-teal-50 p-6 rounded-full mb-6 animate-in zoom-in duration-300">
-                    <ShoppingCart className="w-16 h-16 text-teal-200" />
+                <div className="bg-green-50 p-6 rounded-full mb-6 animate-in zoom-in duration-300">
+                    <ShoppingCart className="w-16 h-16 text-green-200" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-800 mb-2">سبد خرید شما خالی است</h2>
                 <p className="text-gray-500 mb-8 max-w-xs">محصولات مورد علاقه خود را به سبد خرید اضافه کنید.</p>
-                <Button className="bg-teal-600 hover:bg-teal-700 text-white h-12 px-8 rounded-xl shadow-lg shadow-teal-200" onClick={() => router.push('/')}>
+                <Button className="bg-green-600 hover:bg-green-700 text-white h-12 px-8 rounded-xl shadow-lg shadow-green-200" onClick={() => router.push('/')}>
                     شروع خرید
                 </Button>
             </div>
@@ -125,7 +125,7 @@ export default function CartPage() {
                 <div className="p-4 space-y-4 max-w-lg mx-auto">
                     <Card className="border-none shadow-sm gap-2 py-4">
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2 text-teal-700"><CalendarIcon size={18}/> زمان تحویل</CardTitle>
+                            <CardTitle className="text-base flex items-center gap-2 text-green-700"><CalendarIcon size={18}/> زمان تحویل</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ShamsiCalendar onSelectDate={setDeliveryDate} initialDate={deliveryDate} />
@@ -134,7 +134,7 @@ export default function CartPage() {
 
                     <Card className="border-none shadow-sm">
                         <CardHeader>
-                             <CardTitle className="text-base flex items-center gap-2 text-teal-700"><Banknote size={18}/> نحوه پرداخت</CardTitle>
+                             <CardTitle className="text-base flex items-center gap-2 text-green-700"><Banknote size={18}/> نحوه پرداخت</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <Select value={selectedSettlement} onValueChange={setSelectedSettlement}>
@@ -146,7 +146,7 @@ export default function CartPage() {
 
                     <Card className="border-none shadow-sm">
                          <CardHeader>
-                             <CardTitle className="text-base flex items-center gap-2 text-teal-700"><StickyNote size={18}/> یادداشت شما</CardTitle>
+                             <CardTitle className="text-base flex items-center gap-2 text-green-700"><StickyNote size={18}/> یادداشت شما</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <Textarea 
@@ -171,7 +171,7 @@ export default function CartPage() {
                             </div>
                         </div>
                         <Button 
-                            className="flex-[2] h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-200 text-md font-bold" 
+                            className="flex-[2] h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 text-md font-bold" 
                             onClick={handleOrderSubmit} 
                             disabled={isLoading}
                         >
@@ -192,7 +192,7 @@ export default function CartPage() {
                         <ArrowRight className="text-gray-600" />
                     </Button>
                     <h1 className="font-bold text-gray-800 flex items-center gap-2">
-                        <ShoppingCart className="w-5 h-5 text-teal-600"/>
+                        <ShoppingCart className="w-5 h-5 text-green-600"/>
                         سبد خرید
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{toPersianDigits(cart.length)}</span>
                     </h1>
@@ -232,14 +232,14 @@ export default function CartPage() {
                                 <div className="flex items-center justify-between mt-2">
                                     <div className="flex items-center bg-gray-50 rounded-lg p-0.5 border border-gray-100">
                                         <Button size="icon" variant="ghost" className="h-7 w-7 rounded-md hover:bg-white hover:shadow-sm" onClick={() => updateCartQuantity(item.id, item.quantity + 1)}>
-                                            <Plus size={14} className="text-teal-600"/>
+                                            <Plus size={14} className="text-green-600"/>
                                         </Button>
                                         <span className="w-8 text-center font-bold text-sm text-gray-700">{toPersianDigits(item.quantity)}</span>
                                         <Button size="icon" variant="ghost" className="h-7 w-7 rounded-md hover:bg-white hover:shadow-sm" onClick={() => updateCartQuantity(item.id, item.quantity - 1)}>
                                             {item.quantity === 1 ? <Trash2 size={14} className="text-red-500"/> : <Minus size={14} className="text-gray-600"/>}
                                         </Button>
                                     </div>
-                                    <span className="font-bold text-teal-700 text-sm">
+                                    <span className="font-bold text-green-700 text-sm">
                                         {formatToToman(lineItemTotal)}
                                     </span>
                                 </div>
@@ -268,7 +268,7 @@ export default function CartPage() {
                     </div>
                     
                     <Button 
-                        className="flex-[2] h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-lg shadow-teal-200 text-md active:scale-[0.98] transition-all" 
+                        className="flex-[2] h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg shadow-green-200 text-md active:scale-[0.98] transition-all" 
                         onClick={() => setIsCheckout(true)}
                     >
                         ثبت سفارش <ArrowRight className="mr-2 h-4 w-4"/>

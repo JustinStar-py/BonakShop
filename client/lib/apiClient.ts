@@ -4,18 +4,21 @@
 
 import axios from 'axios';
 import Router from 'next/router';
+import { loaderState } from '@/lib/loaderSignal';
 
 // The base URL for all API requests
-const baseURL = '/api';
+const baseURL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : '/api';
 
 const apiClient = axios.create({
   baseURL,
+  withCredentials: true, // Important for sending/receiving cookies
 });
 
 // --- Request Interceptor ---
 // This runs BEFORE each request is sent.
 apiClient.interceptors.request.use(
   (config) => {
+    loaderState.start();
     // 1. Get the access token from localStorage.
     const token = localStorage.getItem('accessToken');
     
@@ -26,6 +29,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    loaderState.complete();
     return Promise.reject(error);
   }
 );
@@ -48,10 +52,12 @@ const processQueue = (error: any, token: string | null = null) => {
 
 apiClient.interceptors.response.use(
   (response) => {
+    loaderState.complete();
     // If the request was successful, just return the response.
     return response;
   },
   async (error) => {
+    loaderState.complete();
     const originalRequest = error.config;
 
     // 1. Check if the error is due to an expired token (status 403 from our middleware).
@@ -69,18 +75,12 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
       
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        // If no refresh token, logout the user.
-        // You might want to redirect to login page here.
-        console.error("No refresh token available.");
-        // Example: Router.push('/login');
-        return Promise.reject(error);
-      }
+      // Note: Refresh token is now in an httpOnly cookie, handled automatically by the browser.
       
       try {
-        // 2. Call the refresh token API endpoint.
-        const { data } = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
+        // 2. Call the refresh token API endpoint. 
+        // We don't send the refresh token in the body anymore; the cookie is sent automatically.
+        const { data } = await axios.post(`${baseURL}/auth/refresh`, {}, { withCredentials: true });
         
         // 3. Update the stored access token.
         localStorage.setItem('accessToken', data.accessToken);
@@ -97,7 +97,7 @@ apiClient.interceptors.response.use(
         // Clear tokens and redirect to login.
         console.error("Refresh token failed:", refreshError);
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        // No need to remove refreshToken from localStorage as it's not there.
         processQueue(refreshError, null);
         
         // Example: Router.push('/login');

@@ -3,14 +3,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
-import { Vazirmatn } from "next/font/google"; 
-import { Samim } from "@/lib/fonts"; // Import the font
+import { Arad } from "@/lib/fonts"; // Import the font
 import { SpeedInsights } from "@vercel/speed-insights/next"
-
-const vazirmatn = Vazirmatn({
-  subsets: ["latin", "arabic"],
-  variable: "--font-vazir",
-}); 
+import GlobalLoader from "@/components/layout/GlobalLoader";
 
 // Import Leaflet CSS
 import 'leaflet/dist/leaflet.css';
@@ -24,7 +19,6 @@ export const metadata: Metadata = {
   }
 };
 
-
 // Root layout component
 export default function RootLayout({
   children,
@@ -33,9 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl">
-      <body className={`${vazirmatn.variable} font-sans antialiased bg-slate-50 text-slate-900`}> {/* Apply the font variable */}
+      <body className={`${Arad.variable} font-sans antialiased bg-slate-50 text-slate-900`}> {/* Apply the font variable */}
         <SpeedInsights/>
         <AppProvider>
+          <GlobalLoader />
           {children}
         </AppProvider>
       </body>

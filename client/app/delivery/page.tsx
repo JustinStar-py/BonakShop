@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "@/context/AppContext";
 import type { Order, ReturnRequest, OrderItem, ReturnRequestItem, OrderStatus, ReturnStatus } from "@prisma/client";
 import { LatLngTuple } from "leaflet";
-import { formatToToman } from "@/utils/toman";
+import { formatToToman } from "@/utils/currencyFormatter";
 
 // --- Type Definitions ---
 type OrderForDelivery = Order & {

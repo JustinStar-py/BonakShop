@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import apiClient from "@/lib/apiClient";
-import { formatToToman } from "@/utils/toman";
+import { formatToToman } from "@/utils/currencyFormatter";
 
 // Helper function to format currency
 function formatPrice(price: number) {

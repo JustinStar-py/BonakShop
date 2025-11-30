@@ -25,9 +25,9 @@ import {
 import { useRouter } from "next/navigation";
 import { RefreshCw, XCircle, StickyNote, CalendarCheck, ShoppingBag } from "lucide-react";
 import { ReturnRequestDialog } from "@/components/shared/ReturnRequestDialog";
-import toPersianDigits from "@/utils/persianNum";
+import toPersianDigits from "@/utils/numberFormatter";
 import OrderCard from "@/components/shared/OrderCard"; // ایمپورت کارت جدید
-import { formatToToman } from "@/utils/toman";
+import { formatToToman } from "@/utils/currencyFormatter";
 
 // تایپ‌های مورد نیاز
 type OrderWithItems = Order & {
@@ -78,12 +78,12 @@ export default function OrdersPage() {
     if (orders.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-[70vh] p-4">
-                <div className="bg-teal-50 p-6 rounded-full mb-4">
-                    <ShoppingBag className="w-12 h-12 text-teal-500" />
+                <div className="bg-green-50 p-6 rounded-full mb-4">
+                    <ShoppingBag className="w-12 h-12 text-green-500" />
                 </div>
                 <h2 className="text-lg font-bold text-gray-700 mb-2">هنوز سفارشی ثبت نکرده‌اید</h2>
                 <p className="text-gray-400 text-sm mb-6 text-center">محصولات متنوع ما را مشاهده کنید و اولین سفارش خود را ثبت کنید.</p>
-                <Button className="bg-teal-600 text-white rounded-xl h-12 px-8" onClick={() => router.push('/')}>
+                <Button className="bg-green-600 text-white rounded-xl h-12 px-8" onClick={() => router.push('/')}>
                     شروع خرید
                 </Button>
             </div>
@@ -93,7 +93,7 @@ export default function OrdersPage() {
     return (
         <div className="pb-24 min-h-screen bg-gray-50 p-4">
             <h1 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <CalendarCheck className="w-6 h-6 text-teal-600"/>
+                <CalendarCheck className="w-6 h-6 text-green-600"/>
                 تاریخچه سفارشات
             </h1>
 
@@ -105,7 +105,7 @@ export default function OrdersPage() {
                         className="border-none" // حذف بوردر پیش‌فرض آکاردئون چون کارت خودش بوردر دارد
                     >
                         {/* اینجا از OrderCard به عنوان تریگر استفاده می‌کنیم */}
-                        <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div]:ring-2 [&[data-state=open]>div]:ring-teal-500">
+                        <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div]:ring-2 [&[data-state=open]>div]:ring-green-500">
                             <OrderCard order={order} />
                         </AccordionTrigger>
                         

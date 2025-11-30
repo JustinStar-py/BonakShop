@@ -58,18 +58,18 @@ export default function BottomNavigation({ totalCartItems }: { totalCartItems: n
                             <div className={cn(
                                 "absolute -top-1 w-1.5 h-1.5 rounded-full transition-all duration-500",
                                 isActive 
-                                    ? "bg-teal-600 scale-100 opacity-100" 
+                                    ? "bg-green-600 scale-100 opacity-100" 
                                     : "bg-gray-300 scale-0 opacity-0"
                             )} />
                             
                             <div className={cn(
                                 "transition-all duration-500 relative",
                                 isActive 
-                                    ? "text-teal-600 scale-110" 
+                                    ? "text-green-600 scale-110" 
                                     : "text-gray-400 hover:text-gray-600"
                             )}>
                                 {isActive && (
-                                    <div className="absolute inset-0 bg-teal-400 blur-xl opacity-30 animate-pulse" />
+                                    <div className="absolute inset-0 bg-green-400 blur-xl opacity-30 animate-pulse" />
                                 )}
                                 <div className="relative z-10">
                                     {icons[item.icon as keyof typeof icons]}
@@ -78,7 +78,7 @@ export default function BottomNavigation({ totalCartItems }: { totalCartItems: n
                             
                             <span className={cn(
                                 "text-[10px] mt-1.5 font-medium transition-all duration-300",
-                                isActive ? "text-teal-600 font-bold scale-105" : "text-gray-500"
+                                isActive ? "text-green-600 font-bold scale-105" : "text-gray-500"
                             )}>
                                 {item.label}
                             </span>

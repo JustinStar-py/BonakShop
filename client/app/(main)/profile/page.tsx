@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowRight, User, ShieldCheck, MapPin, LogOut, ChevronLeft, Store, Phone } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import toPersianDigits from "@/utils/persianNum";
+import toPersianDigits from "@/utils/numberFormatter";
 
 // MapPicker dynamic import
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
@@ -113,14 +113,14 @@ export default function ProfilePage() {
         return (
             <div className="pb-24 min-h-screen bg-gray-50">
                 {/* Header Card */}
-                <div className="bg-gradient-to-br from-teal-600 to-teal-800 text-white pt-8 pb-12 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
+                <div className="bg-gradient-to-br from-green-600 to-green-800 text-white pt-8 pb-12 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
                      <div className="flex items-center gap-4 relative z-10">
                         <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30">
                              <User className="w-8 h-8 text-white" />
                         </div>
                         <div>
                             <h1 className="text-lg font-bold">{user.name || "کاربر جدید"}</h1>
-                            <p className="text-teal-100 text-sm mt-1 flex items-center gap-1 opacity-90">
+                            <p className="text-green-100 text-sm mt-1 flex items-center gap-1 opacity-90">
                                 <Phone className="w-3 h-3" />
                                 {toPersianDigits(Number(user.phone))}
                             </p>
@@ -202,7 +202,7 @@ export default function ProfilePage() {
                         </div>
                         
                         <div className="pt-4">
-                            <Button type="submit" className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-md shadow-lg shadow-teal-200" disabled={isLoading}>
+                            <Button type="submit" className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white text-md shadow-lg shadow-green-200" disabled={isLoading}>
                                 {isLoading ? "در حال ذخیره..." : "ذخیره تغییرات"}
                             </Button>
                         </div>

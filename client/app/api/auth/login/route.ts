@@ -63,20 +63,27 @@ export async function POST(req: Request) {
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: '60d' } // Expires in 30 days (adjust as needed)
+      { expiresIn: '30d' } // Expires in 30 days
     );
     // --- END: JWT Generation ---
 
-    // 6. Remove the password from the user object before sending it back
-    const { password: _, ...userWithoutPassword } = user;
-
-    // 8. Return user data along with the new tokens
-    // The native mobile app will receive this response and store the tokens securely.
-    return NextResponse.json({
+    // 6. Set the Refresh Token in a specific HTTP-only cookie
+    const response = NextResponse.json({
       user: userWithoutPassword,
       accessToken,
-      refreshToken
     }, { status: 200 });
+
+    response.cookies.set({
+      name: 'refreshToken',
+      value: refreshToken,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', // or 'strict' if on the same domain
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+    });
+
+    return response;
 
   } catch (error) {
     console.error("Login API error:", error);

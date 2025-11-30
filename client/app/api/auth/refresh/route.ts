@@ -2,6 +2,7 @@
 // DESCRIPTION: Handles token refresh requests. Verifies a refresh token and issues a new access token.
 
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
@@ -14,14 +15,14 @@ interface RefreshTokenPayload {
 
 /**
  * Handles POST requests to /api/auth/refresh.
- * Expects a 'refreshToken' in the request body.
+ * Expects a 'refreshToken' in the httpOnly cookie.
  * @param {Request} req - The incoming request object.
  * @returns {NextResponse} A response object with a new access token or an error message.
  */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { refreshToken } = body;
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get('refreshToken')?.value;
 
     // 1. Check if the refresh token is provided
     if (!refreshToken) {

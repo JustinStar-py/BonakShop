@@ -1,0 +1,78 @@
+:root {
+  /* --- 🎨 THEME CONFIGURATION --- */
+  /* Change these values to update the entire app's look. */
+
+  /* 1. BRAND COLORS */
+  /* Primary: Main actions, headers, active states */
+  --color-primary: #16A34A;       /* Green-600 */
+  --color-primary-hover: #15803D; /* Green-700 */
+  --color-primary-light: #DCFCE7; /* Green-100 */
+  
+  /* Discount: Sale badges, hot deals, price cuts */
+  --color-discount: #DC2626;      /* Red-600 */
+
+  /* 2. BACKGROUNDS */
+  /* App Background: The main canvas color */
+  --color-bg-app: #F2F8F2;        /* Faint Green Tint */
+  
+  /* Surface: Cards, modals, bottom sheets */
+  --color-bg-surface: #FFFFFF;    /* White */
+
+  /* 3. FUNCTIONAL COLORS */
+  --color-success: #10B981;       /* Emerald-500 */
+  --color-warning: #F59E0B;       /* Amber-500 */
+  --color-error: #EF4444;         /* Red-500 */
+  --color-info: #3B82F6;          /* Blue-500 */
+
+  /* 4. TEXT COLORS (Neutral Zinc) */
+  --color-text-main: #18181B;     /* Zinc-900 */
+  --color-text-secondary: #71717A;/* Zinc-500 */
+  --color-text-inverted: #FFFFFF; /* White */
+
+  /* 5. BORDERS & RADIUS */
+  --color-border: #E4E4E7;        /* Zinc-200 */
+  --radius-default: 0.625rem;     /* 10px */
+  
+  /* --- TAILWIND / SHADCN MAPPINGS (DO NOT EDIT BELOW unless you know what you are doing) --- */
+  /* These map the variables above to the internal system used by components */
+  
+  --background: oklch(0.97 0.01 130); /* Maps to --color-bg-app (approx) */
+  --foreground: oklch(0.145 0 0);
+  
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  
+  --primary: oklch(0.517 0.168 141.66); /* Maps to --color-primary */
+  --primary-foreground: oklch(0.985 0 0);
+  
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  
+  --destructive: oklch(0.533 0.206 25.642); /* Maps to --color-discount */
+  --destructive-foreground: oklch(0.985 0 0);
+
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0% 0 0); /* Match Primary */
+  
+  --radius: var(--radius-default);
+  
+  /* Sidebar specific mappings */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}

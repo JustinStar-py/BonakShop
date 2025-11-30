@@ -14,8 +14,8 @@ import {
     Package, Box, User, ShoppingBag, Share2, ShieldCheck
 } from "lucide-react";
 import Image from "next/image";
-import toPersianDigits from "@/utils/persianNum";
-import { formatToToman } from "@/utils/toman";
+import toPersianDigits from "@/utils/numberFormatter";
+import { formatToToman } from "@/utils/currencyFormatter";
 
 // تعریف تایپ ترکیبی
 type ProductDetails = Product & {
@@ -117,7 +117,7 @@ export default function ProductDetailPage() {
                     {/* Title & Brand */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="inline-flex items-center gap-1 bg-teal-50 text-teal-700 px-2.5 py-1 rounded-lg text-[10px] font-bold">
+                            <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-lg text-[10px] font-bold">
                                 <Building2 size={12}/> {product.supplier.name}
                             </span>
                             {!product.available && (
@@ -156,7 +156,7 @@ export default function ProductDetailPage() {
                         </div>
                         <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
                             <span className="text-[10px] text-gray-400 flex items-center gap-1"><Box size={12}/> موجودی انبار</span>
-                            <span className={`font-bold text-sm ${product.stock > 0 ? "text-teal-600" : "text-red-500"}`}>
+                            <span className={`font-bold text-sm ${product.stock > 0 ? "text-green-600" : "text-red-500"}`}>
                                 {product.stock > 0 ? `${toPersianDigits(product.stock)} عدد` : "تمام شده"}
                             </span>
                         </div>
@@ -204,15 +204,15 @@ export default function ProductDetailPage() {
                     </Button>
                 ) : quantityInCart === 0 ? (
                     <Button 
-                        className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-md shadow-lg shadow-teal-200 active:scale-[0.98] transition-transform" 
+                        className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-md shadow-lg shadow-green-200 active:scale-[0.98] transition-transform" 
                         onClick={() => addToCart(product)}
                     >
                         <ShoppingBag className="mr-2 h-5 w-5"/> افزودن به سبد خرید
                     </Button>
                 ) : (
-                    <div className="flex items-center justify-between bg-teal-50 rounded-2xl p-1.5 border border-teal-100 h-14">
+                    <div className="flex items-center justify-between bg-green-50 rounded-2xl p-1.5 border border-green-100 h-14">
                         <Button 
-                            className="w-12 h-full rounded-xl bg-white text-teal-700 hover:bg-teal-100 shadow-sm border border-teal-100" 
+                            className="w-12 h-full rounded-xl bg-white text-green-700 hover:bg-green-100 shadow-sm border border-green-100" 
                             size="icon" 
                             onClick={() => updateCartQuantity(product.id, quantityInCart + 1)}
                         >
@@ -220,8 +220,8 @@ export default function ProductDetailPage() {
                         </Button>
                         
                         <div className="flex flex-col items-center">
-                            <span className="font-black text-xl text-teal-800 leading-none">{toPersianDigits(quantityInCart)}</span>
-                            <span className="text-[10px] text-teal-600 font-medium">در سبد</span>
+                            <span className="font-black text-xl text-green-800 leading-none">{toPersianDigits(quantityInCart)}</span>
+                            <span className="text-[10px] text-green-600 font-medium">در سبد</span>
                         </div>
 
                         <Button 

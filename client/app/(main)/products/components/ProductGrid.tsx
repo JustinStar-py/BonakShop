@@ -54,7 +54,7 @@ export const ProductGrid = memo(function ProductGrid({
         <p className="text-xs mt-1 text-center px-4">
           فیلترها را تغییر دهید یا عبارت دیگری جستجو کنید.
         </p>
-        <Button variant="link" className="text-teal-500 mt-2" onClick={onClearFilters}>
+        <Button variant="link" className="text-green-500 mt-2" onClick={onClearFilters}>
           پاک کردن فیلترها
         </Button>
       </div>
@@ -85,7 +85,7 @@ export const ProductGrid = memo(function ProductGrid({
 
       {isLoadingMore && (
         <div className="text-center py-6 flex justify-center">
-          <Loader2 className="h-8 w-8 text-teal-500 animate-spin" />
+          <Loader2 className="h-8 w-8 text-green-500 animate-spin" />
         </div>
       )}
 

@@ -76,11 +76,11 @@ export default function CompleteProfilePage() {
             
             {/* Progress Steps */}
             <div className="w-full max-w-lg mb-6 flex items-center justify-center gap-2">
-                <div className="flex items-center gap-1 text-teal-600 text-xs font-bold">
+                <div className="flex items-center gap-1 text-green-600 text-xs font-bold">
                     <CheckCircle2 size={14} /> ثبت‌نام اولیه
                 </div>
-                <div className="w-12 h-[2px] bg-teal-600 rounded-full"></div>
-                <div className="flex items-center gap-1 text-teal-800 text-xs font-black bg-white px-3 py-1 rounded-full shadow-sm border border-teal-100">
+                <div className="w-12 h-[2px] bg-green-600 rounded-full"></div>
+                <div className="flex items-center gap-1 text-green-800 text-xs font-black bg-white px-3 py-1 rounded-full shadow-sm border border-green-100">
                     <Store size={14} /> اطلاعات فروشگاه
                 </div>
             </div>
@@ -88,12 +88,12 @@ export default function CompleteProfilePage() {
             <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                 
                 {/* Header Banner */}
-                <div className="bg-gradient-to-r from-teal-600 to-teal-500 p-6 text-center text-white">
+                <div className="bg-gradient-to-r from-green-600 to-green-500 p-6 text-center text-white">
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto flex items-center justify-center mb-3 border border-white/30 shadow-inner">
                         <Store className="w-8 h-8 text-white" />
                     </div>
                     <h1 className="text-xl font-bold mb-1">خوش آمدید همکار عزیز!</h1>
-                    <p className="text-teal-100 text-xs opacity-90">برای شروع خرید، لطفاً مشخصات فروشگاه خود را وارد کنید.</p>
+                    <p className="text-green-100 text-xs opacity-90">برای شروع خرید، لطفاً مشخصات فروشگاه خود را وارد کنید.</p>
                 </div>
 
                 <div className="p-6">
@@ -106,7 +106,7 @@ export default function CompleteProfilePage() {
                                 <Input 
                                     id="name" name="name" 
                                     value={formData.name} onChange={handleInfoChange} 
-                                    className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-teal-500 transition-all"
+                                    className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500 transition-all"
                                     placeholder="مثال: علی محمدی"
                                     required
                                 />
@@ -116,7 +116,7 @@ export default function CompleteProfilePage() {
                                 <Input 
                                     id="shopName" name="shopName" 
                                     value={formData.shopName} onChange={handleInfoChange} 
-                                    className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-teal-500 transition-all"
+                                    className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500 transition-all"
                                     placeholder="مثال: سوپرمارکت امید"
                                     required
                                 />
@@ -129,7 +129,7 @@ export default function CompleteProfilePage() {
                             <Textarea 
                                 id="shopAddress" name="shopAddress" 
                                 value={formData.shopAddress || ''} onChange={handleInfoChange} 
-                                className="min-h-[80px] rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-teal-500 transition-all"
+                                className="min-h-[80px] rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500 transition-all"
                                 placeholder="استان، شهر، خیابان، کوچه، پلاک..."
                                 required
                             />
@@ -141,7 +141,7 @@ export default function CompleteProfilePage() {
                             <Input 
                                 id="landline" name="landline" 
                                 value={formData.landline || ''} onChange={handleInfoChange} 
-                                className="h-12 text-left rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-teal-500 transition-all"
+                                className="h-12 text-left rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500 transition-all"
                                 placeholder="مثال: 0913..."
                                 type="tel"
                                 dir="ltr"
@@ -167,7 +167,7 @@ export default function CompleteProfilePage() {
                         <div className="pt-4">
                             <Button 
                                 type="submit" 
-                                className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-md shadow-lg shadow-teal-200 transition-transform active:scale-[0.98]" 
+                                className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-md shadow-lg shadow-green-200 transition-transform active:scale-[0.98]" 
                                 disabled={isLoading}
                             >
                                 {isLoading ? <Loader2 className="animate-spin" /> : "ذخیره اطلاعات و ورود"}

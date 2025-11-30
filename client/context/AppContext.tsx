@@ -11,6 +11,7 @@ interface AppContextType {
     cart: CartItem[];
     addToCart: (product: PrismaProduct, quantity?: number) => void;
     updateCartQuantity: (productId: string, newQuantity: number) => void;
+    updateCartPricing: (productId: string, newPrice: number, newDiscountPercentage?: number) => void;
     removeFromCart: (productId: string) => void;
     clearCart: () => void;
     getTotalPrice: () => number;
@@ -121,6 +122,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         );
     };
 
+    const updateCartPricing = (productId: string, newPrice: number, newDiscountPercentage?: number) => {
+        setCart((prevCart) =>
+            prevCart.map((item) =>
+                item.id === productId
+                    ? { 
+                        ...item, 
+                        price: newPrice, 
+                        discountPercentage: newDiscountPercentage ?? item.discountPercentage ?? 0 
+                    }
+                    : item
+            )
+        );
+    };
+
     const removeFromCart = (productId: string) => {
         setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
     };
@@ -149,6 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         cart,
         addToCart,
         updateCartQuantity,
+        updateCartPricing,
         removeFromCart,
         clearCart,
         getTotalPrice,

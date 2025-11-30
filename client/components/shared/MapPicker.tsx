@@ -88,7 +88,7 @@ export default function MapPicker({
                         type="button" 
                         variant="outline" 
                         onClick={handleFindMe}
-                        className="w-full bg-teal-50 text-teal-700 border-teal-100 hover:bg-teal-100 hover:text-teal-800 h-10 rounded-xl transition-all"
+                        className="w-full bg-green-50 text-green-700 border-green-100 hover:bg-green-100 hover:text-green-800 h-10 rounded-xl transition-all"
                         disabled={isLocating}
                     >
                         {isLocating ? (

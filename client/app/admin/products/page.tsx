@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Pencil, PlusCircle, Trash2, Upload, Star, Search, ChevronLeft, ChevronRight, DollarSign, Percent } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatToToman } from "@/utils/toman";
+import { formatToToman } from "@/utils/currencyFormatter";
 
 function formatPrice(price: number) {
     const formatted = formatToToman(price);
@@ -296,7 +296,7 @@ export default function ProductManagementPage() {
                 <h1 className="text-3xl font-bold">مدیریت محصولات</h1>
                 <div className="flex flex-wrap gap-2 justify-end">
                     <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن محصول</Button>
-                    <Button onClick={() => openBulkDialog()} variant="outline" className="border-teal-500 text-teal-700 hover:bg-teal-50"><DollarSign className="ml-2 h-4 w-4" />تغییر قیمت گروهی</Button>
+                    <Button onClick={() => openBulkDialog()} variant="outline" className="border-green-500 text-green-700 hover:bg-green-50"><DollarSign className="ml-2 h-4 w-4" />تغییر قیمت گروهی</Button>
                     <Button onClick={() => openBulkDialog({ direction: 'decrease', type: 'percentage' })} variant="secondary" className="bg-amber-50 text-amber-700 hover:bg-amber-100"><Percent className="ml-2 h-4 w-4" />اعمال تخفیف گروهی</Button>
                     <Button onClick={handleBulkDelete} variant="destructive" disabled={actionLoading}><Trash2 className="ml-2 h-4 w-4" />حذف گروهی</Button>
                 </div>
@@ -562,7 +562,7 @@ export default function ProductManagementPage() {
                     </div>
                     <DialogFooter>
                         <Button variant="secondary" onClick={() => setIsBulkUpdateDialogOpen(false)}>انصراف</Button>
-                        <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={handleBulkPriceUpdate} disabled={actionLoading || !bulkReductionValue}>
+                        <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleBulkPriceUpdate} disabled={actionLoading || !bulkReductionValue}>
                             {actionLoading ? <Loader2 className="animate-spin" /> : "تایید و اجرا"}
                         </Button>
                     </DialogFooter>

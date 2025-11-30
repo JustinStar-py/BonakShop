@@ -1,185 +1,136 @@
-// FILE: app/api/products/route.ts
-
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { jwtVerify } from "jose";
+import { getAuthUserFromRequest } from "@/lib/auth";
+import { unstable_cache, revalidateTag } from "next/cache";
 
-// نوع داده‌ای که از JWT انتظار داریم (بر اساس login)
-interface JwtUser {
-  id?: string;
-  role?: string;
-  phone?: string;
-}
-
-// گرفتن اطلاعات کاربر از روی JWT در هدر Authorization
-async function getUserFromRequest(req: Request): Promise<JwtUser | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.split(" ")[1];
-  if (!token) return null;
-
+export async function GET(req: Request) {
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET!);
-    const { payload } = await jwtVerify(token, secret);
-
-    return {
-      id: payload.userId as string | undefined,
-      role: payload.role as string | undefined,
-      phone: payload.phone as string | undefined,
-    };
-  } catch (e) {
-    console.error("JWT verify failed in /api/products:", e);
-    return null;
-  }
-}
-
-// GET /api/products
-// لیست محصولات با سرچ، فیلتر دسته، تأمین‌کننده و status و صفحه‌بندی
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "15");
-    const searchTerm = searchParams.get("search") || "";
+    const limit = parseInt(searchParams.get("limit") || "12");
+    const search = searchParams.get("search") || "";
     const categoryId = searchParams.get("categoryId") || "";
     const supplierId = searchParams.get("supplierId") || "";
-    const distributorId = searchParams.get("distributorId") || "";
-    const status = searchParams.get("status") || "all"; // فیلتر جدید
-    const sortBy = searchParams.get("sortBy") || "createdAt";
-    const order = (searchParams.get("order") || "desc").toLowerCase() === "asc" ? "asc" : "desc";
+    const sort = searchParams.get("sort") || "newest";
 
     const skip = (page - 1) * limit;
 
-    let whereClause: any = {};
+    const where: any = {
+      available: true, // Only show available products by default? Or handle in UI.
+    };
 
-    if (searchTerm) {
-      whereClause.OR = [
-        { name: { contains: searchTerm, mode: "insensitive" } },
-        { description: { contains: searchTerm, mode: "insensitive" } },
-        { supplier: { name: { contains: searchTerm, mode: "insensitive" } } },
-        { category: { name: { contains: searchTerm, mode: "insensitive" } } },
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
       ];
     }
 
-    if (distributorId && distributorId !== "all") {
-      whereClause.distributorId = distributorId;
-    }
-
     if (categoryId && categoryId !== "all") {
-      whereClause.categoryId = categoryId;
+      where.categoryId = categoryId;
     }
 
     if (supplierId && supplierId !== "all") {
-      whereClause.supplierId = supplierId;
+      where.supplierId = supplierId;
     }
 
-    // فیلتر status
-    if (status === "available") {
-      whereClause.available = true;
-    } else if (status === "unavailable") {
-      whereClause.available = false;
-    } else if (status === "featured") {
-      whereClause.isFeatured = true;
+    let orderBy: any = {};
+    switch (sort) {
+      case "bestselling":
+        // Assuming we have an orders relation or a 'sales' field. 
+        // For now, let's just sort by name or stock as a placeholder if no sales field.
+        // Better: 'isFeatured' for now or random.
+        orderBy = { isFeatured: 'desc' }; 
+        break;
+      case "cheapest":
+        orderBy = { price: "asc" };
+        break;
+      case "expensive":
+        orderBy = { price: "desc" };
+        break;
+      case "newest":
+      default:
+        orderBy = { createdAt: "desc" };
     }
-    // اگر status = all باشد، فیلتر اضافه نمی‌کنیم
 
-    let orderBy: any = { createdAt: order };
-    if (sortBy === "price") {
-      orderBy = { price: order };
-    } else if (sortBy === "createdAt") {
-      orderBy = { createdAt: order };
-    } else if (sortBy === "discount") {
-      orderBy = { discountPercentage: order };
-    }
-
-    const products = await prisma.product.findMany({
-      where: whereClause,
-      skip: skip,
-      take: limit,
-      include: {
-        category: true,
-        supplier: true,
-        distributor: true,
+    // Cache the data fetching logic
+    const getProducts = unstable_cache(
+      async () => {
+        const [products, total] = await Promise.all([
+          prisma.product.findMany({
+            where,
+            include: {
+              category: true,
+              supplier: true,
+              distributor: true,
+            },
+            orderBy,
+            skip,
+            take: limit,
+          }),
+          prisma.product.count({ where }),
+        ]);
+        return { products, total };
       },
-      orderBy,
-    });
+      // Unique key for this specific query combination
+      ['products-query', String(page), String(limit), search, categoryId, supplierId, sort],
+      { 
+        revalidate: 60, // Cache search results for 1 minute
+        tags: ['products'] 
+      }
+    );
 
-    const totalProducts = await prisma.product.count({ where: whereClause });
+    const { products, total } = await getProducts();
 
     return NextResponse.json({
       products,
-      totalPages: Math.ceil(totalProducts / limit),
-      currentPage: page,
-      totalProducts,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    console.error("Failed to fetch products:", error);
+    console.error("Products error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
-// POST /api/products
-// فقط ADMIN می‌تواند محصول جدید اضافه کند (بر اساس JWT)
 export async function POST(req: Request) {
   try {
-    const authUser = await getUserFromRequest(req);
-
-    // اگر توکن نامعتبر بود یا نقش ADMIN نبود → Forbidden
-    if (!authUser || authUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const auth = await getAuthUserFromRequest(req);
+    if (!auth || auth.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const body = await req.json();
-    const {
-      name,
-      price,
-      description,
-      image,
-      categoryId,
-      available,
-      discountPercentage,
-      unit,
-      stock,
-      supplierId,
-      distributorId,
-      isFeatured,
-      consumerPrice,
-    } = body;
-
-    // فیلدهای ضروری
-    if (!name || !price || !categoryId || !supplierId || !distributorId) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
-    }
-
     const product = await prisma.product.create({
       data: {
-        name,
-        price: parseFloat(price),
-        description,
-        image,
-        categoryId,
-        supplierId,
-        distributorId,
-        available: Boolean(available),
-        discountPercentage: parseInt(discountPercentage, 10) || 0,
-        unit,
-        stock: Number(stock),
-        isFeatured: Boolean(isFeatured),
-        consumerPrice: consumerPrice ? parseFloat(consumerPrice) : null,
+        name: body.name,
+        description: body.description,
+        price: parseFloat(body.price),
+        consumerPrice: body.consumerPrice ? parseFloat(body.consumerPrice) : null,
+        stock: parseInt(body.stock),
+        discountPercentage: body.discountPercentage ? parseInt(body.discountPercentage) : 0,
+        categoryId: body.categoryId,
+        supplierId: body.supplierId,
+        distributorId: body.distributorId,
+        image: body.image,
+        available: body.available ?? true,
       },
     });
 
+    // Invalidate caches
+    revalidateTag('products');
+    revalidateTag('categories'); // Because category counts might change
+
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    console.error("Product creation error:", error);
+    console.error("Create product error:", error);
     return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 500 },
+      { error: "Internal Server Error" },
+      { status: 500 }
     );
   }
 }

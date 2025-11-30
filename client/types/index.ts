@@ -16,6 +16,10 @@ export type CartItem = PrismaProduct & {
   quantity: number;
 };
 
+export type ProductWithSupplier = PrismaProduct & {
+  supplier: PrismaSupplier;
+};
+
 // An order with its associated items included
 export type OrderWithItems = PrismaOrder & {
   items: PrismaOrderItem[];
