@@ -99,7 +99,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                         <ShoppingBasket size={20} />
                     </div>
                     <div>
-                        <h2 className="font-bold text-lg text-slate-900">بنک‌شاپ</h2>
+                        <h2 className="font-bold text-lg text-slate-900">بهار نارون</h2>
                         <p className="text-xs text-slate-500">پنل مدیریت فروشگاه</p>
                     </div>
                 </div>

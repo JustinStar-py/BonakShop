@@ -122,6 +122,7 @@ model User {
   latitude    Float?   // Optional geographic latitude.
   longitude   Float?   // Optional geographic longitude.
   role        Role     @default(CUSTOMER) // User's role (determines permissions).
+  userType    UserType @default(SHOP_OWNER) // Type of user (Shop Owner or Individual)
   createdAt   DateTime @default(now()) // Timestamp of creation.
   
   // Relations
@@ -166,6 +167,12 @@ enum Role {
   CUSTOMER // Standard user.
   ADMIN    // Administrator with full access.
   WORKER   // Delivery personnel.
+}
+
+// Enum for user types.
+enum UserType {
+  SHOP_OWNER // Owns a shop (B2B).
+  INDIVIDUAL // Normal person (B2C).
 }
 
 // Enum for possible return request statuses.

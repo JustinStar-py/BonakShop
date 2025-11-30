@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Phone, Store, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import toPersianDigits from "@/utils/numberFormatter";
 
 export default function AuthPage() {
@@ -72,7 +73,7 @@ export default function AuthPage() {
             <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden relative z-10 border border-white/50">
                 <div className="p-8 pb-4 text-center">
                     <div className="w-20 h-20 bg-green-50 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-inner transform rotate-3 hover:rotate-0 transition-all duration-500">
-                        <Store className="w-10 h-10 text-green-600" />
+                        <Image src="/logo.png" alt="Logo" width={50} height={50} className="object-contain" priority />
                     </div>
                     <h1 className="text-2xl font-extrabold text-gray-800 mb-1 tracking-tight">بهار نارون</h1>
                     <p className="text-gray-500 text-sm">سامانه هوشمند خرید عمده</p>
@@ -135,7 +136,12 @@ export default function AuthPage() {
                     </form>
                 </div>
             </div>
-            <p className="absolute bottom-4 text-white/60 text-xs font-light">امنیت و سرعت با بهار نارون</p>
+            <div className="absolute bottom-4 flex flex-col items-center gap-2 z-10">
+                <a referrerPolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=677956&Code=q5dhOSXWMXPs5Mti9d8gViN8F7y3LFlT'>
+                    <img referrerPolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=677956&Code=q5dhOSXWMXPs5Mti9d8gViN8F7y3LFlT' alt='' style={{ cursor: 'pointer' }} className="w-20 h-auto bg-white/80 rounded-xl p-1 shadow-lg backdrop-blur-sm hover:scale-105 transition-transform duration-300" />
+                </a>
+                <p className="text-white/60 text-xs font-light">امنیت و سرعت با بهار نارون</p>
+            </div>
         </div>
     );
 }

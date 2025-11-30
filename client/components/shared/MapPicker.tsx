@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 
 // Import Leaflet CSS directly here to make the component self-contained
 import "leaflet/dist/leaflet.css";
-// Note: Ensure marker images are in your public folder if not handled by webpack
 import "leaflet/dist/images/marker-shadow.png";
 
 const DefaultIcon = new Icon({
@@ -55,12 +54,13 @@ export default function MapPicker({
         if (!readOnly && initialPosition) {
             setMarkerPosition(initialPosition);
             if (mapRef.current) {
-                mapRef.current.flyTo(initialPosition, 15);
+                mapRef.current.flyTo(initialPosition, 15, { duration: 1.5 });
             }
         }
     }, [initialPosition, readOnly]);
 
-    const handleFindMe = () => {
+    const handleFindMe = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent map click
         if (mapRef.current) {
             setIsLocating(true);
             const map = mapRef.current;
@@ -68,7 +68,7 @@ export default function MapPicker({
                 const newPos: LatLngTuple = [e.latlng.lat, e.latlng.lng];
                 setMarkerPosition(newPos);
                 onLocationChange?.(newPos[0], newPos[1]);
-                map.flyTo(newPos, 15);
+                map.flyTo(newPos, 15, { duration: 1.5 });
                 setIsLocating(false);
             }).on("locationerror", function(){
                 alert("امکان دسترسی به موقعیت مکانی شما وجود ندارد. لطفاً GPS را روشن کنید.");
@@ -81,80 +81,74 @@ export default function MapPicker({
     const mapCenter = readOnly && marker ? marker.position : (initialPosition || [35.7219, 51.3347]);
 
     return (
-        <div className="flex flex-col gap-3">
-            {!readOnly && (
-                <div className="flex items-center justify-between gap-2">
-                    <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={handleFindMe}
-                        className="w-full bg-green-50 text-green-700 border-green-100 hover:bg-green-100 hover:text-green-800 h-10 rounded-xl transition-all"
-                        disabled={isLocating}
-                    >
-                        {isLocating ? (
-                            <>
-                                در حال یافتن...
-                                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                            </>
-                        ) : (
-                            <>
-                                <LocateFixed className="ml-2 h-4 w-4" />
-                                موقعیت کنونی من
-                            </>
+        <div className={`${height} w-full rounded-2xl overflow-hidden relative border border-gray-200 shadow-sm z-0`}>
+             <MapContainer 
+                center={mapCenter} 
+                zoom={13} 
+                style={{ height: '100%', width: '100%' }}
+                ref={mapRef}
+                zoomControl={false} // We can add custom controls if needed, or keep default top-left
+            >
+                <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    subdomains="abcd"
+                />
+                
+                {readOnly && marker ? (
+                     <Marker position={marker.position} icon={DefaultIcon}>
+                         <Popup>{marker.popupText}</Popup>
+                     </Marker>
+                ) : (
+                    <>
+                        <MapEventsController 
+                            setPosition={setMarkerPosition} 
+                            onLocationChange={onLocationChange} 
+                        />
+                        {markerPosition && (
+                            <Marker 
+                                position={markerPosition} 
+                                icon={DefaultIcon} 
+                                draggable={true}
+                                eventHandlers={{
+                                    dragend: (e) => {
+                                        const markerInstance = e.target;
+                                        const newPos = markerInstance.getLatLng();
+                                        setMarkerPosition([newPos.lat, newPos.lng]);
+                                        onLocationChange?.(newPos.lat, newPos.lng);
+                                    }
+                                }}
+                            />
                         )}
-                    </Button>
-                </div>
+                    </>
+                )}
+            </MapContainer>
+
+            {/* Floating "Locate Me" Button */}
+            {!readOnly && (
+                <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    onClick={handleFindMe}
+                    disabled={isLocating}
+                    className="absolute bottom-4 right-4 z-[1000] rounded-full w-12 h-12 bg-white shadow-lg hover:bg-gray-50 text-green-600 border border-gray-100 transition-transform active:scale-95"
+                >
+                    {isLocating ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                        <LocateFixed className="h-6 w-6" />
+                    )}
+                </Button>
             )}
 
-            <div className={`${height} w-full rounded-xl overflow-hidden relative border border-gray-200 shadow-inner z-0`}>
-                 <MapContainer 
-                    center={mapCenter} 
-                    zoom={13} 
-                    style={{ height: '100%', width: '100%' }}
-                    ref={mapRef}
-                >
-                    <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    />
-                    
-                    {readOnly && marker ? (
-                         <Marker position={marker.position} icon={DefaultIcon}>
-                             <Popup>{marker.popupText}</Popup>
-                         </Marker>
-                    ) : (
-                        <>
-                            <MapEventsController 
-                                setPosition={setMarkerPosition} 
-                                onLocationChange={onLocationChange} 
-                            />
-                            {markerPosition && (
-                                <Marker 
-                                    position={markerPosition} 
-                                    icon={DefaultIcon} 
-                                    draggable={true}
-                                    eventHandlers={{
-                                        dragend: (e) => {
-                                            const markerInstance = e.target;
-                                            const newPos = markerInstance.getLatLng();
-                                            setMarkerPosition([newPos.lat, newPos.lng]);
-                                            onLocationChange?.(newPos.lat, newPos.lng);
-                                        }
-                                    }}
-                                />
-                            )}
-                        </>
-                    )}
-                </MapContainer>
-
-                {/* Overlay Tip if no marker selected yet (only in edit mode) */}
-                {!readOnly && !markerPosition && (
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md text-xs text-gray-600 pointer-events-none z-[1000] flex items-center gap-1 w-max">
-                        <MapPin size={12} className="text-red-500"/>
-                        روی نقشه ضربه بزنید
-                    </div>
-                )}
-            </div>
+            {/* Overlay Tip */}
+            {!readOnly && !markerPosition && (
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-sm text-xs font-bold text-gray-700 pointer-events-none z-[1000] flex items-center gap-2 border border-gray-100">
+                    <MapPin size={14} className="text-red-500 fill-red-500"/>
+                    موقعیت خود را روی نقشه انتخاب کنید
+                </div>
+            )}
         </div>
     );
 }
