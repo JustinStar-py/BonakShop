@@ -85,7 +85,7 @@ model Order {
   
   // Relations
   userId        String         // Foreign key for User.
-  user          User           @relation(fields: [userId], references: [id])
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   settlementId  String         // Foreign key for Settlement.
   settlement    Settlement     @relation(fields: [settlementId], references: [id])
   items         OrderItem[]    // List of items in this order.
@@ -101,7 +101,7 @@ model OrderItem {
 
   // Relations
   orderId     String  // Foreign key for Order.
-  order       Order   @relation(fields: [orderId], references: [id])
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
   // --- FIX for Procurement Logic ---
   productId   String  // Foreign key for Product. This is crucial for accurate tracking.
@@ -138,7 +138,7 @@ model ReturnRequest {
 
   // Relations
   orderId   String       @unique // Foreign key to the Order, one-to-one relation.
-  order     Order        @relation(fields: [orderId], references: [id])
+  order     Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   items     ReturnRequestItem[] // List of items being returned.
 }
 
@@ -149,9 +149,9 @@ model ReturnRequestItem {
 
   // Relations
   orderItemId     String        // Foreign key to the original OrderItem.
-  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   returnRequestId String        // Foreign key to the ReturnRequest.
-  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id])
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
 }
 
 // Enum for possible order statuses.

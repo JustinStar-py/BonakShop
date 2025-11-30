@@ -136,12 +136,14 @@ export default function AuthPage() {
                     </form>
                 </div>
             </div>
-            <div className="absolute bottom-4 flex flex-col items-center gap-2 z-10">
-                <a referrerPolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=677956&Code=q5dhOSXWMXPs5Mti9d8gViN8F7y3LFlT'>
-                    <img referrerPolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=677956&Code=q5dhOSXWMXPs5Mti9d8gViN8F7y3LFlT' alt='' style={{ cursor: 'pointer' }} className="w-20 h-auto bg-white/80 rounded-xl p-1 shadow-lg backdrop-blur-sm hover:scale-105 transition-transform duration-300" />
-                </a>
-                <p className="text-white/60 text-xs font-light">امنیت و سرعت با بهار نارون</p>
-            </div>
+            {step === "request" && (
+                <div className="absolute bottom-4 flex flex-col items-center gap-2 z-10">
+                    <a referrerPolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=677956&Code=q5dhOSXWMXPs5Mti9d8gViN8F7y3LFlT'>
+                        <img referrerPolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=677956&Code=q5dhOSXWMXPs5Mti9d8gViN8F7y3LFlT' alt='' style={{ cursor: 'pointer' }} className="w-20 h-auto bg-white/80 rounded-xl p-1 shadow-lg backdrop-blur-sm hover:scale-105 transition-transform duration-300" />
+                    </a>
+                    <p className="text-white/60 text-xs font-light">امنیت و سرعت با بهار نارون</p>
+                </div>
+            )}
         </div>
     );
 }

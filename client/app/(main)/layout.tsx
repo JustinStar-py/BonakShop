@@ -32,7 +32,7 @@ export default function MainLayout({
     }
     
     // --- UPDATED LOGIC with new URL ---
-    const isProfileIncomplete = !user.name || !user.shopName;
+    const isProfileIncomplete = !user.name || (user.userType === 'SHOP_OWNER' && !user.shopName);
     const completeProfilePath = "/profile/complete"; // New path
 
     if (isProfileIncomplete && pathname !== completeProfilePath) {
@@ -49,7 +49,7 @@ export default function MainLayout({
     return <LoadingSpinner message="در حال بررسی اطلاعات کاربری..." />;
   }
 
-  const isProfileIncomplete = user && (!user.name || !user.shopName);
+  const isProfileIncomplete = user && (!user.name || (user.userType === 'SHOP_OWNER' && !user.shopName));
   const isOnCompleteProfilePage = pathname === "/profile/complete";
 
 
