@@ -12,11 +12,18 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { name, shopName, shopAddress, landline, latitude, longitude } = body;
+    const { name, shopName, shopAddress, landline, latitude, longitude, userType } = body;
 
-    if (!name || !shopName || !shopAddress) {
+    if (!name || !shopAddress) {
       return NextResponse.json(
-        { error: "Name, shop name, and address are required" },
+        { error: "Name and address are required" },
+        { status: 400 }
+      );
+    }
+
+    if (userType === 'SHOP_OWNER' && !shopName) {
+      return NextResponse.json(
+        { error: "Shop name is required for shop owners" },
         { status: 400 }
       );
     }
@@ -30,8 +37,9 @@ export async function PUT(req: Request) {
         shopName,
         shopAddress,
         landline,
-        latitude,   // Save latitude
-        longitude,  // Save longitude
+        latitude,
+        longitude,
+        userType, // Save userType
       },
     });
 
