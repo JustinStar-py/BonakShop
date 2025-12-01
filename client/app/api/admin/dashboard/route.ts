@@ -21,39 +21,65 @@ export async function GET() {
       _count: { id: true },
       _sum: { totalPrice: true },
     });
-    const customerStats = await Promise.all(
-      customerStatsRaw.map(async stat => {
-        const user = await prisma.user.findUnique({ where: { id: stat.userId } });
-        return {
-          name: user?.shopName || user?.name || "بدون نام",
-          count: stat._count.id,
-          total: stat._sum.totalPrice || 0,
-        };
-      })
-    );
+
+    // Optimization: Fetch all users in one query instead of N queries
+    const userIds = customerStatsRaw.map(stat => stat.userId);
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } }
+    });
+    
+    const userMap = new Map(users.map(user => [user.id, user]));
+
+    const customerStats = customerStatsRaw.map(stat => {
+      const user = userMap.get(stat.userId);
+      return {
+        name: user?.shopName || user?.name || "بدون نام",
+        count: stat._count.id,
+        total: stat._sum.totalPrice || 0,
+      };
+    });
 
     // فروش ۷ روز اخیر
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const last7DaysOrders = await prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: sevenDaysAgo,
+        },
+      },
+      select: {
+        createdAt: true,
+        totalPrice: true,
+      },
+    });
+
+    const dailySalesMap = new Map<string, number>();
+    
+    // Initialize map with 0 for all 7 days
     const last7Days = Array.from({ length: 7 }).map((_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
-      return d;
+      const key = d.toLocaleDateString('fa-IR');
+      dailySalesMap.set(key, 0);
+      return { date: d, key };
     });
-    const dailySalesData = await Promise.all(
-      last7Days.map(async date => {
-        const start = new Date(date);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(date);
-        end.setHours(23, 59, 59, 999);
-        const ordersOfDay = await prisma.order.findMany({
-          where: { createdAt: { gte: start, lte: end } },
-        });
-        const total = ordersOfDay.reduce((sum, o) => sum + o.totalPrice, 0);
-        return {
-          name: start.toLocaleDateString('fa-IR'),
-          فروش: total,
-        };
-      })
-    );
+
+    // Sum up the orders
+    last7DaysOrders.forEach(order => {
+      const orderDateKey = new Date(order.createdAt).toLocaleDateString('fa-IR');
+      if (dailySalesMap.has(orderDateKey)) {
+        dailySalesMap.set(orderDateKey, dailySalesMap.get(orderDateKey)! + order.totalPrice);
+      }
+    });
+
+    const dailySalesData = last7Days.map(day => ({
+      name: day.key,
+      فروش: dailySalesMap.get(day.key) || 0,
+    }));
 
     return NextResponse.json({
       kpiData: {
@@ -66,6 +92,7 @@ export async function GET() {
       dailySalesData,
     });
   } catch (error) {
+    console.error("Dashboard API Error:", error);
     return NextResponse.json({ error: "خطا در دریافت داده‌های داشبورد" }, { status: 500 });
   }
 }
