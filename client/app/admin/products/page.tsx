@@ -98,9 +98,11 @@ export default function ProductManagementPage() {
             const res = await apiClient.get(
                 `/products?page=${page}&limit=15&search=${search}&status=${status}&categoryId=${resolvedCategory}&supplierId=${resolvedSupplier}&distributorId=${resolvedDistributor}`
             );
+            const nextTotalPages = res.data.totalPages || 1;
+            const nextPage = Math.min(Math.max(res.data.currentPage ?? page, 1), nextTotalPages);
             setProducts(res.data.products || []);
-            setTotalPages(res.data.totalPages || 1);
-            setCurrentPage(res.data.currentPage || 1);
+            setTotalPages(nextTotalPages);
+            setCurrentPage(nextPage);
             setTotalProducts(res.data.totalProducts || 0);
         } catch (e) {
             console.error("Failed to fetch products:", e);
@@ -434,16 +436,16 @@ export default function ProductManagementPage() {
                 </CardContent>
             </Card>
 
-             {totalPages > 1 && (
+            {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-4">
-                    <Button variant="outline" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
-                       <ChevronRight className="h-4 w-4" /> بعدی 
+                    <Button variant="outline" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+                        <ChevronRight className="h-4 w-4" /> قبلی
                     </Button>
                     <span className="text-sm font-medium">
                         صفحه {currentPage.toLocaleString('fa-IR')} از {totalPages.toLocaleString('fa-IR')}
                     </span>
-                    <Button variant="outline" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
-                        قبلی <ChevronLeft className="h-4 w-4" />
+                    <Button variant="outline" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+                       بعدی <ChevronLeft className="h-4 w-4" /> 
                     </Button>
                 </div>
             )}

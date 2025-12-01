@@ -14,7 +14,7 @@ export default function HeroBanner({ promoImage }: HeroBannerProps) {
 
   return (
     <div className="px-4 mt-6">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-green-500 via-emerald-500 to-cyan-400 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-stone-500 to-green-400 text-white shadow-xl">
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_20%,white,transparent_35%),radial-gradient(circle_at_80%_0%,white,transparent_25%),radial-gradient(circle_at_40%_60%,white,transparent_25%)]" />
         <div className="relative p-5 flex items-center justify-between gap-4">
           <div>

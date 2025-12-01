@@ -31,15 +31,15 @@ export default function CategoryScroller({
             {/* کانتینر حلقه‌ها */}
             <div className="relative">
               {/* حلقه گرادینت (خارجی‌ترین) - Updated to green-500 as per recent changes */}
-              <div className="p-[2px] rounded-full bg-green-500 transition-all duration-300 shadow-sm group-hover:shadow-md">
+              <div className="p-[1.5px] rounded-2xl bg-stone-3m00 transition-all duration-300 shadow-sm group-hover:shadow-md">
                 {/* فاصله بین گرادینت و فیلی */}
-                <div className="bg-white p-[1.5px] rounded-full">
+                <div className="bg-white p-[1px] rounded-2xl">
                   {/* حلقه فیلی نازک‌تر */}
-                  <div className="border-[1px] border-gray-300 rounded-full p-[1px] group-hover:border-green-500 transition-all duration-300">
+                  <div className="border-[1px] border-gray-100 rounded-2xl p-[0.5px] group-hover:border-green-200 transition-all duration-300">
                     {/* حلقه سفید داخلی */}
-                    <div className="bg-white p-[2px] rounded-full">
+                    <div className="bg-white p-[1px] rounded-2xl">
                       {/* تصویر */}
-                      <div className="h-14 w-14 rounded-full overflow-hidden bg-gray-50 relative">
+                      <div className="h-14 w-14 rounded-xl overflow-hidden bg-gray-50 relative">
                         {c.image ? (
                           <Image
                             src={c.image}

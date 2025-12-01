@@ -12,12 +12,21 @@ export async function GET(req: Request) {
     const categoryId = searchParams.get("categoryId") || "";
     const supplierId = searchParams.get("supplierId") || "";
     const sort = searchParams.get("sort") || "newest";
+    const status = searchParams.get("status");
 
     const skip = (page - 1) * limit;
 
-    const where: any = {
-      available: true, // Only show available products by default? Or handle in UI.
-    };
+    const where: any = {};
+
+    // Default to available: true if status is not provided (for public users)
+    if (!status) {
+        where.available = true;
+    } else if (status === "available") {
+        where.available = true;
+    } else if (status === "unavailable") {
+        where.available = false;
+    }
+    // if status === "all", we don't set where.available, so it returns both.
 
     if (search) {
       where.OR = [
@@ -73,7 +82,7 @@ export async function GET(req: Request) {
         return { products, total };
       },
       // Unique key for this specific query combination
-      ['products-query', String(page), String(limit), search, categoryId, supplierId, sort],
+      ['products-query', String(page), String(limit), search, categoryId, supplierId, sort, status || 'default'],
       { 
         revalidate: 60, // Cache search results for 1 minute
         tags: ['products'] 
