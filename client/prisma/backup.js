@@ -4,9 +4,8 @@ const { PrismaClient } = require('@prisma/client');
 const fs = require('fs').promises;
 const path = require('path');
 
-// --- ست کردن DATABASE_URL مستقیماً ---
-process.env.DATABASE_URL = "";
-// جایگزین کنید username, password و dbname با مقادیر واقعی
+
+
 
 const prisma = new PrismaClient();
 const backupDir = path.join(__dirname, '_backups');
