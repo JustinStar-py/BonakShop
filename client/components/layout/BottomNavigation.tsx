@@ -59,7 +59,7 @@ export default function BottomNavigation({ totalCartItems }: { totalCartItems: n
                         <Link
                             href={item.href}
                             key={item.href}
-                            className="relative flex flex-col items-center justify-center px-5 py-1 transition-all duration-300 active:scale-90"
+                            className="relative flex-1 min-w-0 flex flex-col items-center justify-center py-1 transition-all duration-300 active:scale-90 group"
                         >
                             {/* Top Dot Indicator */}
                             <div className={cn(
@@ -84,14 +84,14 @@ export default function BottomNavigation({ totalCartItems }: { totalCartItems: n
                             </div>
                             
                             <span className={cn(
-                                "text-[10px] mt-1.5 font-medium transition-all duration-300",
+                                "text-[10px] mt-1.5 font-medium transition-all duration-300 whitespace-nowrap",
                                 isActive ? "text-green-600 font-bold scale-105" : "text-gray-500"
                             )}>
                                 {item.label}
                             </span>
                             
                             {item.href === '/cart' && totalCartItems > 0 && (
-                                <span className="absolute top-0 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-rose-600 text-[10px] font-bold text-white ring-2 ring-white shadow-lg">
+                                <span className="absolute top-0 right-1/4 translate-x-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-rose-600 text-[10px] font-bold text-white ring-2 ring-white shadow-lg">
                                     {totalCartItems}
                                 </span>
                             )}

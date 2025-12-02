@@ -57,11 +57,22 @@ export async function POST(req: Request) {
     const newAccessToken = jwt.sign(
       { userId: user.id, role: user.role, phone: user.phone },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: '60d' } // Keep the expiration consistent with the login API
+      { expiresIn: '30d' } // Keep the expiration consistent with the login API
     );
 
-    // 5. Send the new access token back to the client
-    return NextResponse.json({ accessToken: newAccessToken }, { status: 200 });
+    // 5. Refresh the cookie to extend its lifespan without changing the token value
+    const response = NextResponse.json({ accessToken: newAccessToken }, { status: 200 });
+    response.cookies.set({
+      name: 'refreshToken',
+      value: refreshToken,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+    });
+
+    return response;
 
   } catch (error) {
     console.error("Refresh token API error:", error);

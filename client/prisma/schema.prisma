@@ -121,6 +121,7 @@ model User {
   landline    String?  // Optional landline phone number.
   latitude    Float?   // Optional geographic latitude.
   longitude   Float?   // Optional geographic longitude.
+  balance     Decimal  @default(0) // User's wallet balance.
   role        Role     @default(CUSTOMER) // User's role (determines permissions).
   userType    UserType @default(SHOP_OWNER) // Type of user (Shop Owner or Individual)
   createdAt   DateTime @default(now()) // Timestamp of creation.

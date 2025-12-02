@@ -49,13 +49,13 @@ export async function POST(req: Request) {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role, phone: user.phone },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: "60d" }
+      { expiresIn: "30d" }
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: "60d" }
+      { expiresIn: "30d" }
     );
 
     cache.del(`otp:${normalizedPhone}`);
@@ -65,6 +65,7 @@ export async function POST(req: Request) {
     const response = NextResponse.json({
       user: userWithoutPassword,
       accessToken,
+      refreshToken,
     });
 
     response.cookies.set({
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 24 * 60 * 60, // 60 days in seconds
+      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
     });
 
     return response;

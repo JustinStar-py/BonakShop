@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role, phone: user.phone },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: '60d' } // Expires in 1 hour (adjust as needed)
+      { expiresIn: '30d' } // Expires in 30 days
     );
 
     // 5. Create a long-lived Refresh Token
@@ -67,10 +67,14 @@ export async function POST(req: Request) {
     );
     // --- END: JWT Generation ---
 
+    // Remove password before returning the user object
+    const { password: _password, ...userWithoutPassword } = user;
+
     // 6. Set the Refresh Token in a specific HTTP-only cookie
     const response = NextResponse.json({
       user: userWithoutPassword,
       accessToken,
+      refreshToken,
     }, { status: 200 });
 
     response.cookies.set({

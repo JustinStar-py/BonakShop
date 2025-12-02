@@ -64,14 +64,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         try {
             if (tokens) {
                 localStorage.setItem('accessToken', tokens.accessToken);
-                localStorage.setItem('refreshToken', tokens.refreshToken);
                 setUser(tokens.user);
                 return true;
             } else {
                 const response = await apiClient.post('/auth/login', { phone, password });
-                const { user, accessToken, refreshToken } = response.data;
+                const { user, accessToken } = response.data;
                 localStorage.setItem('accessToken', accessToken);
-                localStorage.setItem('refreshToken', refreshToken);
                 setUser(user);
                 return true;
             }

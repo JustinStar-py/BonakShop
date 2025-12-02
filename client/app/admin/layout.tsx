@@ -13,7 +13,8 @@ import {
     LogOut, 
     Menu,
     ShoppingBasket,
-    ChevronLeft
+    ChevronLeft,
+    Users
 } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ import NotificationBell from "@/components/admin/NotificationBell";
 // Define navigation items for cleaner rendering
 const NAV_ITEMS = [
     { href: "/admin/dashboard", label: "داشبورد", icon: LayoutDashboard },
+    { href: "/admin/users", label: "کاربران", icon: Users },
     { href: "/admin/products", label: "محصولات", icon: Package },
     { href: "/admin/categories", label: "دسته‌بندی‌ها", icon: Layers },
     { href: "/admin/companies", label: "شرکت‌ها", icon: Building2 },
