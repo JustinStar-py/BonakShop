@@ -18,6 +18,7 @@ interface ProductCarouselProps {
   onSupplierClick: (supplierId: string) => void;
   onViewAll: () => void;
   accentColorClass?: string;
+  showStrip?: boolean;
 }
 
 export default function ProductCarousel({
@@ -32,8 +33,11 @@ export default function ProductCarousel({
   onSupplierClick,
   onViewAll,
   accentColorClass = "bg-[#ff3659]", // Default accent color
+  showStrip = true,
 }: ProductCarouselProps) {
   if (!products || products.length === 0) return null;
+
+  const StripIcon = Icon || Bell;
 
   return (
     <div className="py-4 my-2 border-t border-b border-gray-200 bg-gray-50">
@@ -65,26 +69,28 @@ export default function ProductCarousel({
       <div className="px-3">
         <div className="flex items-stretch gap-2">
           {/* Vertical Strip (Right side) */}
-          <button
-            onClick={onViewAll}
-            className={`
-              flex-shrink-0
-              w-[48px]
-              h-[250px]
-              self-start
-              flex flex-col items-center justify-flex-start
-              rounded-xl
-              text-white shadow-md
-              gap-y-10 pt-10
-              active:scale-95 transition-transform duration-150
-              ${accentColorClass}
-            `}
-          >
-            <Bell className="w-6 h-6 mb-4" />
-            <span className="text-[15px] font-black whitespace-nowrap rotate-90 leading-none">
-              {title}
-            </span>
-          </button>
+          {showStrip && (
+            <button
+              onClick={onViewAll}
+              className={`
+                flex-shrink-0
+                w-[48px]
+                h-[250px]
+                self-start
+                flex flex-col items-center justify-flex-start
+                rounded-xl
+                text-white shadow-md
+                gap-y-10 pt-10
+                active:scale-95 transition-transform duration-150
+                ${accentColorClass}
+              `}
+            >
+              <StripIcon className="w-6 h-6 mb-4 animate-bounce" />
+              <span className="text-[15px] font-black whitespace-nowrap rotate-90 leading-none">
+                {title}
+              </span>
+            </button>
+          )}
 
           {/* Scrollable Product List */}
           <div

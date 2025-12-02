@@ -9,6 +9,7 @@ const navItems = [
     { href: "/products", label: "محصولات", icon: "box" },
     { href: "/orders", label: "سفارش‌ها", icon: "history" },
     { href: "/cart", label: "سبد خرید", icon: "cart" },
+    { href: "/profile", label: "پروفایل", icon: "user" },
 ];
 
 const icons = {
@@ -35,6 +36,12 @@ const icons = {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3.06164 5.64561C3.54324 2.93009 5.75468 1 8.49772 1H15.5023C18.2453 1 20.4568 2.93009 20.9384 5.64561L21.9481 11.6456C22.6148 15.4117 19.8283 18.8 16 18.8H8C4.17166 18.8 1.38519 15.4117 2.05187 11.6456L3.06164 5.64561Z" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M15 11C15 12.6569 13.6569 14 12 14C10.3431 14 9 12.6569 9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+    ),
+    user: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M6 21V19C6 16.7909 7.79086 15 10 15H14C16.2091 15 18 16.7909 18 19V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
     ),
 };

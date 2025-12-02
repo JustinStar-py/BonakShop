@@ -11,7 +11,8 @@ import {
     Search, Loader2, User as UserIcon, Truck, LayoutDashboard,
     Star, TrendingUp, Sparkles, ArrowLeft, ShoppingBag, LayoutGridIcon,
     ArrowUp,
-    Bell
+    Bell,
+    Droplets, Milk, Cookie, Cake, Drumstick, Coffee, SprayCan, Utensils, Fish, Wheat, Bean, Candy
 } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import useProductPagination from "@/hooks/useProductPagination";
@@ -25,6 +26,13 @@ import ProductCarousel from "@/components/features/home/ProductCarousel";
 import InfiniteProductGrid from "@/components/features/home/InfiniteProductGrid";
 import PromoBanner from "@/components/features/home/PromoBanner";
 import ImageDialog from "@/components/shared/ImageDialog";
+
+interface CategoryRow {
+  id: string;
+  title: string;
+  icon: any;
+  products: ProductWithSupplier[];
+}
 
 export default function HomePage() {
   const { user, cart, addToCart, updateCartQuantity } = useAppContext();
@@ -53,6 +61,7 @@ export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<ProductWithSupplier[]>([]);
   const [bestsellerProducts, setBestsellerProducts] = useState<ProductWithSupplier[]>([]);
   const [newestProducts, setNewestProducts] = useState<ProductWithSupplier[]>([]);
+  const [categoryRows, setCategoryRows] = useState<CategoryRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -60,7 +69,6 @@ export default function HomePage() {
   
   // Search & Pagination State
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   
   const scrollTick = useRef(false);
@@ -73,6 +81,8 @@ export default function HomePage() {
     isLoadingMore,
     fetchPaginatedProducts,
     resetPagination,
+    setPage,
+    page,
     error: paginationError,
   } = useProductPagination<ProductWithSupplier>();
 
@@ -81,28 +91,53 @@ export default function HomePage() {
     const fetchInitialData = async () => {
       setIsLoading(true);
       try {
-        const [catRes, featRes, newRes, bestRes, prodRes] = await Promise.all([
+        // Define category configurations
+        const categoryConfigs = [
+          { title: "روغن ها", id: "cmi38m6es0000i904lhdyg63o", icon: Droplets },
+          { title: "نوشیدنی", id: "cmd2y7w9q0003la4b92oozlad", icon: Coffee }, // Using Coffee as proxy for Beverages
+          { title: "شوینده و بهداشتی", id: "cmi63heqt0000l504r212znxi", icon: SprayCan },
+          { title: "لبنیات", id: "cmd2y7w9q0001la4b8nr7voq0", icon: Milk },
+          { title: "سوسیس و کالباس", id: "cmd2y7w9q0000la4bm0vggyle", icon: Utensils },
+          { title: "تنقلات", id: "cmi7aap5g0000jr04qzsgwuqg", icon: Cookie },
+          { title: "کنسرویجات", id: "cmi1hep5q0000jl04wbs8jj9s", icon: Fish }, // Using Fish for Canned/Tuna
+          { title: "پروتئین", id: "cmia6di3k0000ig045be1ihv4", icon: Drumstick },
+          { title: "کیک و بیسکوییت", id: "cmefyon9q0000jr04d1hv14dq", icon: Cake },
+          { title: "حبوبات", id: "cmi653u260000l804nq41jqqz", icon: Bean },
+        ];
+
+        const categoryPromises = categoryConfigs.map(c => 
+          apiClient.get(`/products?categoryId=${c.id}&limit=10`).catch(() => ({ data: { products: [] } }))
+        );
+
+        const [catRes, featRes, newRes, bestRes, prodRes, ...catRowsRes] = await Promise.all([
           apiClient.get("/categories"),
           apiClient.get("/products/lists?type=featured"),
           apiClient.get("/products/lists?type=newest"),
           apiClient.get("/products/lists?type=bestsellers"),
           apiClient.get("/products?page=1&limit=12&search="),
+          ...categoryPromises
         ]);
+
         setCategories(catRes.data);
         setFeaturedProducts(featRes.data);
         setNewestProducts(newRes.data);
         setBestsellerProducts(bestRes.data);
         
+        // Process category rows
+        const rows = categoryConfigs.map((c, i) => ({
+          id: c.id,
+          title: c.title,
+          icon: c.icon,
+          products: catRowsRes[i]?.data?.products || []
+        })).filter(row => row.products.length > 0);
+        
+        setCategoryRows(rows);
+
         // Set initial paginated products from the hook's state perspective
-        // We manually set it here to avoid double fetching on mount
         setPaginatedProducts(prodRes.data.products);
-        // We need to sync the hook's page/hasMore state if we manually set data,
-        // but the hook exposes setProducts.
-        // Ideally the hook should handle the first fetch, but for now we pass.
-        // Actually, useProductPagination's default page is 1.
-        // We fetched page 1. So next page is 2.
-        // We can just leave it, but we should probably update the hook's internal page state to 2?
-        // The hook exports `setPage`.
+        
+        // Fix for scroll issue: Start from page 2 since page 1 is already loaded
+        setPage(2);
         
       } catch (err) {
         setInitError("خطا در دریافت اطلاعات فروشگاه.");
@@ -112,120 +147,32 @@ export default function HomePage() {
       }
     };
     fetchInitialData();
-  }, [setPaginatedProducts]); // Added dependency
+  }, [setPaginatedProducts, setPage]);
 
   // Search & Category Filter Effect
   useEffect(() => {
     if (isLoading) return;
     
-    // If it's the initial load (where we manually fetched), we might want to skip this 
-    // if searchTerm is empty and category is all.
-    // But `resetPagination` clears products.
-    
     resetPagination();
-    fetchPaginatedProducts(1, debouncedSearchTerm, selectedCategory, true);
+    // Ensure we pass "all" explicitly for category when searching/resetting on home
+    fetchPaginatedProducts(1, debouncedSearchTerm, "all", true);
   }, [
-    selectedCategory,
     debouncedSearchTerm,
     isLoading,
     fetchPaginatedProducts,
     resetPagination,
   ]);
 
-  // Scroll Handler
-  const handleScroll = useCallback(() => {
-    if (scrollTick.current) return;
-    scrollTick.current = true;
-    requestAnimationFrame(() => {
-      const nearingBottom =
-        window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 200;
-        
-      if (nearingBottom && !isLoadingMore && hasMore) {
-        // We don't have access to the current 'page' state variable inside this callback easily 
-        // unless we add it to dependency, which re-adds the listener.
-        // But fetchPaginatedProducts in the hook uses the state updater pattern for page?
-        // No, the hook uses `page` state.
-        // We need to pass the current page to fetchPaginatedProducts or let the hook handle it.
-        // The hook's `fetchPaginatedProducts` takes `pageNum`.
-        // We need the current page from the hook.
-        // Let's use a ref for page in the component or rely on the hook to manage 'next page' internally?
-        // The hook currently takes `pageNum`.
-        
-        // To fix this properly without changing behavior:
-        // We need to pass `page` from the hook to this callback.
-        // This means re-attaching listener when `page` changes. This is fine.
-      }
-      
-      setShowScrollTop(window.scrollY > 400);
-      scrollTick.current = false;
-    });
-  }, [isLoadingMore, hasMore]); // missing `page`
-
-  // Better Scroll Handling:
-  // We should call `fetchPaginatedProducts` with the current page from the hook.
-  // However, `handleScroll` needs the *current* page value.
-  // Let's use a separate effect for scroll attachment that depends on `page`.
-  
-  // Actually, `useProductPagination` could export a `loadMore` function that doesn't require args.
-  // But strictly following "don't over-engineer", let's just fix the dependency.
-  
-  // Wait, `fetchPaginatedProducts` inside the hook uses `setPage`.
-  // But `page` state inside the hook is updated.
-  // We need to pass `page` to `fetchPaginatedProducts` call?
-  // Yes: `fetchPaginatedProducts(page, ...)`
-  
-  // Let's re-implement the scroll effect using the hook's values.
-  
-  const { page } = useProductPagination(); // Ensure we get page from hook? 
-  // I already destructured `page` in the hook return? No I didn't.
-  // Let's add `page` to the destructuring above.
-  
   // Handlers
   const handleSelectProduct = (product: Product) => router.push(`/products/${product.id}`);
   const handleSupplierClick = (supplierId: string) => router.push(`/products?supplierId=${supplierId}`);
-  const handleSelectCategory = (catId: string) => {
-      const next = selectedCategory === catId ? "all" : catId;
-      setSelectedCategory(next);
-  };
 
-  useEffect(() => {
-    const onScroll = () => {
-        if (scrollTick.current) return;
-        scrollTick.current = true;
-        requestAnimationFrame(() => {
-            const nearingBottom = window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 200;
-            if (nearingBottom && !isLoadingMore && hasMore) {
-                // We need the 'page' from the hook here.
-                // Since we can't easily access the hook state inside a closure without dep array,
-                // we will dispatch an event or just include it.
-                // Actually, let's just trigger the fetch.
-                // The hook expects `pageNum`.
-                // We will have to rely on the `page` variable from the hook.
-            }
-            setShowScrollTop(window.scrollY > 400);
-            scrollTick.current = false;
-        });
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [isLoadingMore, hasMore]); // We need 'page' here but it causes re-bind. That's ok.
-
-  // Re-writing the scroll logic to be safer:
+  // Scroll Handler (Infinite Scroll)
   useEffect(() => {
       const onScroll = () => {
           if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
               if (!isLoadingMore && hasMore) {
-                  // We use a ref for page to avoid stale closures if we don't want to rebind
-                  // But simply:
-                  // We can't call fetchPaginatedProducts(page) here because 'page' is stale.
-                  // We'll solve this by modifying the hook slightly? 
-                  // No, let's just use the component state for page?
-                  // The hook manages page.
-                  
-                  // To keep it simple:
-                  // Pass `page` to dependency array.
-                  fetchPaginatedProducts(page, debouncedSearchTerm, selectedCategory);
+                  fetchPaginatedProducts(page, debouncedSearchTerm, "all");
               }
           }
           setShowScrollTop(window.scrollY > 400);
@@ -233,7 +180,7 @@ export default function HomePage() {
       
       window.addEventListener("scroll", onScroll);
       return () => window.removeEventListener("scroll", onScroll);
-  }, [page, isLoadingMore, hasMore, debouncedSearchTerm, selectedCategory, fetchPaginatedProducts]);
+  }, [page, isLoadingMore, hasMore, debouncedSearchTerm, fetchPaginatedProducts]);
 
 
   if (isLoading) return <LoadingSpinner message="در حال چیدن قفسه‌ها..." />;
@@ -288,8 +235,6 @@ export default function HomePage() {
 
           <CategoryScroller
             categories={categories}
-            selectedCategory={selectedCategory}
-            onSelectCategory={handleSelectCategory}
           />
 
           <ProductCarousel
@@ -318,6 +263,7 @@ export default function HomePage() {
             onSupplierClick={handleSupplierClick}
             onImageClick={setViewingImage}
             onViewAll={() => router.push("/products?sort=bestselling")}
+            accentColorClass="bg-blue-5mk00"
           />
 
           <ProductCarousel
@@ -331,7 +277,25 @@ export default function HomePage() {
             onSupplierClick={handleSupplierClick}
             onImageClick={setViewingImage}
             onViewAll={() => router.push("/products?sort=newest")}
+            accentColorClass="bg-green-500"
           />
+
+          {categoryRows.map((row) => (
+            <ProductCarousel
+              key={row.id}
+              title={row.title}
+              icon={row.icon}
+              products={row.products}
+              cart={cart}
+              onAddToCart={addToCart}
+              onUpdateQuantity={updateCartQuantity}
+              onSelectProduct={handleSelectProduct}
+              onSupplierClick={handleSupplierClick}
+              onImageClick={setViewingImage}
+              onViewAll={() => router.push(`/products?categoryId=${row.id}`)}
+              showStrip={false}
+            />
+          ))}
 
           <InfiniteProductGrid
             products={paginatedProducts}

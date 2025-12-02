@@ -2,17 +2,14 @@
 
 import { Category } from "@/types";
 import Image from "next/image";
+import Link from "next/link";
 
 interface CategoryScrollerProps {
   categories: Category[];
-  selectedCategory: string;
-  onSelectCategory: (categoryId: string) => void;
 }
 
 export default function CategoryScroller({
   categories,
-  selectedCategory,
-  onSelectCategory,
 }: CategoryScrollerProps) {
   return (
     <div className="py-4 mb-2 border-b border-gray-300">
@@ -21,17 +18,15 @@ export default function CategoryScroller({
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {categories.map((c) => (
-          <div
+          <Link
             key={c.id}
-            className={`flex flex-col items-center flex-shrink-0 gap-2 cursor-pointer group ${
-              selectedCategory === c.id ? "opacity-100" : "opacity-80 hover:opacity-100"
-            }`}
-            onClick={() => onSelectCategory(c.id)}
+            href={`/products?categoryId=${c.id}`}
+            className="flex flex-col items-center flex-shrink-0 gap-2 cursor-pointer group opacity-90 hover:opacity-100"
           >
             {/* کانتینر حلقه‌ها */}
             <div className="relative">
               {/* حلقه گرادینت (خارجی‌ترین) - Updated to green-500 as per recent changes */}
-              <div className="p-[1.5px] rounded-2xl bg-stone-3m00 transition-all duration-300 shadow-sm group-hover:shadow-md">
+              <div className="p-[1.5px] rounded-2xl bg-stone-300 transition-all duration-300 shadow-sm group-hover:shadow-md">
                 {/* فاصله بین گرادینت و فیلی */}
                 <div className="bg-white p-[1px] rounded-2xl">
                   {/* حلقه فیلی نازک‌تر */}
@@ -62,7 +57,7 @@ export default function CategoryScroller({
             <span className="text-[11px] font-semibold text-gray-600 truncate w-16 text-center group-hover:text-green-600 transition-colors">
               {c.name}
             </span>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
