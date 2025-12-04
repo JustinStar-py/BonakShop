@@ -65,7 +65,7 @@ export async function GET(req: Request) {
     // Cache the data fetching logic
     const getProducts = unstable_cache(
       async () => {
-        const [products, total] = await Promise.all([
+        const [products, total] = await prisma.$transaction([
           prisma.product.findMany({
             where,
             include: {

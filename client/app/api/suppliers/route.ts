@@ -1,11 +1,20 @@
 // FILE: app/api/suppliers/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import cache from "memory-cache";
 import { getAuthUserFromRequest } from "@/lib/auth";
+import { unstable_cache, revalidateTag } from "next/cache";
 
-const CACHE_KEY = "all_suppliers_cache";
-const CACHE_DURATION = 1000 * 60 * 60;
+// Cached data fetcher
+const getAllSuppliers = unstable_cache(
+  async () => {
+    console.log("Fetching all suppliers from database (CACHE MISS)");
+    return await prisma.supplier.findMany({
+      orderBy: { name: "asc" },
+    });
+  },
+  ["all-suppliers-list"],
+  { tags: ["suppliers"], revalidate: 3600 } // Cache for 1 hour
+);
 
 // --- GET suppliers ---
 export async function GET(request: Request) {
@@ -14,28 +23,21 @@ export async function GET(request: Request) {
     const categoryId = searchParams.get("categoryId");
 
     if (categoryId) {
-      const products = await prisma.product.findMany({
-        where: { categoryId },
-        select: { supplier: true },
-        distinct: ["supplierId"],
+      // Optimized query: Find suppliers that have at least one product in this category
+      const suppliers = await prisma.supplier.findMany({
+        where: {
+          products: {
+            some: {
+              categoryId: categoryId,
+            },
+          },
+        },
+        orderBy: { name: "asc" },
       });
-      const suppliers = products.map((p) => p.supplier);
       return NextResponse.json(suppliers);
     }
 
-    const cachedSuppliers = cache.get(CACHE_KEY);
-    if (cachedSuppliers) {
-      console.log("Serving all suppliers from cache");
-      return NextResponse.json(cachedSuppliers, { status: 200 });
-    }
-
-    console.log("Fetching all suppliers from database");
-    const allSuppliers = await prisma.supplier.findMany({
-      orderBy: { name: "asc" },
-    });
-
-    cache.put(CACHE_KEY, allSuppliers, CACHE_DURATION);
-
+    const allSuppliers = await getAllSuppliers();
     return NextResponse.json(allSuppliers);
   } catch (error) {
     console.error("Failed to fetch suppliers:", error);
@@ -68,7 +70,8 @@ export async function POST(req: Request) {
       data: { name, logo },
     });
 
-    cache.del(CACHE_KEY);
+    // Invalidate cache
+    revalidateTag("suppliers");
 
     return NextResponse.json(newSupplier, { status: 201 });
   } catch (error) {

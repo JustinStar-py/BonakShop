@@ -2,11 +2,21 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
+import { unstable_cache, revalidateTag } from "next/cache";
+
+// Cached fetcher for distributors
+const getDistributors = unstable_cache(
+  async () => {
+    return await prisma.distributor.findMany();
+  },
+  ["all-distributors"],
+  { tags: ["distributors"], revalidate: 3600 }
+);
 
 // GET all distributors
 export async function GET() {
   try {
-    const distributors = await prisma.distributor.findMany();
+    const distributors = await getDistributors();
     return NextResponse.json(distributors, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch distributors" }, { status: 500 });
@@ -31,6 +41,10 @@ export async function POST(req: Request) {
     const newDistributor = await prisma.distributor.create({
         data: { name, logo }
     });
+
+    // Invalidate cache
+    revalidateTag("distributors");
+
     return NextResponse.json(newDistributor, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to create distributor" }, { status: 500 });
