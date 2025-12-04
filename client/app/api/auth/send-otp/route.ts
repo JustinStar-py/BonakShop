@@ -24,6 +24,19 @@ export async function POST(req: Request) {
     const normalizedPhone = normalizePhoneNumber(phone);
     // اجازه می‌دهیم کاربر جدید هم کد بگیرد؛ ایجاد/ورود در verify-otp انجام می‌شود.
 
+    // Fetch Whitelisted Numbers from DB
+    const whitelistSetting = await prisma.systemSetting.findUnique({
+      where: { key: "WHITELISTED_NUMBERS" },
+    });
+
+    const WHITELISTED_NUMBERS = whitelistSetting?.value
+      ? whitelistSetting.value.split(",").map((n) => n.trim())
+      : [];
+    
+    if (WHITELISTED_NUMBERS.includes(normalizedPhone)) {
+      return NextResponse.json({ message: "کد ورود ارسال شد." });
+    }
+
     const now = Date.now();
     const hourKey = `otp:count:${normalizedPhone}`;
     const lastKey = `otp:last:${normalizedPhone}`;

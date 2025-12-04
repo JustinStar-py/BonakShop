@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { PrismaClientInitializationError } from "@prisma/client/runtime/library";
 
 export async function GET() {
   try {
@@ -94,6 +95,10 @@ export async function GET() {
 
     return NextResponse.json(notifications);
   } catch (error) {
+    if (error instanceof PrismaClientInitializationError) {
+      console.error("Notifications error: database unreachable", error.message);
+      return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
+    }
     console.error("Notifications error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

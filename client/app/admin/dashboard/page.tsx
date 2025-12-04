@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, DollarSign, ShoppingBag, Users, TrendingUp, ArrowUpRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, DollarSign, ShoppingBag, Users, TrendingUp, ArrowUpRight, AlertCircle } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area } from "recharts";
 import apiClient from "@/lib/apiClient";
 import { formatToToman } from "@/utils/currencyFormatter";
@@ -47,26 +48,29 @@ export default function DashboardHomePage() {
     const { isLoadingUser } = useAppContext();
     const [stats, setStats] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchDashboardData = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const res = await apiClient.get('/admin/dashboard');
+            setStats(res.data);
+        } catch (e) {
+            console.error("Failed to fetch dashboard data", e);
+            setError("خطا در دریافت اطلاعات داشبورد.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
-            setIsLoading(true);
-            try {
-                const res = await apiClient.get('/admin/dashboard');
-                setStats(res.data);
-            } catch (e) {
-                console.error("Failed to fetch dashboard data", e);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        
         if (!isLoadingUser) {
             fetchDashboardData();
         }
     }, [isLoadingUser]);
 
-    if (isLoadingUser || isLoading || !stats) {
+    if (isLoadingUser || isLoading) {
         return (
             <div className="flex justify-center items-center h-96">
                 <div className="flex flex-col items-center gap-4 text-slate-400">
@@ -76,6 +80,20 @@ export default function DashboardHomePage() {
             </div>
         );
     }
+
+    if (error) {
+        return (
+            <div className="flex flex-col justify-center items-center h-96 gap-4 text-red-600">
+                <AlertCircle className="h-12 w-12" />
+                <p className="text-lg font-medium">{error}</p>
+                <Button onClick={fetchDashboardData} variant="outline">
+                    تلاش مجدد
+                </Button>
+            </div>
+        );
+    }
+
+    if (!stats) return null;
 
     return (
         <div className="space-y-6">

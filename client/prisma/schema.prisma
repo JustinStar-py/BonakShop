@@ -122,12 +122,19 @@ model User {
   latitude    Float?   // Optional geographic latitude.
   longitude   Float?   // Optional geographic longitude.
   balance     Decimal  @default(0) // User's wallet balance.
+  isApproved  Boolean  @default(true) // Approval status for whitelist mode.
   role        Role     @default(CUSTOMER) // User's role (determines permissions).
   userType    UserType @default(SHOP_OWNER) // Type of user (Shop Owner or Individual)
   createdAt   DateTime @default(now()) // Timestamp of creation.
   
   // Relations
   orders      Order[]  // List of all orders placed by this user.
+}
+
+// Model for system-wide settings (key-value store).
+model SystemSetting {
+  key   String @id
+  value String
 }
 
 // Model for return requests.
@@ -153,6 +160,17 @@ model ReturnRequestItem {
   orderItem       OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   returnRequestId String        // Foreign key to the ReturnRequest.
   returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+}
+
+// Model for home page banners (Hero Slider).
+model Banner {
+  id          String   @id @default(cuid())
+  title       String?  // Optional title/alt text
+  image       String   // URL of the banner image
+  link        String?  // URL to redirect when clicked
+  isActive    Boolean  @default(true) // Show/Hide toggle
+  priority    Int      @default(0) // Display order (higher shows first)
+  createdAt   DateTime @default(now())
 }
 
 // Enum for possible order statuses.

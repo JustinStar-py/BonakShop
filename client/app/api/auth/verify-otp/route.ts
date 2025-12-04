@@ -27,23 +27,86 @@ export async function POST(req: Request) {
 
     const normalizedPhone = normalizePhoneNumber(phone);
     const normalizedCode = normalizeCodeDigits(String(code));
-    const cachedCode = cache.get(`otp:${normalizedPhone}`) as string | null;
 
-    if (!cachedCode || cachedCode !== normalizedCode) {
-      return NextResponse.json({ error: "کد وارد شده نامعتبر یا منقضی است." }, { status: 401 });
+    // Fetch System Settings
+    const settings = await prisma.systemSetting.findMany({
+      where: { key: { in: ["WHITELIST_ENABLED", "JOIN_CODES", "WHITELISTED_NUMBERS"] } },
+    });
+
+    const whitelistSetting = settings.find((s) => s.key === "WHITELIST_ENABLED");
+    const joinCodesSetting = settings.find((s) => s.key === "JOIN_CODES");
+    const whitelistedNumbersSetting = settings.find((s) => s.key === "WHITELISTED_NUMBERS");
+
+    const isWhitelistEnabled = whitelistSetting?.value === "true";
+    const joinCodes = joinCodesSetting?.value
+      ? joinCodesSetting.value.split(",").map((c) => c.trim())
+      : [];
+    const WHITELISTED_NUMBERS = whitelistedNumbersSetting?.value
+      ? whitelistedNumbersSetting.value.split(",").map((n) => n.trim())
+      : [];
+
+    const isTestNumber = WHITELISTED_NUMBERS.includes(normalizedPhone) && normalizedCode === "12345";
+
+    const isStaticCodeValid = joinCodes.includes(normalizedCode);
+    let isDynamicCodeValid = false;
+
+    if (!isStaticCodeValid && !isTestNumber) {
+      const cachedCode = cache.get(`otp:${normalizedPhone}`) as string | null;
+      if (cachedCode && cachedCode === normalizedCode) {
+        isDynamicCodeValid = true;
+      }
+    }
+
+    if (!isStaticCodeValid && !isDynamicCodeValid && !isTestNumber) {
+      return NextResponse.json(
+        { error: "کد وارد شده نامعتبر یا منقضی است." },
+        { status: 401 }
+      );
+    }
+
+    // Clean up OTP if dynamic was used
+    if (isDynamicCodeValid) {
+      cache.del(`otp:${normalizedPhone}`);
     }
 
     let user = await prisma.user.findUnique({ where: { phone: normalizedPhone } });
+
     if (!user) {
       const randomPass = Math.random().toString(36).slice(-12);
       const hashed = await bcrypt.hash(randomPass, 10);
+      
+      // Determine approval status for new user
+      // If whitelist is OFF -> Approved
+      // If whitelist is ON -> Approved ONLY if static code used or test number, otherwise False
+      const isApproved = !isWhitelistEnabled || isStaticCodeValid || isTestNumber;
+
       user = await prisma.user.create({
         data: {
           phone: normalizedPhone,
           password: hashed,
           role: "CUSTOMER",
+          isApproved: isApproved,
         },
       });
+    } else {
+      // Existing user
+      if (isStaticCodeValid || isTestNumber) {
+        // If they used a join code or test number, approve them
+        if (!user.isApproved) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: { isApproved: true },
+          });
+        }
+      } else {
+        // Dynamic OTP used
+        if (isWhitelistEnabled && !user.isApproved) {
+          return NextResponse.json(
+            { error: "حساب کاربری شما هنوز تایید نشده است." },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     const accessToken = jwt.sign(

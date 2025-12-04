@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { jwtVerify } from "jose"; // A modern, secure library for JWT handling
+import { PrismaClientInitializationError } from "@prisma/client/runtime/library";
 
 // Define a type for the decoded access token payload for type safety
 interface AccessTokenPayload {
@@ -56,6 +57,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ user: userWithoutPassword }, { status: 200 });
 
   } catch (error) {
+    // Handle database connectivity issues separately for clearer debugging
+    if (error instanceof PrismaClientInitializationError) {
+      console.error("Get user API error: database unreachable", error.message);
+      return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
+    }
     // This catch block will also handle errors from jwtVerify (e.g., expired token)
     console.error("Get user API error:", error);
     return NextResponse.json({ error: "Invalid token or internal server error." }, { status: 500 });

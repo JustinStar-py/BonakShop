@@ -38,25 +38,8 @@ export default function HomePage() {
   const { user, cart, addToCart, updateCartQuantity } = useAppContext();
   const router = useRouter();
 
-  // Banners Data
-  const banners = [
-    {
-      id: 1,
-      image:
-        "https://studiomani.ir/wp-content/uploads/2019/05/istak-non-alcoholic-beer-02.jpg",
-      link: "/products?supplierId=cmeg3ib2h0000jy04qsat2ejr",
-      active: true,
-    },
-    {
-      id: 2,
-      image:
-        "https://www.digikala.com/mag/wp-content/uploads/2024/03/9b6907ac-5dd5-4fcd-b4c8-3a0874fcb16d-22-pickles.jpg",
-      link: "/products?categoryId=cmd8x3h5k0000jm047c3bv2zk",
-      active: true,
-    },
-  ];
-
   // Local State
+  const [banners, setBanners] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<ProductWithSupplier[]>([]);
   const [bestsellerProducts, setBestsellerProducts] = useState<ProductWithSupplier[]>([]);
@@ -67,6 +50,13 @@ export default function HomePage() {
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   
+  // Static Promo Data
+  const promoBanner = {
+    image: "https://www.digikala.com/mag/wp-content/uploads/2024/03/9b6907ac-5dd5-4fcd-b4c8-3a0874fcb16d-22-pickles.jpg",
+    link: "/products?categoryId=cmd8x3h5k0000jm047c3bv2zk",
+    active: true,
+  };
+
   // Search & Pagination State
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -109,12 +99,13 @@ export default function HomePage() {
           apiClient.get(`/products?categoryId=${c.id}&limit=10`).catch(() => ({ data: { products: [] } }))
         );
 
-        const [catRes, featRes, newRes, bestRes, prodRes, ...catRowsRes] = await Promise.all([
+        const [catRes, featRes, newRes, bestRes, prodRes, bannersRes, ...catRowsRes] = await Promise.all([
           apiClient.get("/categories"),
           apiClient.get("/products/lists?type=featured"),
           apiClient.get("/products/lists?type=newest"),
           apiClient.get("/products/lists?type=bestsellers"),
           apiClient.get("/products?page=1&limit=12&search="),
+          apiClient.get("/banners").catch(() => ({ data: [] })),
           ...categoryPromises
         ]);
 
@@ -122,6 +113,7 @@ export default function HomePage() {
         setFeaturedProducts(featRes.data);
         setNewestProducts(newRes.data);
         setBestsellerProducts(bestRes.data);
+        setBanners(bannersRes.data || []);
         
         // Process category rows
         const rows = categoryConfigs.map((c, i) => ({
@@ -231,7 +223,7 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-          <HeroBanner promoImage={banners[0]?.active ? banners[0].image : undefined} />
+          <HeroBanner banners={banners} />
 
           <CategoryScroller
             categories={categories}
@@ -250,7 +242,7 @@ export default function HomePage() {
             onViewAll={() => router.push("/products?sort=bestselling")}
           />
 
-          <PromoBanner image={banners[1].image} link={banners[1].link} active={banners[1].active} />
+          <PromoBanner image={promoBanner.image} link={promoBanner.link} active={promoBanner.active} />
 
           <ProductCarousel
             title="پرفروش‌ترین‌ها"
@@ -263,7 +255,7 @@ export default function HomePage() {
             onSupplierClick={handleSupplierClick}
             onImageClick={setViewingImage}
             onViewAll={() => router.push("/products?sort=bestselling")}
-            accentColorClass="bg-blue-5mk00"
+            accentColorClass="bg-blue-500"
           />
 
           <ProductCarousel

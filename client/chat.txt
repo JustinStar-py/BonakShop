@@ -1,4 +1,14 @@
-Adjusted auth issuers to honor 30-day lifetime: app/api/auth/verify-otp/route.ts now signs both tokens for 30d, returns the refresh token in the JSON body, and sets the refresh cookie maxAge to 30 days; app/api/auth/refresh/route.ts issues 30d access tokens and re-sets the existing refresh cookie with a 30d maxAge to keep users active for the full window.
-Fixed app/api/auth/login/route.ts by defining userWithoutPassword and including refreshToken in the response so the route no longer throws and clients get both tokens.
-Simplified client token handling in context/AppContext.tsx by stopping storage of refresh tokens in localStorage (server handles them via httpOnly cookie).
-Notes/next steps: consider running your test suite or a quick manual login/OTP/refresh flow to verify cookies and tokens after these changes.
+    at <unknown> (app\api\auth\send-otp\route.ts:28:56)
+    at async POST (app\api\auth\send-otp\route.ts:28:29)
+  26 |
+  27 |     // Fetch Whitelisted Numbers from DB
+> 28 |     const whitelistSetting = await prisma.systemSetting.findUnique({
+     |                                                        ^
+  29 |       where: { key: "WHITELISTED_NUMBERS" },
+  30 |     });
+  31 | {
+  clientVersion: '6.16.1',
+  errorCode: undefined,
+  retryable: undefined
+}
+ POST /api/auth/send-otp 500 in 2364ms
