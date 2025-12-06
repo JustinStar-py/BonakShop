@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Pencil, PlusCircle, Trash2, Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Pencil, PlusCircle, Trash2, Upload, ArrowRightLeft } from "lucide-react";
 
 export default function CategoryManagementPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -19,6 +20,7 @@ export default function CategoryManagementPage() {
     const [editingCategory, setEditingCategory] = useState<any | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; categoryId: string | null; categoryName: string | null }>({ isOpen: false, categoryId: null, categoryName: null });
+    const [moveDialog, setMoveDialog] = useState<{ isOpen: boolean; sourceId: string; targetId: string }>({ isOpen: false, sourceId: "", targetId: "" });
 
     const fetchCategories = async () => {
         setIsLoading(true);
@@ -80,13 +82,46 @@ export default function CategoryManagementPage() {
         finally { setActionLoading(false); }
     };
 
+    const handleMoveProducts = async () => {
+        if (!moveDialog.sourceId || !moveDialog.targetId) {
+            alert("لطفا دسته‌بندی مبدا و مقصد را انتخاب کنید.");
+            return;
+        }
+        if (moveDialog.sourceId === moveDialog.targetId) {
+            alert("دسته‌بندی مبدا و مقصد نمی‌توانند یکسان باشند.");
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            const res = await apiClient.post('/admin/categories/move-products', {
+                sourceCategoryId: moveDialog.sourceId,
+                targetCategoryId: moveDialog.targetId
+            });
+            alert(res.data.message);
+            setMoveDialog({ isOpen: false, sourceId: "", targetId: "" });
+            // Optional: Refresh categories if counts were displayed, but for now we just move products.
+        } catch (error: any) {
+            console.error(error);
+            alert(error.response?.data?.error || "خطا در جابجایی محصولات");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     if (isLoading) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">مدیریت دسته‌بندی‌ها</h1>
-                <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن دسته‌بندی</Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setMoveDialog({ isOpen: true, sourceId: "", targetId: "" })}>
+                        <ArrowRightLeft className="ml-2 h-4 w-4" />
+                        انتقال محصولات
+                    </Button>
+                    <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن دسته‌بندی</Button>
+                </div>
             </div>
             <Card>
                 <CardContent className="pt-6">
@@ -123,6 +158,57 @@ export default function CategoryManagementPage() {
                     <DialogFooter>
                         <Button variant="secondary" onClick={() => setDeleteDialog({ isOpen: false, categoryId: null, categoryName: null })}>انصراف</Button>
                         <Button variant="destructive" onClick={() => handleDelete(deleteDialog.categoryId)} disabled={actionLoading}>{actionLoading ? <Loader2 className="animate-spin" /> : "تایید حذف"}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={moveDialog.isOpen} onOpenChange={(open) => setMoveDialog(prev => ({ ...prev, isOpen: open }))}>
+                <DialogContent dir="rtl" className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>انتقال محصولات بین دسته‌بندی‌ها</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <Label>از دسته‌بندی (مبدا)</Label>
+                            <Select
+                                value={moveDialog.sourceId}
+                                onValueChange={(value) => setMoveDialog(prev => ({ ...prev, sourceId: value }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="انتخاب دسته‌بندی مبدا" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map((c) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex justify-center">
+                            <ArrowRightLeft className="h-6 w-6 text-muted-foreground rotate-90" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>به دسته‌بندی (مقصد)</Label>
+                            <Select
+                                value={moveDialog.targetId}
+                                onValueChange={(value) => setMoveDialog(prev => ({ ...prev, targetId: value }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="انتخاب دسته‌بندی مقصد" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.filter(c => c.id !== moveDialog.sourceId).map((c) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setMoveDialog({ isOpen: false, sourceId: "", targetId: "" })}>انصراف</Button>
+                        <Button onClick={handleMoveProducts} disabled={actionLoading || !moveDialog.sourceId || !moveDialog.targetId}>
+                            {actionLoading ? <Loader2 className="animate-spin" /> : "انتقال محصولات"}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
