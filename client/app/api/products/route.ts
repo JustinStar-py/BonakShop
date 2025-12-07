@@ -133,6 +133,7 @@ export async function POST(req: Request) {
     // Invalidate caches
     revalidateTag('products');
     revalidateTag('categories'); // Because category counts might change
+    revalidateTag('suppliers'); // Because supplier product counts might change
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {

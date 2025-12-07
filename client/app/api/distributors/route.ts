@@ -2,21 +2,13 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
-import { unstable_cache, revalidateTag } from "next/cache";
-
-// Cached fetcher for distributors
-const getDistributors = unstable_cache(
-  async () => {
-    return await prisma.distributor.findMany();
-  },
-  ["all-distributors"],
-  { tags: ["distributors"], revalidate: 3600 }
-);
+import { revalidateTag } from "next/cache";
+import { getCachedDistributors } from "@/lib/cache";
 
 // GET all distributors
 export async function GET() {
   try {
-    const distributors = await getDistributors();
+    const distributors = await getCachedDistributors();
     return NextResponse.json(distributors, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch distributors" }, { status: 500 });

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Pencil, PlusCircle, Trash2, Upload, ArrowRightLeft } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Trash2, Upload, ArrowRightLeft, Search } from "lucide-react";
 
 export default function CategoryManagementPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -21,6 +21,7 @@ export default function CategoryManagementPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; categoryId: string | null; categoryName: string | null }>({ isOpen: false, categoryId: null, categoryName: null });
     const [moveDialog, setMoveDialog] = useState<{ isOpen: boolean; sourceId: string; targetId: string }>({ isOpen: false, sourceId: "", targetId: "" });
+    const [searchQuery, setSearchQuery] = useState("");
 
     const fetchCategories = async () => {
         setIsLoading(true);
@@ -31,6 +32,10 @@ export default function CategoryManagementPage() {
         finally { setIsLoading(false); }
     };
     useEffect(() => { fetchCategories(); }, []);
+
+    const filteredCategories = categories.filter(c => 
+        c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const handleOpenDialog = (category: any | null = null) => {
         setEditingCategory(category || { name: "", icon: "", image: "" });
@@ -113,21 +118,33 @@ export default function CategoryManagementPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <h1 className="text-3xl font-bold">مدیریت دسته‌بندی‌ها</h1>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setMoveDialog({ isOpen: true, sourceId: "", targetId: "" })}>
-                        <ArrowRightLeft className="ml-2 h-4 w-4" />
-                        انتقال محصولات
-                    </Button>
-                    <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن دسته‌بندی</Button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            placeholder="جستجو در دسته‌بندی‌ها..."
+                            className="w-full pr-8"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setMoveDialog({ isOpen: true, sourceId: "", targetId: "" })}>
+                            <ArrowRightLeft className="ml-2 h-4 w-4" />
+                            انتقال محصولات
+                        </Button>
+                        <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن دسته‌بندی</Button>
+                    </div>
                 </div>
             </div>
             <Card>
                 <CardContent className="pt-6">
                     <Table>
                         <TableHeader><TableRow><TableHead className="w-[80px] text-right">تصویر</TableHead><TableHead className="w-[80px] text-right">آیکون</TableHead><TableHead className="text-right">نام</TableHead><TableHead className="text-center w-[120px]">عملیات</TableHead></TableRow></TableHeader>
-                        <TableBody>{categories.map(c => (<TableRow key={c.id}>
+                        <TableBody>{filteredCategories.map(c => (<TableRow key={c.id}>
                             <TableCell className="text-right"><img src={c.image || "/placeholder.svg"} alt={c.name} className="h-12 w-12 rounded-md object-cover" /></TableCell>
                             <TableCell className="text-right"><span className="text-2xl">{c.icon}</span></TableCell>
                             <TableCell className="font-medium text-right">{c.name}</TableCell>

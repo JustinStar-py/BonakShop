@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { amount } = await req.json();
-    const { id } = await Promise.resolve(params);
+    const { id } = await params;
 
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {

@@ -42,3 +42,14 @@ export const getCachedSuppliers = unstable_cache(
   ['suppliers-list'],
   { revalidate: 3600, tags: ['suppliers'] }
 );
+
+// 4. Distributors Cache
+export const getCachedDistributors = unstable_cache(
+  async () => {
+    return await prisma.distributor.findMany({
+      orderBy: { name: "asc" },
+    });
+  },
+  ['distributors-list'],
+  { revalidate: 3600, tags: ['distributors'] }
+);

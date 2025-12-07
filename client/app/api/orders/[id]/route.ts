@@ -6,7 +6,7 @@ import { getAuthUserFromRequest } from "@/lib/auth";
 // GET a single order by its ID
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const auth = await getAuthUserFromRequest(req);
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const orderId = params.id;
+    const { id: orderId } = await params;
     const order = await prisma.order.findUnique({
       where: {
         id: orderId,
@@ -46,7 +46,7 @@ export async function GET(
 
     return NextResponse.json(order, { status: 200 });
   } catch (error) {
-    console.error(`Failed to fetch order ${params.id}:`, error);
+    console.error(`Failed to fetch order:`, error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },

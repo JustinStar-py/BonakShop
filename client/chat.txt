@@ -1,14 +1,16 @@
-    at <unknown> (app\api\auth\send-otp\route.ts:28:56)
-    at async POST (app\api\auth\send-otp\route.ts:28:29)
-  26 |
-  27 |     // Fetch Whitelisted Numbers from DB
-> 28 |     const whitelistSetting = await prisma.systemSetting.findUnique({
-     |                                                        ^
-  29 |       where: { key: "WHITELISTED_NUMBERS" },
-  30 |     });
-  31 | {
-  clientVersion: '6.16.1',
-  errorCode: undefined,
-  retryable: undefined
-}
- POST /api/auth/send-otp 500 in 2364ms
+mate fix this bug
+ ○ Compiling /api/categories/[id] ...
+ GET /api/admin/notifications 200 in 198ms
+ ✓ Compiled /api/categories/[id] in 22.2s
+Error: Route "/api/categories/[id]" used `params.id`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at PUT (app\api\categories\[id]\route.ts:21:30)
+  19 |     }
+  20 |
+> 21 |     const categoryId = params.id;
+     |                              ^
+  22 |     const body = await req.json();
+  23 |     const { name, icon, image } = body;
+  24 |
+ PUT /api/categories/cmi66a5lg000pjg04y0z585xs 200 in 28557ms
+ GET /api/categories 200 in 2577ms
+ GET /api/admin/notifications 200 in 306ms

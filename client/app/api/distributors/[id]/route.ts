@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 
 // Handles UPDATING an existing distributor
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthUserFromRequest(req as Request);
@@ -15,7 +16,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     
-    const distributorId = params.id;
+    const { id: distributorId } = await params;
     const { name, logo } = await req.json();
 
     if (!name) {
@@ -27,6 +28,7 @@ export async function PUT(
       data: { name, logo },
     });
     
+    revalidateTag("distributors");
     return NextResponse.json(updatedDistributor, { status: 200 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
@@ -39,17 +41,18 @@ export async function PUT(
 // Handles DELETING an existing distributor
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthUserFromRequest(req as Request);
     if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const distributorId = params.id;
+    const { id: distributorId } = await params;
 
     await prisma.distributor.delete({ where: { id: distributorId } });
     
+    revalidateTag("distributors");
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {

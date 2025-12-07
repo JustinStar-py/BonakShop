@@ -3,13 +3,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const productId = params.id;
+    const { id: productId } = await params;
     if (!productId) {
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
     }
@@ -34,8 +35,8 @@ export async function GET(
 }
 
 // --- This function handles UPDATING a full product record ---
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const productId = params.id;
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id: productId } = await params;
   try {
     const auth = await getAuthUserFromRequest(req);
     if (!auth || auth.user.role !== 'ADMIN') {
@@ -72,6 +73,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       },
     });
 
+    revalidateTag('products');
     return NextResponse.json(updatedProduct, { status: 200 });
   } catch (error) {
     console.error("Product update error:", error);
@@ -100,6 +102,7 @@ export async function PATCH(
       data: body,
     });
 
+    revalidateTag('products');
     return NextResponse.json(updatedProduct, { status: 200 });
 
   } catch (error) {
@@ -122,6 +125,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     await prisma.product.delete({ where: { id: productId } });
+    
+    revalidateTag('products');
+    revalidateTag('categories'); // Update category counts
+    revalidateTag('suppliers'); // Update supplier counts (if tracked)
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Product delete error:", error);

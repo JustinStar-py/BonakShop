@@ -37,6 +37,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "dotenv": "^17.2.2",
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "jalaali-js": "^1.2.8",
     "jose": "^6.0.13",
     "jsonwebtoken": "^9.0.2",
@@ -52,6 +54,7 @@
     "react-top-loading-bar": "^3.0.2",
     "react-zoom-pan-pinch": "^3.7.0",
     "recharts": "^3.0.2",
+    "swiper": "^12.0.3",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.25.67"

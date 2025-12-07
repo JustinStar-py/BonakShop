@@ -2,19 +2,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
-import { unstable_cache, revalidateTag } from "next/cache";
-
-// Cached data fetcher
-const getAllSuppliers = unstable_cache(
-  async () => {
-    console.log("Fetching all suppliers from database (CACHE MISS)");
-    return await prisma.supplier.findMany({
-      orderBy: { name: "asc" },
-    });
-  },
-  ["all-suppliers-list"],
-  { tags: ["suppliers"], revalidate: 3600 } // Cache for 1 hour
-);
+import { revalidateTag } from "next/cache";
+import { getCachedSuppliers } from "@/lib/cache";
 
 // --- GET suppliers ---
 export async function GET(request: Request) {
@@ -37,7 +26,7 @@ export async function GET(request: Request) {
       return NextResponse.json(suppliers);
     }
 
-    const allSuppliers = await getAllSuppliers();
+    const allSuppliers = await getCachedSuppliers();
     return NextResponse.json(allSuppliers);
   } catch (error) {
     console.error("Failed to fetch suppliers:", error);

@@ -7,7 +7,7 @@ import { OrderStatus } from "@prisma/client";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthUserFromRequest(req);
@@ -15,7 +15,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const orderId = params.id;
+    const { id: orderId } = await params;
     const { status } = await req.json();
     const userRole = auth.user.role;
 
