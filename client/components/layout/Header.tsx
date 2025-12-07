@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Search, User as UserIcon, Truck, LayoutDashboard, ShoppingBag } from "lucide-react";
+import { Search, User as UserIcon, Truck, LayoutDashboard, ShoppingBag, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { User } from "@/types"; // Assuming User type is in types/index.ts
@@ -57,6 +57,14 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
               <Truck className="h-5 w-5 text-gray-600" />
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full hover:bg-gray-100 text-gray-700"
+            onClick={() => router.push("/chat")}
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

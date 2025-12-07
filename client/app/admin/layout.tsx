@@ -15,7 +15,8 @@ import {
     ShoppingBasket,
     ChevronLeft,
     Users,
-    Settings
+    Settings,
+    MessageSquare
 } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ import NotificationBell from "@/components/admin/NotificationBell";
 // Define navigation items for cleaner rendering
 const NAV_ITEMS = [
     { href: "/admin/dashboard", label: "داشبورد", icon: LayoutDashboard },
+    { href: "/admin/chat", label: "پشتیبانی", icon: MessageSquare },
     { href: "/admin/users", label: "کاربران", icon: Users },
     { href: "/admin/products", label: "محصولات", icon: Package },
     { href: "/admin/categories", label: "دسته‌بندی‌ها", icon: Layers },

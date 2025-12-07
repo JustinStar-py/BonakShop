@@ -129,12 +129,48 @@ model User {
   
   // Relations
   orders      Order[]  // List of all orders placed by this user.
+  chatSessions ChatSession[] // List of chat sessions started by this user
+  sentMessages ChatMessage[] // List of messages sent by this user
 }
 
 // Model for system-wide settings (key-value store).
 model SystemSetting {
   key   String @id
   value String
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  image     String
+  link      String?
+  isActive  Boolean  @default(true)
+  priority  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Model for chat sessions between users and admins
+model ChatSession {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    ChatStatus  @default(OPEN)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  messages  ChatMessage[]
+}
+
+// Model for individual chat messages
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content   String
+  read      Boolean     @default(false)
+  createdAt DateTime    @default(now())
 }
 
 // Model for return requests.
@@ -160,17 +196,6 @@ model ReturnRequestItem {
   orderItem       OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   returnRequestId String        // Foreign key to the ReturnRequest.
   returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
-}
-
-// Model for home page banners (Hero Slider).
-model Banner {
-  id          String   @id @default(cuid())
-  title       String?  // Optional title/alt text
-  image       String   // URL of the banner image
-  link        String?  // URL to redirect when clicked
-  isActive    Boolean  @default(true) // Show/Hide toggle
-  priority    Int      @default(0) // Display order (higher shows first)
-  createdAt   DateTime @default(now())
 }
 
 // Enum for possible order statuses.
@@ -199,5 +224,11 @@ enum ReturnStatus {
   REQUESTED // Return has been requested by the customer.
   APPROVED  // Return has been approved by an admin/worker.
   REJECTED  // Return has been rejected.
+}
+
+// Enum for chat session statuses
+enum ChatStatus {
+  OPEN
+  CLOSED
 }
 

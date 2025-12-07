@@ -4,7 +4,7 @@ import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Phone, Wallet, History, ChevronLeft, Store, MapPin, ArrowRight } from "lucide-react";
+import { User, LogOut, Phone, Wallet, History, ChevronLeft, Store, MapPin, ArrowRight, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -187,6 +187,14 @@ export default function ProfilePage() {
                         <span className="text-sm font-medium text-gray-700">تاریخچه تراکنش‌ها</span>
                     </div>
                     <ChevronLeft className="w-5 h-5 text-gray-300 group-hover:text-orange-500 transition-colors" />
+                </button>
+
+                <button onClick={() => router.push('/chat')} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group active:scale-95 transition-all">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-green-50 text-green-600"><MessageSquare className="w-5 h-5" /></div>
+                        <span className="text-sm font-medium text-gray-700">پشتیبانی آنلاین</span>
+                    </div>
+                    <ChevronLeft className="w-5 h-5 text-gray-300 group-hover:text-green-500 transition-colors" />
                 </button>
 
                 <button onClick={logout} className="w-full bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center justify-center gap-2 text-red-600 mt-6 hover:bg-red-100 transition-colors">

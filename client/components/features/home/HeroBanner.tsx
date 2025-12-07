@@ -78,7 +78,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
   }
 
   return (
-    <div className="relative group" dir="rtl">
+    <div className="relative group">
       {/* Embla Viewport */}
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex touch-pan-y">
@@ -123,7 +123,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
                     )}
                   >
                     {banner.title && (
-                      <h2 className="text-xl md:text-3xl lg:text-4xl font-black mb-3 drop-shadow-lg leading-tight">
+                      <h2 className="text-xl md:text-3xl lg:text-4xl font-black mb-3 leading-tight">
                         {banner.title}
                       </h2>
                     )}
@@ -131,7 +131,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
                       <div className="mt-4">
                         <Button
                           onClick={() => router.push(banner.link!)}
-                          className="bg-white text-black hover:bg-white/90 rounded-full px-6 font-bold shadow-lg transform transition hover:scale-105"
+                          className="bg-white text-black hover:bg-white/90 rounded-full px-6 font-bold transform transition hover:scale-105"
                           size="sm"
                         >
                           <ShoppingBag size={16} className="ml-2" />
