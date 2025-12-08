@@ -32,6 +32,7 @@ export default function AuthPage() {
     const [code, setCode] = useState("");
     const [step, setStep] = useState<"request" | "verify">("request");
     const [isLoading, setIsLoading] = useState(false);
+    const [isPhoneInputFocused, setIsPhoneInputFocused] = useState(false);
     const codeInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -180,6 +181,8 @@ export default function AuthPage() {
                                         required
                                         value={phone}
                                         onChange={handlePhoneChange}
+                                        onFocus={() => setIsPhoneInputFocused(true)}
+                                        onBlur={() => setIsPhoneInputFocused(false)}
                                         maxLength={11}
                                     />
                                 </div>
@@ -218,8 +221,8 @@ export default function AuthPage() {
                     </form>
                 </div>
             </div>
-            {step === "request" && (
-                <div className="absolute bottom-4 flex flex-col items-center gap-2 z-10">
+            {step === "request" && !isPhoneInputFocused && (
+                <div className="absolute bottom-4 flex flex-col items-center gap-2 z-10 transition-opacity duration-300">
                     <a referrerPolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=680926&Code=ddh2sBKCxHmWqySC22llyr3LJQGpGOpD'>
                         <img referrerPolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=680926&Code=ddh2sBKCxHmWqySC22llyr3LJQGpGOpD' alt='' style={{ cursor: 'pointer' }} className="w-20 h-auto bg-white/80 rounded-xl p-1 shadow-lg backdrop-blur-sm hover:scale-105 transition-transform duration-300" />
                     </a>
