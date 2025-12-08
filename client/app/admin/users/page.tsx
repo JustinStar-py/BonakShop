@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import apiClient from "@/lib/apiClient";
 import { useSimpleToast } from "@/components/ui/toast-notification";
+import type { User, WalletOperation } from "@/types";
 import {
   Table,
   TableBody,
