@@ -88,8 +88,9 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
         <div
             className={cn(
                 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md',
-                'animate-in slide-in-from-bottom-2 duration-300',
-                'pointer-events-auto',
+                'animate-in slide-in-from-bottom-5 fade-in-0 duration-300 ease-out',
+                'data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom-5 data-[state=closed]:fade-out data-[state=closed]:duration-300',
+                'pointer-events-auto transform transition-all',
                 colors[type]
             )}
         >
