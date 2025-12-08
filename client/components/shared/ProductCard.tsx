@@ -1,7 +1,6 @@
 "use client";
 
-import type { Product, Supplier } from "@/types";
-import type { CartItem } from "@/types";
+import type { ProductWithRelations, CartItem } from "@/types";
 import { Plus, Minus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -9,13 +8,13 @@ import toPersianDigits from "@/utils/numberFormatter";
 import { formatToTomanParts } from "@/utils/currencyFormatter";
 
 interface ProductCardProps {
-  product: Product & { supplier: Supplier };
+  product: ProductWithRelations;
   cartItem: CartItem | undefined;
-  onAddToCart: (product: Product & { supplier: Supplier }) => void;
-  onSelectProduct: (product: Product & { supplier: Supplier }) => void;
+  onAddToCart: (product: ProductWithRelations) => void;
+  onSelectProduct: (product: ProductWithRelations) => void;
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
-  onImageClick?: (imageUrl: string) => void; // Making optional to fit usage
-  onSupplierClick?: (supplierId: string) => void; // Making optional to fit usage
+  onImageClick?: (imageUrl: string) => void;
+  onSupplierClick?: (supplierId: string) => void;
 }
 
 export default function ProductCard({
@@ -130,9 +129,8 @@ export default function ProductCard({
       <div className="mt-auto flex items-end justify-end">
         <div className="flex flex-col items-end">
           <div
-            className={`mb-0.5 flex items-baseline gap-1 text-gray-400 text-[11px] font-medium ${
-              !(hasDiscount && formattedPrice) ? "invisible" : ""
-            }`}
+            className={`mb-0.5 flex items-baseline gap-1 text-gray-400 text-[11px] font-medium ${!(hasDiscount && formattedPrice) ? "invisible" : ""
+              }`}
           >
             <span className="line-through">{formattedPrice?.amount ?? ""}</span>
             <span className="text-[10px]">

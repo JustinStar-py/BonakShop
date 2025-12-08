@@ -1,3 +1,0 @@
-mate add an padding for last message that use can see fully, also mate has scroll to last  
-  message auto ption?
-also mate make color of supprt chat diffrence, also its must be right of page, and user message left position of page

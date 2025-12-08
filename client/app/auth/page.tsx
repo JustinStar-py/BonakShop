@@ -110,7 +110,7 @@ export default function AuthPage() {
 
             navigator.credentials
                 .get({
-                    // @ts-ignore - Web OTP API
+                    // @ts-expect-error - Web OTP API is not fully typed
                     otp: { transport: ['sms'] },
                     signal: ac.signal
                 })

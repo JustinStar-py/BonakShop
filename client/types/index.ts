@@ -9,13 +9,18 @@ import { Prisma } from '@prisma/client';
 export interface User {
   id: string;
   phone: string;
+  password: string;
   name: string | null;
   shopName: string | null;
-  userType: 'SHOP_OWNER' | 'INDIVIDUAL';
-  role: 'ADMIN' | 'CUSTOMER' | 'WORKER';
+  shopAddress: string | null;
+  landline: string | null;
+  latitude: number | null;
+  longitude: number | null;
   balance: number;
+  isApproved: boolean;
+  role: 'ADMIN' | 'CUSTOMER' | 'WORKER';
+  userType: 'SHOP_OWNER' | 'INDIVIDUAL';
   createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface UserWithOrders extends User {
@@ -29,25 +34,30 @@ export interface UserWithOrders extends User {
 export interface Product {
   id: string;
   name: string;
-  slug: string;
   description: string | null;
   price: number;
+  consumerPrice: number | null;
   image: string | null;
-  stock: number;
-  categoryId: string;
-  supplierId: string | null;
+  available: boolean;
   discountPercentage: number;
-  tags: string[];
+  unit: string;
+  stock: number;
   isFeatured: boolean;
-  isActive: boolean;
+  categoryId: string;
+  supplierId: string;
+  distributorId: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface ProductWithRelations extends Product {
   category: Category;
-  supplier?: Supplier;
+  supplier: Supplier;
+  distributor: Distributor;
 }
+
+// Alias for backward compatibility
+export type ProductWithSupplier = ProductWithRelations;
 
 export interface ProductFormData {
   name: string;
@@ -100,11 +110,9 @@ export type ProductOrderByInput = {
 export interface Category {
   id: string;
   name: string;
-  slug: string;
-  description: string | null;
+  icon: string | null;
   image: string | null;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface CategoryWithProducts extends Category {
@@ -225,7 +233,14 @@ export interface ChatSession {
 export interface Supplier {
   id: string;
   name: string;
-  contactInfo: string | null;
+  logo: string | null;
+  createdAt: Date;
+}
+
+export interface Distributor {
+  id: string;
+  name: string;
+  logo: string | null;
   createdAt: Date;
 }
 
