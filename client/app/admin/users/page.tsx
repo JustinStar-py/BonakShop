@@ -244,8 +244,32 @@ export default function UsersPage() {
               <p className="text-sm text-gray-500 mb-1">موجودی فعلی</p>
               <p className="text-xl font-bold text-gray-800">{chargingUser ? formatToToman(Number(chargingUser.balance)) : 0}</p>
             </div>
+
+            {/* Operation Type Toggle */}
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setWalletOperation('increase')}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${walletOperation === 'increase'
+                    ? 'bg-green-600 text-white shadow'
+                    : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                ✓ افزایش موجودی
+              </button>
+              <button
+                type="button"
+                onClick={() => setWalletOperation('decrease')}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${walletOperation === 'decrease'
+                    ? 'bg-red-600 text-white shadow'
+                    : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                ✗ کسر موجودی
+              </button>
+            </div>
             <div className="space-y-2">
-              <Label>مبلغ افزایش (تومان)</Label>
+              <Label>{walletOperation === 'increase' ? 'مبلغ افزایش (تومان)' : 'مبلغ کسر (تومان)'}</Label>
               <Input
                 type="number"
                 value={chargeAmount}
@@ -253,7 +277,12 @@ export default function UsersPage() {
                 placeholder="مثلا: 100000"
               />
             </div>
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">افزایش موجودی</Button>
+            <Button
+              type="submit"
+              className={`w-full ${walletOperation === 'increase' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+            >
+              {walletOperation === 'increase' ? '✓ افزایش موجودی' : '✗ کسر موجودی'}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
