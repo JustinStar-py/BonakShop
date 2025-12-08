@@ -1,41 +1,62 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import apiClient from "@/lib/apiClient";
+import { getErrorMessage } from "@/lib/errors";
 import ChatWindow from "@/components/features/chat/ChatWindow";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, MessageSquare, Filter } from "lucide-react";
+import { RefreshCw, MessageSquare } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
+type ChatSessionStatus = "OPEN" | "CLOSED";
+
+interface AdminChatSession {
+    id: string;
+    status: ChatSessionStatus;
+    userId: string;
+    user: {
+        name: string | null;
+        shopName: string | null;
+        phone: string;
+    };
+    messages?: { id: string; content: string }[];
+    _count?: { messages?: number };
+}
+
 export default function AdminChatPage() {
     const { user } = useAppContext();
-    const [sessions, setSessions] = useState<any[]>([]);
+    const [sessions, setSessions] = useState<AdminChatSession[]>([]);
     const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CLOSED'>('ALL');
 
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
         setLoading(true);
         try {
             const url = filter === 'ALL' ? "/admin/chat" : `/admin/chat?status=${filter}`;
-            const res = await apiClient.get(url);
-            if (res.data.sessions) {
-                setSessions(res.data.sessions);
-            } else if (Array.isArray(res.data)) {
+            const res = await apiClient.get<{ sessions?: AdminChatSession[] } | AdminChatSession[]>(url);
+            if (Array.isArray(res.data)) {
                 setSessions(res.data);
+            } else if (res.data.sessions) {
+                setSessions(res.data.sessions);
             }
-        } catch (err) {
-            console.error(err);
+        } catch (error) {
+            console.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
 
     useEffect(() => {
         fetchSessions();
         const interval = setInterval(fetchSessions, 10000); // Poll list every 10s
         return () => clearInterval(interval);
-    }, [filter]);
+    }, [fetchSessions]);
+
+    const selectedSession = useMemo(
+        () => sessions.find((session) => session.id === selectedSessionId),
+        [sessions, selectedSessionId]
+    );
 
     return (
         <div className="container mx-auto px-4 py-8 min-h-screen">
@@ -76,21 +97,21 @@ export default function AdminChatPage() {
                                     )}
                                 >
                                     <div className="flex justify-between items-center mb-1">
-                                        <span className="font-bold text-sm">{s.user.name || "کاربر ناشناس"}</span>
+                                        <span className="font-bold text-sm">{s.user?.name || "کاربر ناشناس"}</span>
                                         <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", s.status === 'OPEN' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
                                             {s.status === 'OPEN' ? 'باز' : 'بسته'}
                                         </span>
                                     </div>
                                     <div className="text-xs text-gray-500 mb-1">
-                                        {s.user.shopName} | {s.user.phone}
+                                        {s.user?.shopName ?? "—"} | {s.user?.phone ?? "—"}
                                     </div>
                                     <div className="text-xs text-gray-400 truncate">
                                         {s.messages?.[0]?.content || "بدون پیام"}
                                     </div>
-                                    {s._count?.messages > 0 && (
+                                    {(s._count?.messages || 0) > 0 && (
                                         <div className="mt-1 flex justify-end">
                                             <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">
-                                                {s._count.messages} پیام جدید
+                                                {s._count?.messages} پیام جدید
                                             </span>
                                         </div>
                                     )}
@@ -102,12 +123,12 @@ export default function AdminChatPage() {
 
                 {/* Chat Window */}
                 <div className="md:col-span-2">
-                    {selectedSessionId && user ? (
+                    {selectedSession && user ? (
                         <ChatWindow 
-                            sessionId={selectedSessionId} 
+                            sessionId={selectedSession.id} 
                             currentUserId={user.id}
                             isAdminView={true}
-                            sessionOwnerId={sessions.find(s => s.id === selectedSessionId)?.userId}
+                            sessionOwnerId={selectedSession.userId}
                             onClose={() => fetchSessions()}
                         />
                     ) : (

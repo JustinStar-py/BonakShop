@@ -1,22 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAppContext } from "@/context/AppContext";
 import apiClient from "@/lib/apiClient";
-import type { Product, Category, Supplier, CartItem, ProductWithSupplier } from "@/types";
+import type { Product, Category, ProductWithSupplier } from "@/types";
 import ProductCard from "@/components/shared/ProductCard";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { 
-    Search, Loader2, User as UserIcon, Truck, LayoutDashboard,
-    Star, TrendingUp, Sparkles, ArrowLeft, ShoppingBag, LayoutGridIcon,
+    Search, Loader2,
+    Star, TrendingUp, Sparkles,
     ArrowUp,
-    Bell,
-    Droplets, Milk, Cookie, Cake, Drumstick, Coffee, SprayCan, Utensils, Fish, Wheat, Bean, Candy
+    Droplets, Milk, Cookie, Cake, Drumstick, Coffee, SprayCan, Utensils, Fish, Bean
 } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import useProductPagination from "@/hooks/useProductPagination";
 import { useRouter } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 
 // Components
 import Header from "@/components/layout/Header";
@@ -27,10 +27,17 @@ import InfiniteProductGrid from "@/components/features/home/InfiniteProductGrid"
 import PromoBanner from "@/components/features/home/PromoBanner";
 import ImageDialog from "@/components/shared/ImageDialog";
 
+type Banner = {
+  id: string;
+  title?: string | null;
+  image: string;
+  link?: string | null;
+};
+
 interface CategoryRow {
   id: string;
   title: string;
-  icon: any;
+  icon: LucideIcon;
   products: ProductWithSupplier[];
 }
 
@@ -39,7 +46,7 @@ export default function HomePage() {
   const router = useRouter();
 
   // Local State
-  const [banners, setBanners] = useState<any[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<ProductWithSupplier[]>([]);
   const [bestsellerProducts, setBestsellerProducts] = useState<ProductWithSupplier[]>([]);
@@ -61,8 +68,6 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   
-  const scrollTick = useRef(false);
-
   // Pagination Hook
   const {
     products: paginatedProducts,
@@ -73,7 +78,6 @@ export default function HomePage() {
     resetPagination,
     setPage,
     page,
-    error: paginationError,
   } = useProductPagination<ProductWithSupplier>();
 
   // Initial Data Fetch

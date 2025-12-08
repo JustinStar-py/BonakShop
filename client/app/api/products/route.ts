@@ -20,11 +20,11 @@ export async function GET(req: Request) {
 
     // Default to available: true if status is not provided (for public users)
     if (!status) {
-        where.available = true;
+      where.available = true;
     } else if (status === "available") {
-        where.available = true;
+      where.available = true;
     } else if (status === "unavailable") {
-        where.available = false;
+      where.available = false;
     }
     // if status === "all", we don't set where.available, so it returns both.
 
@@ -49,7 +49,7 @@ export async function GET(req: Request) {
         // Assuming we have an orders relation or a 'sales' field. 
         // For now, let's just sort by name or stock as a placeholder if no sales field.
         // Better: 'isFeatured' for now or random.
-        orderBy = { isFeatured: 'desc' }; 
+        orderBy = { isFeatured: 'desc' };
         break;
       case "cheapest":
         orderBy = { price: "asc" };
@@ -83,9 +83,9 @@ export async function GET(req: Request) {
       },
       // Unique key for this specific query combination
       ['products-query', String(page), String(limit), search, categoryId, supplierId, sort, status || 'default'],
-      { 
+      {
         revalidate: 60, // Cache search results for 1 minute
-        tags: ['products'] 
+        tags: ['products']
       }
     );
 
@@ -114,20 +114,20 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+
+    // Validate input using Zod
+    const { createProductSchema, validateBody } = await import('@/lib/validation');
+    const validation = validateBody(createProductSchema, body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
     const product = await prisma.product.create({
-      data: {
-        name: body.name,
-        description: body.description,
-        price: parseFloat(body.price),
-        consumerPrice: body.consumerPrice ? parseFloat(body.consumerPrice) : null,
-        stock: parseInt(body.stock),
-        discountPercentage: body.discountPercentage ? parseInt(body.discountPercentage) : 0,
-        categoryId: body.categoryId,
-        supplierId: body.supplierId,
-        distributorId: body.distributorId,
-        image: body.image,
-        available: body.available ?? true,
-      },
+      data: validation.data!
     });
 
     // Invalidate caches
@@ -144,3 +144,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

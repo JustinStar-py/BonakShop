@@ -12,6 +12,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import toPersianDigits from "@/utils/numberFormatter";
 import { formatToTomanParts } from "@/utils/currencyFormatter";
 import apiClient from "@/lib/apiClient";
+import { getErrorMessage } from "@/lib/errors";
 import dynamic from 'next/dynamic';
 
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
@@ -67,8 +68,8 @@ export default function ProfilePage() {
             setUser(res.data);
             setSuccess("اطلاعات با موفقیت به‌روز شد.");
             setTimeout(() => setCurrentView('DASHBOARD'), 1500);
-        } catch (err: any) { 
-            setError(err.response?.data?.error || "خطا در ذخیره اطلاعات"); 
+        } catch (error) { 
+            setError(getErrorMessage(error, "خطا در ذخیره اطلاعات")); 
         } finally { 
             setIsLoading(false); 
         }

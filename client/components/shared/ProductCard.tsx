@@ -11,8 +11,8 @@ import { formatToTomanParts } from "@/utils/currencyFormatter";
 interface ProductCardProps {
   product: Product & { supplier: Supplier };
   cartItem: CartItem | undefined;
-  onAddToCart: (product: Product) => void;
-  onSelectProduct: (product: Product) => void;
+  onAddToCart: (product: Product & { supplier: Supplier }) => void;
+  onSelectProduct: (product: Product & { supplier: Supplier }) => void;
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onImageClick?: (imageUrl: string) => void; // Making optional to fit usage
   onSupplierClick?: (supplierId: string) => void; // Making optional to fit usage

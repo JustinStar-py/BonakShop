@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import apiClient from "@/lib/apiClient";
+import { getErrorMessage } from "@/lib/errors";
 import dynamic from 'next/dynamic';
 
 import { Button } from "@/components/ui/button";
@@ -83,8 +84,8 @@ export default function CompleteProfilePage() {
             const res = await apiClient.put('/user/profile', formData);
             setUser(res.data);
             router.replace('/');
-        } catch (err: any) { 
-            setError(err.response?.data?.error || "خطا در ذخیره اطلاعات"); 
+        } catch (error) { 
+            setError(getErrorMessage(error, "خطا در ذخیره اطلاعات")); 
         } finally { 
             setIsLoading(false); 
         }

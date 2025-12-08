@@ -1,23 +1,17 @@
-// FILE: client/middleware.ts
-// DESCRIPTION: Intercepts incoming requests to protected API routes to validate JWT access tokens.
+// FILE: middleware.ts
+// DESCRIPTION: Optimized middleware with better performance
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose'; // A modern, secure library for JWT handling
+import { jwtVerify } from 'jose';
 
-/**
- * This middleware function is triggered for all routes matching the `matcher` config.
- * It checks for a valid JWT in the 'Authorization' header.
- *
- * @param {NextRequest} request - The incoming request object.
- * @returns {NextResponse} The response to send back, either continuing the chain or denying access.
- */
+// Cache for verified tokens (in production, use Redis)
+const tokenCache = new Map<string, { userId: string; expiry: number }>();
+
 export async function middleware(request: NextRequest) {
-  // 1. Extract the token from the Authorization header (e.g., "Bearer eyJhbGci...")
   const authHeader = request.headers.get('authorization');
   const token = authHeader?.split(' ')[1];
 
-  // 2. If no token is found, return an 'Unauthorized' error
   if (!token) {
     return new NextResponse(
       JSON.stringify({ success: false, message: 'Authentication failed: No token provided.' }),
@@ -25,20 +19,39 @@ export async function middleware(request: NextRequest) {
     );
   }
 
+  // Check cache first (reduces verification overhead)
+  const cached = tokenCache.get(token);
+  if (cached && Date.now() < cached.expiry) {
+    // Token is valid and cached
+    const response = NextResponse.next();
+    response.headers.set('x-user-id', cached.userId);
+    return response;
+  }
+
   try {
-    // 3. Get the secret key from environment variables
     const secret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET!);
+    const verified = await jwtVerify(token, secret);
 
-    // 4. Verify the token. If it's invalid or expired, jwtVerify will throw an error.
-    // We don't need the payload here, just the verification check.
-    await jwtVerify(token, secret);
+    // Cache the verified token
+    if (verified.payload.userId && verified.payload.exp) {
+      tokenCache.set(token, {
+        userId: verified.payload.userId as string,
+        expiry: (verified.payload.exp as number) * 1000
+      });
+    }
 
-    // 5. If the token is valid, allow the request to proceed to the API route
-    return NextResponse.next();
+    const response = NextResponse.next();
+    if (verified.payload.userId) {
+      response.headers.set('x-user-id', verified.payload.userId as string);
+    }
 
+    return response;
   } catch (err) {
     console.error("JWT Verification Error:", err);
-    // 6. If verification fails, return a 'Forbidden' error
+
+    // Remove from cache if verification fails
+    tokenCache.delete(token);
+
     return new NextResponse(
       JSON.stringify({ success: false, message: 'Authentication failed: Invalid token.' }),
       { status: 403, headers: { 'content-type': 'application/json' } }
@@ -46,17 +59,21 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-// --- Configuration ---
-/**
- * The `matcher` config specifies which routes this middleware should run on.
- * We are protecting all API routes under /api/user, /api/orders, etc.,
- * while excluding the public authentication routes.
- *
- * It uses a negative lookahead `(?!...)` to exclude specific paths.
- */
+// Cleanup expired tokens every 5 minutes
+if (typeof window === 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [token, data] of tokenCache.entries()) {
+      if (now >= data.expiry) {
+        tokenCache.delete(token);
+      }
+    }
+  }, 5 * 60 * 1000);
+}
+
 export const config = {
   matcher: [
-    '/api/((?!auth|products|categories).*)', // Protects all API routes except auth, products, and categories
+    '/api/((?!auth|products|categories).*)',
     '/api/user/:path*',
     '/api/orders/:path*',
     '/api/admin/:path*',

@@ -72,6 +72,13 @@ model Product {
 
   // A product is unique based on its name and supplier.
   @@unique([name, supplierId])
+  // Performance indexes for frequently queried columns
+  @@index([categoryId, available]) // For category filtering
+  @@index([supplierId, available]) // For supplier filtering
+  @@index([createdAt]) // For sorting by newest
+  @@index([price]) // For price sorting
+  @@index([isFeatured, available]) // For featured products
+  @@index([stock]) // For inventory management
 }
 
 // Model for customer orders.
@@ -90,6 +97,11 @@ model Order {
   settlement    Settlement     @relation(fields: [settlementId], references: [id])
   items         OrderItem[]    // List of items in this order.
   returnRequest ReturnRequest? // Optional relation to a return request.
+  
+  // Performance indexes
+  @@index([userId, createdAt]) // For user order history
+  @@index([status, deliveryDate]) // For delivery planning
+  @@index([deliveryDate]) // For date-based queries
 }
 
 // Model for items within an order.
@@ -131,6 +143,10 @@ model User {
   orders      Order[]  // List of all orders placed by this user.
   chatSessions ChatSession[] // List of chat sessions started by this user
   sentMessages ChatMessage[] // List of messages sent by this user
+  
+  // Performance indexes
+  @@index([role, isApproved]) // For admin user management
+  @@index([createdAt]) // For user registration analytics
 }
 
 // Model for system-wide settings (key-value store).
@@ -159,6 +175,10 @@ model ChatSession {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   messages  ChatMessage[]
+  
+  // Performance indexes
+  @@index([userId, status]) // For user's active chats
+  @@index([status, updatedAt]) // For admin chat queue
 }
 
 // Model for individual chat messages

@@ -3,21 +3,28 @@
 
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import type { Category } from "@prisma/client";
+import Image from "next/image";
 import apiClient from "@/lib/apiClient";
+import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Pencil, PlusCircle, Trash2, Upload, ArrowRightLeft, Search } from "lucide-react";
 
+type CategoryForm = Pick<Category, "id" | "name" | "icon" | "image"> & {
+  icon?: string;
+  image?: string;
+};
+
 export default function CategoryManagementPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<any | null>(null);
+    const [editingCategory, setEditingCategory] = useState<CategoryForm | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; categoryId: string | null; categoryName: string | null }>({ isOpen: false, categoryId: null, categoryName: null });
     const [moveDialog, setMoveDialog] = useState<{ isOpen: boolean; sourceId: string; targetId: string }>({ isOpen: false, sourceId: "", targetId: "" });
@@ -37,13 +44,13 @@ export default function CategoryManagementPage() {
         c.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handleOpenDialog = (category: any | null = null) => {
-        setEditingCategory(category || { name: "", icon: "", image: "" });
+    const handleOpenDialog = (category: CategoryForm | null = null) => {
+        setEditingCategory(category || { id: "", name: "", icon: "", image: "" });
         setIsDialogOpen(true);
     };
 
-    const handleFormChange = (field: string, value: any) => {
-        setEditingCategory((prev: any) => ({ ...prev, [field]: value }));
+    const handleFormChange = <K extends keyof CategoryForm>(field: K, value: CategoryForm[K]) => {
+        setEditingCategory((prev) => (prev ? { ...prev, [field]: value } : prev));
     };
     
     const handleImageUpload = async (file: File) => {
@@ -57,7 +64,7 @@ export default function CategoryManagementPage() {
             if (data.success) {
                 handleFormChange('image', data.data.url);
             } else { alert("آپلود عکس موفق نبود."); }
-        } catch (err) { alert("خطا در آپلود عکس"); } 
+        } catch { alert("خطا در آپلود عکس"); } 
         finally { setActionLoading(false); }
     };
     
@@ -65,14 +72,21 @@ export default function CategoryManagementPage() {
         e.preventDefault();
         if (!editingCategory) return;
         setActionLoading(true);
-        const isEditing = !!editingCategory.id;
-        const url = isEditing ? `/categories/${editingCategory.id}` : '/categories';
+        const isEditing = Boolean(editingCategory.id);
+        const url = isEditing && editingCategory.id ? `/categories/${editingCategory.id}` : '/categories';
         const method = isEditing ? 'PUT' : 'POST';
+        const payload = isEditing
+            ? editingCategory
+            : {
+                name: editingCategory.name,
+                icon: editingCategory.icon,
+                image: editingCategory.image,
+            };
         try {
-            await apiClient({ url, method, data: editingCategory });
+            await apiClient.request({ url, method, data: payload });
             await fetchCategories();
             setIsDialogOpen(false);
-        } catch (e) { alert(`خطا در ذخیره دسته‌بندی: ${e}`); } 
+        } catch (error) { alert(getErrorMessage(error, "خطا در ذخیره دسته‌بندی")); } 
         finally { setActionLoading(false); }
     };
     
@@ -83,7 +97,7 @@ export default function CategoryManagementPage() {
             await apiClient.delete(`/categories/${categoryId}`);
             await fetchCategories();
             setDeleteDialog({ isOpen: false, categoryId: null, categoryName: null });
-        } catch (error) { alert(`خطا در حذف: ${error}`); } 
+        } catch (error) { alert(getErrorMessage(error, "خطا در حذف دسته‌بندی")); } 
         finally { setActionLoading(false); }
     };
 
@@ -106,9 +120,9 @@ export default function CategoryManagementPage() {
             alert(res.data.message);
             setMoveDialog({ isOpen: false, sourceId: "", targetId: "" });
             // Optional: Refresh categories if counts were displayed, but for now we just move products.
-        } catch (error: any) {
+        } catch (error) {
             console.error(error);
-            alert(error.response?.data?.error || "خطا در جابجایی محصولات");
+            alert(getErrorMessage(error, "خطا در جابجایی محصولات"));
         } finally {
             setActionLoading(false);
         }
@@ -145,11 +159,19 @@ export default function CategoryManagementPage() {
                     <Table>
                         <TableHeader><TableRow><TableHead className="w-[80px] text-right">تصویر</TableHead><TableHead className="w-[80px] text-right">آیکون</TableHead><TableHead className="text-right">نام</TableHead><TableHead className="text-center w-[120px]">عملیات</TableHead></TableRow></TableHeader>
                         <TableBody>{filteredCategories.map(c => (<TableRow key={c.id}>
-                            <TableCell className="text-right"><img src={c.image || "/placeholder.svg"} alt={c.name} className="h-12 w-12 rounded-md object-cover" /></TableCell>
+                            <TableCell className="text-right">
+                                <Image
+                                    src={c.image || "/placeholder.svg"}
+                                    alt={c.name}
+                                    width={48}
+                                    height={48}
+                                    className="h-12 w-12 rounded-md object-cover"
+                                />
+                            </TableCell>
                             <TableCell className="text-right"><span className="text-2xl">{c.icon}</span></TableCell>
                             <TableCell className="font-medium text-right">{c.name}</TableCell>
                             <TableCell className="text-center"><div className="flex justify-center gap-2">
-                                <Button size="sm" variant="outline" onClick={() => handleOpenDialog(c)}><Pencil className="h-4 w-4" /></Button>
+                                <Button size="sm" variant="outline" onClick={() => handleOpenDialog()}><Pencil className="h-4 w-4" /></Button>
                                 <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({ isOpen: true, categoryId: c.id, categoryName: c.name })}><Trash2 className="h-4 w-4" /></Button>
                             </div></TableCell>
                         </TableRow>))}</TableBody>
@@ -171,7 +193,7 @@ export default function CategoryManagementPage() {
             <Dialog open={deleteDialog.isOpen} onOpenChange={() => setDeleteDialog({ isOpen: false, categoryId: null, categoryName: null })}>
                 <DialogContent dir="rtl">
                     <DialogHeader><DialogTitle>حذف دسته‌بندی</DialogTitle></DialogHeader>
-                    <p>آیا مطمئن هستید که می‌خواهید دسته‌بندی "{deleteDialog.categoryName}" را حذف کنید؟ این عملیات غیرقابل بازگشت است.</p>
+                    <p>آیا مطمئن هستید که می‌خواهید دسته‌بندی &quot;{deleteDialog.categoryName}&quot; را حذف کنید؟ این عملیات غیرقابل بازگشت است.</p>
                     <DialogFooter>
                         <Button variant="secondary" onClick={() => setDeleteDialog({ isOpen: false, categoryId: null, categoryName: null })}>انصراف</Button>
                         <Button variant="destructive" onClick={() => handleDelete(deleteDialog.categoryId)} disabled={actionLoading}>{actionLoading ? <Loader2 className="animate-spin" /> : "تایید حذف"}</Button>

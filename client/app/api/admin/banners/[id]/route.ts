@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+type RouteParams = { params: Promise<{ id: string }> };
+
+export async function PUT(req: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await req.json();
@@ -19,17 +22,23 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     });
     return NextResponse.json(banner);
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return NextResponse.json({ error: "Banner not found" }, { status: 404 });
+    }
     console.error("Error updating banner:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
     await prisma.banner.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return NextResponse.json({ error: "Banner not found" }, { status: 404 });
+    }
     console.error("Error deleting banner:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

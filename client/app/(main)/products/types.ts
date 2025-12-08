@@ -1,4 +1,4 @@
-import type { Product } from '@/types';
+import type { Product, ProductWithSupplier } from '@/types';
 
 export type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'bestselling';
 
@@ -10,7 +10,7 @@ export interface ProductFilters {
 }
 
 export interface ProductsState {
-  products: Product[];
+  products: ProductWithSupplier[];
   isLoading: boolean;
   isLoadingMore: boolean;
   error: string | null;

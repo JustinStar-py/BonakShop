@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     try {
         const orders = await prisma.order.findMany({
             where: { userId: auth.user.id },
-            include: { 
+            include: {
                 items: true,
                 returnRequest: {
                     select: { id: true }
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         if (!Array.isArray(items) || items.length === 0 || totalPrice === undefined || !deliveryDate || !settlementId) {
             return NextResponse.json({ error: "Missing required order data" }, { status: 400 });
         }
-        
+
         const safeDeliveryDate = new Date(deliveryDate);
 
         const newOrder = await prisma.$transaction(async (tx) => {
@@ -75,11 +75,20 @@ export async function POST(req: Request) {
             return order;
         });
 
+        // Send order confirmation email (background job)
+        const { sendOrderConfirmation } = await import('@/lib/jobs');
+        await sendOrderConfirmation({
+            orderId: newOrder.id,
+            userId,
+            totalPrice,
+            deliveryDate: safeDeliveryDate.toISOString(),
+        });
+
         return NextResponse.json(newOrder, { status: 201 });
     } catch (error: any) {
         console.error("Order creation failed:", error);
         if (error.code === 'P2025' || error.message.includes('decrement')) {
-             return NextResponse.json({ error: "موجودی یکی از محصولات کافی نیست." }, { status: 400 });
+            return NextResponse.json({ error: "موجودی یکی از محصولات کافی نیست." }, { status: 400 });
         }
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

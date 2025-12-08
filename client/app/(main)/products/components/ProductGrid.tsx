@@ -4,18 +4,18 @@ import { memo } from 'react';
 import ProductCard from '@/components/shared/ProductCard';
 import { Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Product } from '@/types';
+import type { CartItem, ProductWithSupplier } from '@/types';
 
 interface ProductGridProps {
-  products: Product[];
-  cart: any[];
+  products: ProductWithSupplier[];
+  cart: CartItem[];
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
   error: string | null;
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (product: ProductWithSupplier) => void;
   onUpdateQuantity: (id: string, quantity: number) => void;
-  onSelectProduct: (product: Product) => void;
+  onSelectProduct: (product: ProductWithSupplier) => void;
   onSupplierClick: (supplierId: string) => void;
   onRetry: () => void;
   onClearFilters: () => void;
@@ -71,12 +71,11 @@ export const ProductGrid = memo(function ProductGrid({
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <ProductCard
-              product={product as any}
+              product={product}
               cartItem={cart.find((item) => item.id === product.id)}
               onAddToCart={onAddToCart}
               onUpdateQuantity={onUpdateQuantity}
               onSelectProduct={onSelectProduct}
-              onImageClick={() => {}}
               onSupplierClick={onSupplierClick}
             />
           </div>

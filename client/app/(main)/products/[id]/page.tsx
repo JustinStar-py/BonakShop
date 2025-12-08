@@ -8,7 +8,6 @@ import type { Product, Supplier, Category } from "@prisma/client"; // اطمین
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
     ArrowRight, Plus, Minus, Building2, Layers, 
     Package, Box, User, ShoppingBag, Share2, ShieldCheck
@@ -39,7 +38,7 @@ export default function ProductDetailPage() {
                 try {
                     const response = await apiClient.get(`/products/${id}`);
                     setProduct(response.data);
-                } catch (err) {
+                } catch {
                     setError("محصول مورد نظر یافت نشد.");
                 } finally {
                     setIsLoading(false);

@@ -11,9 +11,9 @@ import { cn } from "@/lib/utils";
 
 interface Banner {
   id: string;
-  title?: string;
+  title?: string | null;
   image: string;
-  link?: string;
+  link?: string | null;
 }
 
 interface HeroBannerProps {

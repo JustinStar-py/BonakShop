@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import apiClient from "@/lib/apiClient";
+import { getErrorMessage } from "@/lib/errors";
 import type { Order, OrderItem } from "@prisma/client";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import {
@@ -42,32 +43,32 @@ export default function OrdersPage() {
     const [selectedOrderForReturn, setSelectedOrderForReturn] = useState<OrderWithItems | null>(null);
     const router = useRouter();
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await apiClient.get('/orders');
+            const { data } = await apiClient.get<OrderWithItems[]>('/orders');
             // مرتب‌سازی بر اساس جدیدترین
-            const sortedOrders = response.data.sort((a: Order, b: Order) => 
+            const sortedOrders = [...data].sort((a, b) => 
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
             setOrders(sortedOrders);
-        } catch (err) {
-            setError("خطا در دریافت تاریخچه سفارشات.");
+        } catch (error) {
+            setError(getErrorMessage(error, "??? ?? ?????? ??????? ???????."));
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchOrders();
-    }, []);
+    }, [fetchOrders]);
 
     const handleCancelOrder = async (orderId: string) => {
         try {
             await apiClient.patch(`/orders/${orderId}/status`, { status: "CANCELED" });
             fetchOrders(); 
-        } catch (e: any) {
-            alert(e.response?.data?.error || "خطا در لغو سفارش");
+        } catch (error) {
+            alert(getErrorMessage(error, "??? ?? ??? ?????"));
         }
     };
 

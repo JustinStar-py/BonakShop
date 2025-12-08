@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useAppContext } from "@/context/AppContext";
 import apiClient from "@/lib/apiClient";
+import { getErrorMessage } from "@/lib/errors";
 import type { Settlement } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -25,7 +26,7 @@ const getTodayDateString = (): string => {
 };
 
 export default function CartPage() {
-    const { cart, updateCartQuantity, removeFromCart, getTotalPrice, getOriginalTotalPrice, clearCart } = useAppContext();
+    const { cart, updateCartQuantity, getTotalPrice, getOriginalTotalPrice, clearCart } = useAppContext();
     const router = useRouter();
 
     const [isCheckout, setIsCheckout] = useState(false);
@@ -88,8 +89,8 @@ export default function CartPage() {
             clearCart();
             router.push('/orders');
 
-        } catch (e: any) {
-            setError(e.response?.data?.error || "خطا در ثبت سفارش");
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, "خطا در ثبت سفارش"));
         } finally {
             setIsLoading(false);
         }

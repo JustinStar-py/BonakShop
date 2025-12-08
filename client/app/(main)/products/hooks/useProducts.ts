@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import apiClient from '@/lib/apiClient';
-import type { Product } from '@/types';
+import { getErrorMessage } from '@/lib/errors';
+import type { ProductWithSupplier } from '@/types';
 import type { ProductFilters, ProductsState } from '../types';
 import { PRODUCTS_PER_PAGE } from '../constants';
 
@@ -46,7 +47,7 @@ export function useProducts(filters: ProductFilters) {
     try {
       const queryString = buildQueryString(pageNum);
       const response = await apiClient.get(`/products?${queryString}`);
-      const newProducts: Product[] = response.data.products;
+      const newProducts: ProductWithSupplier[] = response.data.products;
 
       setState(prev => ({
         ...prev,
@@ -60,10 +61,10 @@ export function useProducts(filters: ProductFilters) {
         error: null,
       }));
 
-    } catch (err) {
+    } catch (error) {
       setState(prev => ({
         ...prev,
-        error: 'خطا در بارگذاری محصولات',
+        error: getErrorMessage(error, 'خطا در بارگذاری محصولات'),
         isLoading: false,
         isLoadingMore: false,
       }));
