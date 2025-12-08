@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import apiClient from "@/lib/apiClient";
+import { useSimpleToast } from "@/components/ui/toast-notification";
 import {
   Table,
   TableBody,
@@ -26,17 +27,19 @@ import { formatToToman } from "@/utils/currencyFormatter";
 import toPersianDigits from "@/utils/numberFormatter";
 
 export default function UsersPage() {
+  const toast = useSimpleToast();
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Edit State
   const [editingUser, setEditingUser] = useState<any>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  
+
   // Charge State
   const [chargingUser, setChargingUser] = useState<any>(null);
   const [chargeAmount, setChargeAmount] = useState("");
+  const [walletOperation, setWalletOperation] = useState<'increase' | 'decrease'>('increase');
   const [isChargeOpen, setIsChargeOpen] = useState(false);
 
   useEffect(() => {
@@ -59,10 +62,11 @@ export default function UsersPage() {
     if (!editingUser) return;
     try {
       await apiClient.put(`/admin/users/${editingUser.id}`, editingUser);
+      toast.success("کاربر با موفقیت ویرایش شد");
       setIsEditOpen(false);
       fetchUsers();
     } catch (error) {
-      alert("خطا در ویرایش کاربر");
+      toast.error("خطا در ویرایش کاربر");
     }
   };
 
@@ -70,17 +74,20 @@ export default function UsersPage() {
     e.preventDefault();
     if (!chargingUser || !chargeAmount) return;
     try {
-      await apiClient.post(`/admin/users/${chargingUser.id}/wallet`, { amount: Number(chargeAmount) });
+      const amount = walletOperation === 'decrease' ? -Math.abs(Number(chargeAmount)) : Number(chargeAmount);
+      await apiClient.post(`/admin/users/${chargingUser.id}/wallet`, { amount });
+      toast.success(walletOperation === 'decrease' ? `${formatToToman(Math.abs(Number(chargeAmount)))} از کیف پول کسر شد` : `کیف پول با موفقیت شارژ شد!`);
       setIsChargeOpen(false);
       setChargeAmount("");
+      setWalletOperation('increase');
       fetchUsers();
     } catch (error) {
-      alert("خطا در شارژ کیف پول");
+      toast.error("خطا در تغییر موجودی کیف پول");
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredUsers = users.filter(u =>
+    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.phone.includes(searchTerm)
   );
 
@@ -119,34 +126,32 @@ export default function UsersPage() {
                 <TableCell className="font-medium">{user.name || "---"}</TableCell>
                 <TableCell>{toPersianDigits(user.phone)}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    user.userType === 'SHOP_OWNER' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
-                  }`}>
+                  <span className={`px-2 py-1 rounded-full text-xs ${user.userType === 'SHOP_OWNER' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
+                    }`}>
                     {user.userType === 'SHOP_OWNER' ? 'فروشگاه‌دار' : 'کاربر عادی'}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    user.role === 'ADMIN' ? 'bg-red-100 text-red-700' :
+                  <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'ADMIN' ? 'bg-red-100 text-red-700' :
                     user.role === 'WORKER' ? 'bg-blue-100 text-blue-700' :
-                    'bg-green-100 text-green-700'
-                  }`}>
+                      'bg-green-100 text-green-700'
+                    }`}>
                     {user.role === 'ADMIN' ? 'مدیر' : user.role === 'WORKER' ? 'کارمند' : 'مشتری'}
                   </span>
                 </TableCell>
                 <TableCell>{formatToToman(Number(user.balance))}</TableCell>
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => { setEditingUser(user); setIsEditOpen(true); }}
                       className="text-blue-600 hover:bg-blue-50"
                     >
                       <Edit size={18} />
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       onClick={() => { setChargingUser(user); setIsChargeOpen(true); }}
                       className="text-green-600 hover:bg-green-50"
@@ -171,30 +176,30 @@ export default function UsersPage() {
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>نام</Label>
-                <Input 
-                  value={editingUser.name || ""} 
-                  onChange={(e) => setEditingUser({...editingUser, name: e.target.value})} 
+                <Input
+                  value={editingUser.name || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label>شماره تماس</Label>
-                <Input 
-                  value={editingUser.phone} 
-                  onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})} 
+                <Input
+                  value={editingUser.phone}
+                  onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label>نام فروشگاه</Label>
-                <Input 
-                  value={editingUser.shopName || ""} 
-                  onChange={(e) => setEditingUser({...editingUser, shopName: e.target.value})} 
+                <Input
+                  value={editingUser.shopName || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, shopName: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label>نقش</Label>
-                <Select 
-                  value={editingUser.role} 
-                  onValueChange={(val) => setEditingUser({...editingUser, role: val})}
+                <Select
+                  value={editingUser.role}
+                  onValueChange={(val) => setEditingUser({ ...editingUser, role: val })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -208,9 +213,9 @@ export default function UsersPage() {
               </div>
               <div className="space-y-2">
                 <Label>نوع کاربر</Label>
-                <Select 
-                  value={editingUser.userType} 
-                  onValueChange={(val) => setEditingUser({...editingUser, userType: val})}
+                <Select
+                  value={editingUser.userType}
+                  onValueChange={(val) => setEditingUser({ ...editingUser, userType: val })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -235,15 +240,15 @@ export default function UsersPage() {
           </DialogHeader>
           <form onSubmit={handleChargeSubmit} className="space-y-4">
             <div className="p-4 bg-gray-50 rounded-lg text-center">
-               <p className="text-sm text-gray-500 mb-1">موجودی فعلی</p>
-               <p className="text-xl font-bold text-gray-800">{chargingUser ? formatToToman(Number(chargingUser.balance)) : 0}</p>
+              <p className="text-sm text-gray-500 mb-1">موجودی فعلی</p>
+              <p className="text-xl font-bold text-gray-800">{chargingUser ? formatToToman(Number(chargingUser.balance)) : 0}</p>
             </div>
             <div className="space-y-2">
               <Label>مبلغ افزایش (تومان)</Label>
-              <Input 
-                type="number" 
-                value={chargeAmount} 
-                onChange={(e) => setChargeAmount(e.target.value)} 
+              <Input
+                type="number"
+                value={chargeAmount}
+                onChange={(e) => setChargeAmount(e.target.value)}
                 placeholder="مثلا: 100000"
               />
             </div>
