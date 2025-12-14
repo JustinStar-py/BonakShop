@@ -90,6 +90,17 @@ model Order {
   notes         String?        // Optional notes from the customer.
   createdAt     DateTime       @default(now()) // Timestamp of creation.
   
+  // Payment tracking fields
+  paymentStatus    PaymentStatus @default(PENDING) // Payment status (PENDING, PAID, FAILED)
+  paymentAuthority String?       // Zarinpal authority code
+  paymentRefId     String?       // Zarinpal reference ID after successful payment
+  paymentMethod    String?       // Payment method used (e.g., "zarinpal")
+  paidAt           DateTime?     // Payment completion timestamp
+  
+  // Credit payment fields
+  creditUsed       Decimal        @default(0) // Amount of user credit reserved/used for this order
+  amountDue        Float          @default(0) // Remaining amount to be paid via gateway (totalPrice - creditUsed)
+  
   // Relations
   userId        String         // Foreign key for User.
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -102,6 +113,7 @@ model Order {
   @@index([userId, createdAt]) // For user order history
   @@index([status, deliveryDate]) // For delivery planning
   @@index([deliveryDate]) // For date-based queries
+  @@index([paymentStatus]) // For payment tracking
 }
 
 // Model for items within an order.
@@ -250,5 +262,12 @@ enum ReturnStatus {
 enum ChatStatus {
   OPEN
   CLOSED
+}
+
+// Enum for payment statuses
+enum PaymentStatus {
+  PENDING // Payment not yet completed
+  PAID    // Payment successfully verified
+  FAILED  // Payment failed or was cancelled
 }
 

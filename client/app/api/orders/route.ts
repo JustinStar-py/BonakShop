@@ -1,4 +1,4 @@
-// FILE: app/api/orders/route.ts (CORRECTED)
+// FILE: app/api/orders/route.ts (WITH CREDIT SUPPORT)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     }
 }
 
-// --- (POST function is updated) ---
+// --- (POST function with credit support) ---
 export async function POST(req: Request) {
     const auth = await getAuthUserFromRequest(req);
     if (!auth || !auth.user) {
@@ -37,22 +37,60 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { items, totalPrice, deliveryDate, settlementId, notes } = body;
+        const { items, totalPrice, deliveryDate, notes, useCredit } = body;
 
-        if (!Array.isArray(items) || items.length === 0 || totalPrice === undefined || !deliveryDate || !settlementId) {
+        if (!Array.isArray(items) || items.length === 0 || totalPrice === undefined || !deliveryDate) {
             return NextResponse.json({ error: "Missing required order data" }, { status: 400 });
         }
 
         const safeDeliveryDate = new Date(deliveryDate);
 
+        // Get or create default CASH settlement
+        const cashSettlement = await prisma.settlement.upsert({
+            where: { name: 'CASH' },
+            create: { name: 'CASH', description: 'نقدی - پرداخت آنلاین' },
+            update: {},
+        });
+
         const newOrder = await prisma.$transaction(async (tx) => {
+            // Fetch user's current balance if using credit
+            let creditToUse = 0;
+            let amountDue = totalPrice;
+
+            if (useCredit) {
+                const user = await tx.user.findUnique({
+                    where: { id: userId },
+                    select: { balance: true },
+                });
+
+                if (user && Number(user.balance) > 0) {
+                    // Calculate how much credit can be used (min of balance and total)
+                    const availableCredit = Number(user.balance);
+                    creditToUse = Math.min(availableCredit, totalPrice);
+                    amountDue = totalPrice - creditToUse;
+
+                    // If credit covers the full amount, deduct immediately
+                    if (amountDue === 0) {
+                        await tx.user.update({
+                            where: { id: userId },
+                            data: { balance: { decrement: creditToUse } },
+                        });
+                    }
+                }
+            }
+
+            // Create the order
             const order = await tx.order.create({
                 data: {
                     userId,
                     totalPrice,
                     deliveryDate: safeDeliveryDate,
-                    settlementId,
+                    settlementId: cashSettlement.id,
                     notes,
+                    creditUsed: creditToUse,
+                    amountDue,
+                    paymentStatus: amountDue === 0 ? 'PAID' : 'PENDING',
+                    paidAt: amountDue === 0 ? new Date() : null,
                     items: {
                         create: items.map((item: any) => ({
                             productName: item.productName,
@@ -65,6 +103,7 @@ export async function POST(req: Request) {
                 include: { items: true },
             });
 
+            // Decrement product stock
             for (const item of items) {
                 await tx.product.update({
                     where: { id: item.productId },
@@ -75,16 +114,36 @@ export async function POST(req: Request) {
             return order;
         });
 
-        // Send order confirmation email (background job)
-        const { sendOrderConfirmation } = await import('@/lib/jobs');
-        await sendOrderConfirmation({
-            orderId: newOrder.id,
-            userId,
-            totalPrice,
-            deliveryDate: safeDeliveryDate.toISOString(),
-        });
+        // If fully paid with credit, send confirmation email
+        if (newOrder.paymentStatus === 'PAID') {
+            try {
+                const { sendOrderConfirmation } = await import('@/lib/jobs');
+                await sendOrderConfirmation({
+                    orderId: newOrder.id,
+                    userId,
+                    totalPrice,
+                    deliveryDate: safeDeliveryDate.toISOString(),
+                });
+            } catch (emailError) {
+                console.error('Failed to send confirmation email:', emailError);
+            }
 
-        return NextResponse.json(newOrder, { status: 201 });
+            return NextResponse.json({
+                success: true,
+                orderId: newOrder.id,
+                message: 'سفارش با موفقیت ثبت و پرداخت شد',
+                paidWithCredit: true,
+            }, { status: 201 });
+        }
+
+        // Otherwise, return order ID for payment redirect
+        return NextResponse.json({
+            orderId: newOrder.id,
+            amountDue: newOrder.amountDue,
+            creditUsed: Number(newOrder.creditUsed),
+            message: 'Order created, proceed to payment',
+        }, { status: 201 });
+
     } catch (error: any) {
         console.error("Order creation failed:", error);
         if (error.code === 'P2025' || error.message.includes('decrement')) {

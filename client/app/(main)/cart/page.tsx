@@ -1,18 +1,16 @@
-// FILE: app/(main)/cart/page.tsx (UNIFIED FOOTER STYLE)
+// FILE: app/(main)/cart/page.tsx (WITH CREDIT SUPPORT - NO SETTLEMENTS)
 "use client";
 
 import { useState, useEffect } from "react";
 import { useAppContext } from "@/context/AppContext";
 import apiClient from "@/lib/apiClient";
 import { getErrorMessage } from "@/lib/errors";
-import type { Settlement } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { useSimpleToast } from "@/components/ui/toast-notification";
 import Image from "next/image";
-import { Plus, Minus, Trash2, CalendarIcon, Loader2, StickyNote, Banknote, ArrowRight, ShoppingCart } from "lucide-react";
+import { Plus, Minus, Trash2, CalendarIcon, Loader2, StickyNote, ArrowRight, ShoppingCart, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ShamsiCalendar } from "@/components/shared/ShamsiCalendar";
 import toPersianDigits from "@/utils/numberFormatter";
@@ -32,36 +30,36 @@ export default function CartPage() {
     const toast = useSimpleToast();
 
     const [isCheckout, setIsCheckout] = useState(false);
-    const [settlements, setSettlements] = useState<Settlement[]>([]);
-    const [selectedSettlement, setSelectedSettlement] = useState<string>("");
     const [deliveryDate, setDeliveryDate] = useState<string>(getTodayDateString());
     const [notes, setNotes] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Credit usage state
+    const [useCredit, setUseCredit] = useState(false);
+    const [userBalance, setUserBalance] = useState<number>(0);
+
+    // Fetch user balance when entering checkout
     useEffect(() => {
-        const fetchSettlements = async () => {
+        const fetchUserBalance = async () => {
             try {
-                const response = await apiClient.get('/settlements');
-                setSettlements(response.data);
-                if (response.data.length > 0) {
-                    setSelectedSettlement(response.data[0].id);
-                }
+                const response = await apiClient.get('/user/profile');
+                setUserBalance(Number(response.data.balance) || 0);
             } catch (err) {
-                console.error("Failed to fetch settlements", err);
-                setError("خطا در دریافت نحوه تسویه حساب.");
+                console.error("Failed to fetch user balance", err);
             }
         };
         if (isCheckout) {
-            fetchSettlements();
+            fetchUserBalance();
         }
     }, [isCheckout]);
 
+    // Calculate credit amounts
+    const totalPrice = getTotalPrice();
+    const creditToUse = useCredit ? Math.min(userBalance, totalPrice) : 0;
+    const amountDue = totalPrice - creditToUse;
+
     const handleOrderSubmit = async () => {
-        if (!selectedSettlement) {
-            toast.error("لطفا نحوه تسویه حساب را انتخاب کنید.");
-            return;
-        }
         if (cart.length === 0) {
             toast.warning("سبد خرید شما خالی است.");
             return;
@@ -81,16 +79,26 @@ export default function CartPage() {
                         price: discountedPrice,
                     };
                 }),
-                totalPrice: getTotalPrice(),
+                totalPrice,
                 deliveryDate,
-                settlementId: selectedSettlement,
                 notes,
+                useCredit, // Send credit usage preference
             };
 
-            await apiClient.post('/orders', orderData);
+            const response = await apiClient.post('/orders', orderData);
+            const { orderId, paidWithCredit } = response.data;
+
             clearCart();
-            toast.success("سفارش شما با موفقیت ثبت شد!");
-            router.push('/orders');
+
+            // If fully paid with credit, go to orders page
+            if (paidWithCredit) {
+                toast.success("سفارش با موفقیت ثبت و پرداخت شد!");
+                router.push('/orders');
+            } else {
+                // Otherwise redirect to payment
+                toast.success("سفارش ایجاد شد، در حال انتقال به درگاه پرداخت...");
+                router.push(`/payment/${orderId}`);
+            }
 
         } catch (error: unknown) {
             setError(getErrorMessage(error, "خطا در ثبت سفارش"));
@@ -137,17 +145,51 @@ export default function CartPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-none shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2 text-green-700"><Banknote size={18} /> نحوه پرداخت</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Select value={selectedSettlement} onValueChange={setSelectedSettlement}>
-                                <SelectTrigger className="h-12 rounded-xl bg-gray-50 border-gray-200"><SelectValue placeholder="انتخاب کنید..." /></SelectTrigger>
-                                <SelectContent>{settlements.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                            </Select>
-                        </CardContent>
-                    </Card>
+                    {/* CREDIT USAGE CARD */}
+                    {userBalance > 0 && (
+                        <Card className="border-none shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="text-base flex items-center gap-2 text-green-700"><Wallet size={18} /> استفاده از اعتبار</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                    <span className="text-sm text-gray-600">موجودی شما:</span>
+                                    <span className="font-bold text-gray-800">{formatToToman(userBalance)}</span>
+                                </div>
+
+                                <label className="flex items-center justify-between cursor-pointer bg-green-50 p-3 rounded-lg border-2 border-transparent hover:border-green-200 transition-all">
+                                    <div className="flex items-center gap-2">
+                                        <Wallet className="text-green-600" size={20} />
+                                        <span className="font-medium text-gray-700">استفاده از اعتبار کیف پول</span>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={useCredit}
+                                        onChange={(e) => setUseCredit(e.target.checked)}
+                                        className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                    />
+                                </label>
+
+                                {useCredit && (
+                                    <div className="bg-blue-50 p-3 rounded-lg space-y-2 animate-in slide-in-from-top duration-200">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">اعتبار استفاده شده:</span>
+                                            <span className="font-bold text-green-600">{formatToToman(creditToUse)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">مبلغ قابل پرداخت:</span>
+                                            <span className="font-bold text-gray-800">{formatToToman(amountDue)}</span>
+                                        </div>
+                                        {amountDue === 0 && (
+                                            <div className="text-xs text-green-600 text-center mt-2 font-medium">
+                                                ✨ سفارش شما بدون نیاز به پرداخت آنلاین ثبت می‌شود
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <Card className="border-none shadow-sm">
                         <CardHeader>
@@ -172,7 +214,7 @@ export default function CartPage() {
                         <div className="flex-1 flex flex-col justify-center">
                             <span className="text-[10px] text-gray-400">مبلغ قابل پرداخت</span>
                             <div className="flex items-center gap-1">
-                                <span className="font-bold text-lg text-gray-800">{formatToToman(getTotalPrice())}</span>
+                                <span className="font-bold text-lg text-gray-800">{formatToToman(useCredit ? amountDue : totalPrice)}</span>
                             </div>
                         </div>
                         <Button
@@ -254,11 +296,10 @@ export default function CartPage() {
                 })}
             </div>
 
-            {/* FOOTER PHASE 1: Now identical style to Phase 2 */}
+            {/* FOOTER PHASE 1 */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-50 shadow-[0_-4px_30px_rgba(0,0,0,0.1)]">
                 <div className="max-w-lg mx-auto flex gap-3 items-center">
                     <div className="flex-1 flex flex-col justify-center">
-                        {/* Profit info added nicely above price */}
                         {getOriginalTotalPrice() - getTotalPrice() > 0 && (
                             <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5">
                                 <span>سود شما:</span>

@@ -24,7 +24,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
-import { RefreshCw, XCircle, StickyNote, CalendarCheck, ShoppingBag } from "lucide-react";
+import { RefreshCw, XCircle, StickyNote, CalendarCheck, ShoppingBag, CreditCard } from "lucide-react";
 import { ReturnRequestDialog } from "@/components/shared/ReturnRequestDialog";
 import toPersianDigits from "@/utils/numberFormatter";
 import OrderCard from "@/components/shared/OrderCard"; // ایمپورت کارت جدید
@@ -48,7 +48,7 @@ export default function OrdersPage() {
         try {
             const { data } = await apiClient.get<OrderWithItems[]>('/orders');
             // مرتب‌سازی بر اساس جدیدترین
-            const sortedOrders = [...data].sort((a, b) => 
+            const sortedOrders = [...data].sort((a, b) =>
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
             setOrders(sortedOrders);
@@ -66,14 +66,14 @@ export default function OrdersPage() {
     const handleCancelOrder = async (orderId: string) => {
         try {
             await apiClient.patch(`/orders/${orderId}/status`, { status: "CANCELED" });
-            fetchOrders(); 
+            fetchOrders();
         } catch (error) {
             alert(getErrorMessage(error, "??? ?? ??? ?????"));
         }
     };
 
     if (isLoading) return <LoadingSpinner message="در حال بارگذاری سفارشات..." />;
-    
+
     if (error) return <div className="text-center text-red-500 p-8">{error}</div>;
 
     if (orders.length === 0) {
@@ -94,22 +94,22 @@ export default function OrdersPage() {
     return (
         <div className="pb-24 min-h-screen bg-gray-50 p-4">
             <h1 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <CalendarCheck className="w-6 h-6 text-green-600"/>
+                <CalendarCheck className="w-6 h-6 text-green-600" />
                 تاریخچه سفارشات
             </h1>
 
             <Accordion type="single" collapsible className="w-full space-y-3">
                 {orders.map((order) => (
-                    <AccordionItem 
-                        key={order.id} 
-                        value={order.id} 
+                    <AccordionItem
+                        key={order.id}
+                        value={order.id}
                         className="border-none" // حذف بوردر پیش‌فرض آکاردئون چون کارت خودش بوردر دارد
                     >
                         {/* اینجا از OrderCard به عنوان تریگر استفاده می‌کنیم */}
                         <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div]:ring-2 [&[data-state=open]>div]:ring-green-500">
                             <OrderCard order={order} />
                         </AccordionTrigger>
-                        
+
                         <AccordionContent className="px-1 py-2">
                             <div className="bg-white rounded-xl border border-gray-200 p-4 mt-2 shadow-inner">
                                 <div className="flex justify-between items-center text-sm mb-3 pb-3 border-b border-dashed">
@@ -128,7 +128,7 @@ export default function OrdersPage() {
                                         <p className="text-xs text-gray-700 leading-relaxed">{order.notes}</p>
                                     </div>
                                 )}
-                                
+
                                 <h4 className="font-bold text-sm text-gray-700 mb-3">اقلام سفارش:</h4>
                                 <div className="space-y-2 mb-4">
                                     {order.items.map((item: OrderItem) => (
@@ -143,13 +143,13 @@ export default function OrdersPage() {
                                         </div>
                                     ))}
                                 </div>
-                                
+
                                 <div className="flex flex-wrap gap-3 pt-2">
                                     {order.status === 'PENDING' && (
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button variant="destructive" className="flex-1 h-10 rounded-xl text-xs">
-                                                    <XCircle size={16} className="ml-2"/> لغو سفارش
+                                                    <XCircle size={16} className="ml-2" /> لغو سفارش
                                                 </Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
@@ -168,12 +168,12 @@ export default function OrdersPage() {
                                     )}
 
                                     {order.status === 'DELIVERED' && !order.returnRequest && (
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             className="flex-1 h-10 rounded-xl text-xs border-orange-300 text-orange-600 hover:bg-orange-50"
                                             onClick={() => setSelectedOrderForReturn(order)}
                                         >
-                                            <RefreshCw size={16} className="ml-2"/> درخواست مرجوعی
+                                            <RefreshCw size={16} className="ml-2" /> درخواست مرجوعی
                                         </Button>
                                     )}
                                 </div>
@@ -183,9 +183,9 @@ export default function OrdersPage() {
                 ))}
             </Accordion>
 
-            <ReturnRequestDialog 
-                order={selectedOrderForReturn} 
-                onOpenChange={() => setSelectedOrderForReturn(null)} 
+            <ReturnRequestDialog
+                order={selectedOrderForReturn}
+                onOpenChange={() => setSelectedOrderForReturn(null)}
                 onSuccess={() => {
                     fetchOrders();
                     setSelectedOrderForReturn(null);
