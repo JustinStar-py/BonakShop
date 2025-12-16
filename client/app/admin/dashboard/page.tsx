@@ -3,15 +3,16 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RestartLinear as Loader2, DollarLinear as DollarSign, BagLinear as ShoppingBag, UsersGroupRoundedLinear as Users, GraphUpLinear as TrendingUp, AltArrowRightLinear as ArrowUpRight, DangerCircleLinear as AlertCircle } from "@solar-icons/react-perf";
+import { Loader2, DollarSign, ShoppingBag, Users, TrendingUp, ArrowUpRight, AlertCircle } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area } from "recharts";
 import apiClient from "@/lib/apiClient";
 import { formatToToman } from "@/utils/currencyFormatter";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
+import TomanPrice from "@/components/shared/TomanPrice";
 
 // Helper function to format currency
-function formatPrice(price: number) {
+function formatPriceLabel(price: number) {
     const formatted = formatToToman(price);
     return formatted || "۰ تومان";
 }
@@ -33,7 +34,7 @@ function KpiCard({ title, value, icon: Icon, className, trend }: any) {
                 {trend && (
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                         <span className="text-emerald-600 flex items-center">
-                            <ArrowUpRight size={12} />
+                            <ArrowUpRight size={12} /> 
                             {trend}
                         </span>
                         <span className="opacity-70">نسبت به ماه گذشته</span>
@@ -99,19 +100,19 @@ export default function DashboardHomePage() {
         <div className="space-y-6">
             {/* KPI Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KpiCard
-                    title="مجموع فروش کل"
-                    value={formatPrice(stats.kpiData?.totalRevenue || 0)}
+                <KpiCard 
+                    title="مجموع فروش کل" 
+                    value={<TomanPrice value={stats.kpiData?.totalRevenue || 0} />} 
                     icon={DollarSign}
                 />
-                <KpiCard
-                    title="تعداد کل سفارشات"
-                    value={(stats.kpiData?.totalOrders || 0).toLocaleString('fa-IR')}
+                <KpiCard 
+                    title="تعداد کل سفارشات" 
+                    value={(stats.kpiData?.totalOrders || 0).toLocaleString('fa-IR')} 
                     icon={ShoppingBag}
                 />
-                <KpiCard
-                    title="تعداد مشتریان"
-                    value={(stats.kpiData?.totalCustomers || 0).toLocaleString('fa-IR')}
+                <KpiCard 
+                    title="تعداد مشتریان" 
+                    value={(stats.kpiData?.totalCustomers || 0).toLocaleString('fa-IR')} 
                     icon={Users}
                 />
             </div>
@@ -130,30 +131,30 @@ export default function DashboardHomePage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={stats.dailySalesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                <XAxis
-                                    dataKey="name"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
+                                <XAxis 
+                                    dataKey="name" 
+                                    fontSize={12} 
+                                    tickLine={false} 
+                                    axisLine={false} 
                                     tickMargin={10}
                                     stroke="#64748b"
                                 />
-                                <YAxis
-                                    fontSize={11}
-                                    tickFormatter={(v) => `${(v / 1000000).toLocaleString('fa-IR')}م`}
+                                <YAxis 
+                                    fontSize={11} 
+                                    tickFormatter={(v) => `${(v / 1000000).toLocaleString('fa-IR')}م`} 
                                     tickLine={false}
                                     axisLine={false}
                                     stroke="#64748b"
                                 />
-                                <Tooltip
+                                <Tooltip 
                                     cursor={{ fill: '#f1f5f9' }}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                    formatter={(v: number) => [formatPrice(v), "فروش"]}
+                                    formatter={(v: number) => [formatPriceLabel(v), "فروش"]} 
                                 />
-                                <Bar
-                                    dataKey="فروش"
-                                    fill="hsl(var(--primary))"
-                                    radius={[6, 6, 0, 0]}
+                                <Bar 
+                                    dataKey="فروش" 
+                                    fill="hsl(var(--primary))" 
+                                    radius={[6, 6, 0, 0]} 
                                     barSize={40}
                                 />
                             </BarChart>
@@ -179,8 +180,8 @@ export default function DashboardHomePage() {
                                             <p className="text-xs text-slate-500">{stat.count.toLocaleString('fa-IR')} سفارش ثبت شده</p>
                                         </div>
                                     </div>
-                                    <div className="font-mono text-sm font-bold text-primary bg-primary/5 px-2 py-1 rounded-md">
-                                        {formatPrice(stat.total)}
+                                    <div className="text-sm font-bold bg-primary/5 px-2 py-1 rounded-md">
+                                        <TomanPrice value={stat.total} />
                                     </div>
                                 </li>
                             ))}

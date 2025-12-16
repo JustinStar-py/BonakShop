@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ShamsiCalendar } from "@/components/shared/ShamsiCalendar";
 import toPersianDigits from "@/utils/numberFormatter";
-import { formatToToman } from "@/utils/currencyFormatter";
+import TomanPrice from "@/components/shared/TomanPrice";
 
 const getTodayDateString = (): string => {
     const today = new Date();
@@ -154,7 +154,7 @@ export default function CartPage() {
                             <CardContent className="space-y-3">
                                 <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                                     <span className="text-sm text-gray-600">موجودی شما:</span>
-                                    <span className="font-bold text-gray-800">{formatToToman(userBalance)}</span>
+                                    <TomanPrice value={userBalance} className="font-bold" />
                                 </div>
 
                                 <label className="flex items-center justify-between cursor-pointer bg-green-50 p-3 rounded-lg border-2 border-transparent hover:border-green-200 transition-all">
@@ -174,11 +174,11 @@ export default function CartPage() {
                                     <div className="bg-blue-50 p-3 rounded-lg space-y-2 animate-in slide-in-from-top duration-200">
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-600">اعتبار استفاده شده:</span>
-                                            <span className="font-bold text-green-600">{formatToToman(creditToUse)}</span>
+                                            <TomanPrice value={creditToUse} className="font-bold" />
                                         </div>
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-600">مبلغ قابل پرداخت:</span>
-                                            <span className="font-bold text-gray-800">{formatToToman(amountDue)}</span>
+                                            <TomanPrice value={amountDue} className="font-bold" />
                                         </div>
                                         {amountDue === 0 && (
                                             <div className="text-xs text-green-600 text-center mt-2 font-medium">
@@ -214,7 +214,7 @@ export default function CartPage() {
                         <div className="flex-1 flex flex-col justify-center">
                             <span className="text-[10px] text-gray-400">مبلغ قابل پرداخت</span>
                             <div className="flex items-center gap-1">
-                                <span className="font-bold text-lg text-gray-800">{formatToToman(useCredit ? amountDue : totalPrice)}</span>
+                                <TomanPrice value={useCredit ? amountDue : totalPrice} className="font-bold text-lg" />
                             </div>
                         </div>
                         <Button
@@ -272,7 +272,10 @@ export default function CartPage() {
                                                 %{toPersianDigits(item.discountPercentage)}
                                             </span>
                                         )}
-                                        <span>فی: {formatToToman(finalPrice)}</span>
+                                        <span className="flex items-baseline gap-1">
+                                            <span>فی:</span>
+                                            <TomanPrice value={finalPrice} />
+                                        </span>
                                     </div>
                                 </div>
 
@@ -286,9 +289,7 @@ export default function CartPage() {
                                             {item.quantity === 1 ? <Trash2 size={14} className="text-red-500" /> : <Minus size={14} className="text-gray-600" />}
                                         </Button>
                                     </div>
-                                    <span className="font-bold text-green-700 text-sm">
-                                        {formatToToman(lineItemTotal)}
-                                    </span>
+                                    <TomanPrice value={lineItemTotal} className="font-bold text-sm" />
                                 </div>
                             </div>
                         </div>
@@ -303,13 +304,13 @@ export default function CartPage() {
                         {getOriginalTotalPrice() - getTotalPrice() > 0 && (
                             <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5">
                                 <span>سود شما:</span>
-                                <span className="text-red-500 font-bold">{formatToToman(getOriginalTotalPrice() - getTotalPrice())}</span>
+                                <TomanPrice value={getOriginalTotalPrice() - getTotalPrice()} className="font-bold" />
                             </div>
                         )}
                         {!((getOriginalTotalPrice() - getTotalPrice() > 0)) && <span className="text-[10px] text-gray-400">مبلغ قابل پرداخت</span>}
 
                         <div className="flex items-center gap-1">
-                            <span className="font-bold text-lg text-gray-800">{formatToToman(getTotalPrice())}</span>
+                            <TomanPrice value={getTotalPrice()} className="font-bold text-lg" />
                         </div>
                     </div>
 

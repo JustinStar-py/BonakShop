@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pen2Linear as Edit, WalletLinear as Wallet, MagniferLinear as Search, RestartLinear as Loader2 } from "@solar-icons/react-perf";
 import { formatToToman } from "@/utils/currencyFormatter";
 import toPersianDigits from "@/utils/numberFormatter";
+import TomanPrice from "@/components/shared/TomanPrice";
 
 export default function UsersPage() {
   const toast = useSimpleToast();
@@ -146,7 +147,9 @@ export default function UsersPage() {
                     {user.role === 'ADMIN' ? 'مدیر' : user.role === 'WORKER' ? 'کارمند' : 'مشتری'}
                   </span>
                 </TableCell>
-                <TableCell>{formatToToman(Number(user.balance))}</TableCell>
+                <TableCell>
+                  <TomanPrice value={Number(user.balance)} />
+                </TableCell>
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-2">
                     <Button
@@ -248,7 +251,10 @@ export default function UsersPage() {
           <form onSubmit={handleChargeSubmit} className="space-y-4">
             <div className="p-4 bg-gray-50 rounded-lg text-center">
               <p className="text-sm text-gray-500 mb-1">موجودی فعلی</p>
-              <p className="text-xl font-bold text-gray-800">{chargingUser ? formatToToman(Number(chargingUser.balance)) : 0}</p>
+              <TomanPrice
+                value={chargingUser ? Number(chargingUser.balance) : 0}
+                className="text-xl font-bold"
+              />
             </div>
 
             {/* Operation Type Toggle */}

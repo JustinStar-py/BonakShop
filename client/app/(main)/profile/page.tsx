@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import toPersianDigits from "@/utils/numberFormatter";
-import { formatToTomanParts } from "@/utils/currencyFormatter";
+import TomanPrice from "@/components/shared/TomanPrice";
 import apiClient from "@/lib/apiClient";
 import { getErrorMessage } from "@/lib/errors";
 import dynamic from 'next/dynamic';
@@ -77,7 +77,6 @@ export default function ProfilePage() {
 
     if (isLoadingUser || !user) return <LoadingSpinner message="در حال بارگذاری..." />;
 
-    const balanceParts = formatToTomanParts(Number(user.balance || 0));
     const initialMapPosition = (user.latitude && user.longitude) ? [user.latitude, user.longitude] as [number, number] : undefined;
 
     if (currentView === 'EDIT_INFO') {
@@ -164,10 +163,7 @@ export default function ProfilePage() {
                         </Button>
                     </div>
                     <div className="text-center py-4">
-                        <span className="text-3xl font-black text-gray-800 tracking-tight">
-                            {balanceParts ? balanceParts.amount : "0"}
-                        </span>
-                        <span className="text-sm text-gray-400 mr-2 font-medium">تومان</span>
+                        <TomanPrice value={Number(user.balance || 0)} className="text-3xl font-black tracking-tight" />
                     </div>
                 </div>
             </div>

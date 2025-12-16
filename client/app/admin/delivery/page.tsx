@@ -10,10 +10,10 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RestartLinear as Loader2, BoxLinear as Package, RestartLinear as RefreshCw, DocumentTextLinear as FileText, MapPointLinear as MapPin, PhoneLinear as Phone, ShopLinear as Building, UserLinear as UserIconLucide } from "@solar-icons/react-perf";
+import { Loader2, Package, RefreshCw, FileText, MapPin, Phone, Building, User as UserIconLucide } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import dynamic from 'next/dynamic';
-import { formatToToman } from "@/utils/currencyFormatter";
+import TomanPrice from "@/components/shared/TomanPrice";
 
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
     ssr: false,
@@ -25,12 +25,11 @@ type OrderWithRelations = Order & { user: { name: string | null; shopName: strin
 type ReturnForDelivery = ReturnRequest & { order: { user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; } }, items: (ReturnRequestItem & { orderItem: { productName: string } })[] };
 
 // Helper Functions
-const formatPrice = (price: number) => formatToToman(price) || "۰ تومان";
-const getOrderStatusInfo = (status: OrderStatus) => ({ PENDING: { text: "در حال بررسی", variant: "secondary" as const }, SHIPPED: { text: "ارسال شده", variant: "default" as const }, DELIVERED: { text: "تحویل داده شد", variant: "success" as const }, CANCELED: { text: "لغو شده", variant: "destructive" as const } }[status]);
+const getOrderStatusInfo = (status: OrderStatus) => ({ PENDING: { text: "در حال بررسی", variant: "secondary" as "secondary" }, SHIPPED: { text: "ارسال شده", variant: "default" as "default" }, DELIVERED: { text: "تحویل داده شد", variant: "default" as "default" }, CANCELED: { text: "لغو شده", variant: "destructive" as "destructive" } }[status]);
 const getReturnStatusInfo = (status: ReturnStatus) => ({ REQUESTED: { text: "درخواست شده", variant: "secondary" as "secondary" }, APPROVED: { text: "تایید شده", variant: "default" as "default" }, REJECTED: { text: "رد شده", variant: "destructive" as "destructive" } }[status]);
 
 // Orders Panel Component
-function OrdersPanel({ orders, isLoading, refreshData }: { orders: OrderWithRelations[], isLoading: boolean, refreshData: () => void }) {
+function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderWithRelations[], isLoading: boolean, refreshData: () => void}) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const handleStatusChange = async (orderId: string, status: OrderStatus) => {
         setActionLoading(orderId);
@@ -53,8 +52,8 @@ function OrdersPanel({ orders, isLoading, refreshData }: { orders: OrderWithRela
                 <div className="space-y-1.5 text-sm text-muted-foreground pt-2 border-t mt-2"><p className="flex items-center gap-2"><UserIconLucide className="h-4 w-4" />{order.user.name}</p><p className="flex items-start gap-2"><Building className="h-4 w-4 mt-1 shrink-0" />{order.user.shopAddress}</p><p className="flex items-center gap-2"><Phone className="h-4 w-4" />{order.user.phone}</p></div>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 mt-auto">
-                <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full"><FileText className="ml-2 h-4 w-4" />فاکتور</Button></DialogTrigger><DialogContent className="max-w-sm"><CardHeader><CardTitle>فاکتور سفارش</CardTitle><CardDescription>شماره: ...{order.id.slice(-6)}</CardDescription></CardHeader><CardContent className="space-y-3 text-sm">{order.items.map(item => (<div key={item.id} className="flex justify-between"><span>{item.productName} (×{item.quantity})</span><span>{formatPrice(item.price * item.quantity)}</span></div>))}<Separator /><div className="flex justify-between font-bold"><span>مبلغ کل:</span><span>{formatPrice(order.totalPrice)}</span></div></CardContent></DialogContent></Dialog>
-                {order.user.latitude && order.user.longitude && <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full"><MapPin className="ml-2 h-4 w-4" />نقشه</Button></DialogTrigger><DialogContent><MapPicker readOnly marker={{ position: [order.user.latitude, order.user.longitude], popupText: order.user.shopName || 'موقعیت' }} /></DialogContent></Dialog>}
+                <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full"><FileText className="ml-2 h-4 w-4"/>فاکتور</Button></DialogTrigger><DialogContent className="max-w-sm"><CardHeader><CardTitle>فاکتور سفارش</CardTitle><CardDescription>شماره: ...{order.id.slice(-6)}</CardDescription></CardHeader><CardContent className="space-y-3 text-sm">{order.items.map(item => (<div key={item.id} className="flex justify-between"><span>{item.productName} (×{item.quantity})</span><TomanPrice value={item.price * item.quantity} /></div>))}<Separator /><div className="flex justify-between font-bold"><span>مبلغ کل:</span><TomanPrice value={order.totalPrice} /></div></CardContent></DialogContent></Dialog>
+                {order.user.latitude && order.user.longitude && <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full"><MapPin className="ml-2 h-4 w-4"/>نقشه</Button></DialogTrigger><DialogContent><MapPicker readOnly marker={{ position: [order.user.latitude, order.user.longitude], popupText: order.user.shopName || 'موقعیت'}}/></DialogContent></Dialog>}
                 <div className="flex items-center gap-2"><Select onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)} defaultValue={order.status} disabled={actionLoading === order.id}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PENDING">در حال بررسی</SelectItem><SelectItem value="SHIPPED">ارسال شده</SelectItem><SelectItem value="DELIVERED">تحویل داده شد</SelectItem><SelectItem value="CANCELED">لغو شده</SelectItem></SelectContent></Select>{actionLoading === order.id && <Loader2 className="h-5 w-5 animate-spin" />}</div>
             </CardContent>
         </Card>
@@ -65,7 +64,7 @@ function OrdersPanel({ orders, isLoading, refreshData }: { orders: OrderWithRela
 }
 
 // Returns Panel Component
-function ReturnsPanel({ returns, isLoading, refreshData }: { returns: ReturnForDelivery[], isLoading: boolean, refreshData: () => void }) {
+function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDelivery[], isLoading: boolean, refreshData: () => void}) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const handleStatusChange = async (returnId: string, status: ReturnStatus) => {
         setActionLoading(returnId);

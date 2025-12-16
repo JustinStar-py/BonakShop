@@ -5,7 +5,7 @@ import { AddCircleLinear, MinusCircleLinear, TrashBinMinimalisticLinear } from "
 import Image from "next/image";
 import { useState } from "react";
 import toPersianDigits from "@/utils/numberFormatter";
-import { formatToTomanParts } from "@/utils/currencyFormatter";
+import TomanPrice from "@/components/shared/TomanPrice";
 
 interface ProductCardProps {
   product: ProductWithRelations;
@@ -30,8 +30,6 @@ export default function ProductCard({
   const hasDiscount = product.discountPercentage > 0;
 
   const discountedPrice = product.price * (1 - product.discountPercentage / 100);
-  const formattedPrice = formatToTomanParts(product.price);
-  const formattedDiscountedPrice = formatToTomanParts(discountedPrice);
 
   const animatePlus = (target: HTMLElement) => {
     target.animate(
@@ -128,24 +126,20 @@ export default function ProductCard({
       {/* Pricing */}
       <div className="mt-auto flex items-end justify-end">
         <div className="flex flex-col items-end">
-          <div
-            className={`mb-0.5 flex items-baseline gap-1 text-gray-400 text-[11px] font-medium ${!(hasDiscount && formattedPrice) ? "invisible" : ""
-              }`}
-          >
-            <span className="line-through">{formattedPrice?.amount ?? ""}</span>
-            <span className="text-[10px]">
-              {formattedPrice?.suffix ?? ""}
-            </span>
+          <div className={hasDiscount ? "mb-0.5" : "mb-0.5 invisible"}>
+            <TomanPrice
+              value={product.price}
+              className="text-[11px] font-medium"
+              amountClassName="line-through text-black/60"
+              suffixClassName="text-black/45"
+            />
           </div>
 
-          <div className="flex items-baseline gap-1 text-gray-800">
-            <span className="text-[15px] font-extrabold tracking-tight">
-              {(formattedDiscountedPrice || formattedPrice)?.amount}
-            </span>
-            <span className="text-[9px] font-medium text-gray-500">
-              {(formattedDiscountedPrice || formattedPrice)?.suffix}
-            </span>
-          </div>
+          <TomanPrice
+            value={hasDiscount ? discountedPrice : product.price}
+            className="text-[15px] font-extrabold tracking-tight"
+            suffixClassName="text-black/50"
+          />
         </div>
       </div>
     </div>

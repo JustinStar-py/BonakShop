@@ -8,13 +8,13 @@ import type { Product, Supplier, Category } from "@prisma/client"; // اطمین
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    AltArrowRightLinear as ArrowRight, AddCircleLinear as Plus, MinusCircleLinear as Minus, ShopLinear as Building2, LayersLinear as Layers,
-    BoxLinear as Package, BoxLinear as Box, UserLinear as User, BagLinear as ShoppingBag, ShareLinear as Share2, VerifiedCheckLinear as ShieldCheck
-} from "@solar-icons/react-perf";
+import { 
+    ArrowRight, Plus, Minus, Building2, Layers, 
+    Package, Box, User, ShoppingBag, Share2, ShieldCheck
+} from "lucide-react";
 import Image from "next/image";
 import toPersianDigits from "@/utils/numberFormatter";
-import { formatToToman } from "@/utils/currencyFormatter";
+import TomanPrice from "@/components/shared/TomanPrice";
 
 // تعریف تایپ ترکیبی
 type ProductDetails = Product & {
@@ -63,20 +63,20 @@ export default function ProductDetailPage() {
             </div>
         );
     }
-
+    
     const discountedPrice = product.price * (1 - product.discountPercentage / 100);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-32">
-
+            
             {/* --- HEADER --- */}
             <header className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-md border-b border-gray-100/50">
                 <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => router.back()}>
-                    <ArrowRight className="w-6 h-6 text-gray-700" />
+                    <ArrowRight className="w-6 h-6 text-gray-700"/>
                 </Button>
                 <span className="font-bold text-sm text-gray-800 truncate max-w-[200px]">{product.name}</span>
                 <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
-                    <Share2 className="w-5 h-5 text-gray-500" />
+                    <Share2 className="w-5 h-5 text-gray-500"/>
                 </Button>
             </header>
 
@@ -84,13 +84,13 @@ export default function ProductDetailPage() {
                 {/* --- IMAGE SECTION --- */}
                 <div className="relative bg-white pb-10 pt-6 rounded-b-[2.5rem] shadow-sm overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#f1f5f9_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
-
+                    
                     <div className="relative z-10 flex justify-center items-center h-56 sm:h-72">
-                        <Image
-                            src={product.image || "/placeholder.jpg"}
-                            alt={product.name}
-                            width={300}
-                            height={300}
+                        <Image 
+                            src={product.image || "/placeholder.jpg"} 
+                            alt={product.name} 
+                            width={300} 
+                            height={300} 
                             className="object-contain max-h-full drop-shadow-xl hover:scale-105 transition-transform duration-500"
                         />
                     </div>
@@ -112,12 +112,12 @@ export default function ProductDetailPage() {
 
                 {/* --- INFO SECTION --- */}
                 <div className="px-5 mt-6 space-y-6">
-
+                    
                     {/* Title & Brand */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-lg text-[10px] font-bold">
-                                <Building2 size={12} /> {product.supplier.name}
+                                <Building2 size={12}/> {product.supplier.name}
                             </span>
                             {!product.available && (
                                 <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">
@@ -134,8 +134,8 @@ export default function ProductDetailPage() {
                         <div className="flex flex-col items-end">
                             {product.consumerPrice ? (
                                 <div className="flex items-center gap-1">
-                                    <User size={14} className="text-gray-400" />
-                                    <span className="text-lg font-bold text-gray-700">{formatToToman(product.consumerPrice)}</span>
+                                    <User size={14} className="text-gray-400"/>
+                                    <TomanPrice value={product.consumerPrice} className="text-lg font-bold" />
                                 </div>
                             ) : (
                                 <span className="text-xs text-gray-400">---</span>
@@ -146,21 +146,21 @@ export default function ProductDetailPage() {
                     {/* Attributes Grid */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
-                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Layers size={12} /> دسته‌بندی</span>
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Layers size={12}/> دسته‌بندی</span>
                             <span className="font-bold text-gray-700 text-sm">{product.category.name}</span>
                         </div>
                         <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
-                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Package size={12} /> واحد فروش</span>
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Package size={12}/> واحد فروش</span>
                             <span className="font-bold text-gray-700 text-sm">{product.unit}</span>
                         </div>
                         <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
-                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Box size={12} /> موجودی انبار</span>
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Box size={12}/> موجودی انبار</span>
                             <span className={`font-bold text-sm ${product.stock > 0 ? "text-green-600" : "text-red-500"}`}>
                                 {product.stock > 0 ? `${toPersianDigits(product.stock)} عدد` : "تمام شده"}
                             </span>
                         </div>
                         <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
-                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><ShieldCheck size={12} /> اصالت کالا</span>
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><ShieldCheck size={12}/> اصالت کالا</span>
                             <span className="font-bold text-gray-700 text-sm">تایید شده</span>
                         </div>
                     </div>
@@ -182,17 +182,20 @@ export default function ProductDetailPage() {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex flex-col">
                         {product.discountPercentage > 0 && (
-                            <span className="text-xs text-gray-400 line-through decoration-red-400 decoration-2">
-                                {formatToToman(product.price)}
-                            </span>
+                            <TomanPrice
+                                value={product.price}
+                                className="text-xs line-through decoration-red-400 decoration-2"
+                                amountClassName="text-black/60"
+                                suffixClassName="text-black/45"
+                            />
                         )}
                         <div className="flex items-center gap-1 text-gray-800">
-                            <span className="text-2xl font-black">{formatToToman(discountedPrice)}</span>
+                            <TomanPrice value={discountedPrice} className="text-2xl font-black" />
                         </div>
                     </div>
                     {product.discountPercentage > 0 && (
                         <Badge variant="destructive" className="rounded-lg px-2">
-                            سود شما: {formatToToman(product.price - discountedPrice)}
+                            سود شما: <TomanPrice value={product.price - discountedPrice} className="font-bold" />
                         </Badge>
                     )}
                 </div>
@@ -202,33 +205,33 @@ export default function ProductDetailPage() {
                         ناموجود در انبار
                     </Button>
                 ) : quantityInCart === 0 ? (
-                    <Button
-                        className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-md shadow-lg shadow-green-200 active:scale-[0.98] transition-transform"
+                    <Button 
+                        className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-md shadow-lg shadow-green-200 active:scale-[0.98] transition-transform" 
                         onClick={() => addToCart(product)}
                     >
-                        <ShoppingBag className="mr-2 h-5 w-5" /> افزودن به سبد خرید
+                        <ShoppingBag className="mr-2 h-5 w-5"/> افزودن به سبد خرید
                     </Button>
                 ) : (
                     <div className="flex items-center justify-between bg-green-50 rounded-2xl p-1.5 border border-green-100 h-14">
-                        <Button
-                            className="w-12 h-full rounded-xl bg-white text-green-700 hover:bg-green-100 shadow-sm border border-green-100"
-                            size="icon"
+                        <Button 
+                            className="w-12 h-full rounded-xl bg-white text-green-700 hover:bg-green-100 shadow-sm border border-green-100" 
+                            size="icon" 
                             onClick={() => updateCartQuantity(product.id, quantityInCart + 1)}
                         >
-                            <Plus className="h-6 w-6" />
+                            <Plus className="h-6 w-6"/>
                         </Button>
-
+                        
                         <div className="flex flex-col items-center">
                             <span className="font-black text-xl text-green-800 leading-none">{toPersianDigits(quantityInCart)}</span>
                             <span className="text-[10px] text-green-600 font-medium">در سبد</span>
                         </div>
 
-                        <Button
-                            className="w-12 h-full rounded-xl bg-white text-red-500 hover:bg-red-50 shadow-sm border border-red-100"
-                            size="icon"
+                        <Button 
+                            className="w-12 h-full rounded-xl bg-white text-red-500 hover:bg-red-50 shadow-sm border border-red-100" 
+                            size="icon" 
                             onClick={() => updateCartQuantity(product.id, quantityInCart - 1)}
                         >
-                            <Minus className="h-6 w-6" />
+                            <Minus className="h-6 w-6"/>
                         </Button>
                     </div>
                 )}
