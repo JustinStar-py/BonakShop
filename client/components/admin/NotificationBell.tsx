@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, Package, ShoppingCart, AlertTriangle, RefreshCcw, Check } from "lucide-react";
+import { BellLinear, BoxLinear, CartLinear, DangerTriangleLinear, RestartLinear, CheckCircleLinear } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -34,7 +34,7 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  
+
   // Track known IDs to detect new ones
   const knownIdsRef = useRef<Set<string>>(new Set());
   const isFirstLoadRef = useRef(true);
@@ -62,12 +62,12 @@ export default function NotificationBell() {
 
   const showBrowserNotification = (newItems: Notification[]) => {
     if (!("Notification" in window)) return;
-    
+
     if (Notification.permission === "granted") {
-      const text = newItems.length === 1 
-        ? newItems[0].message 
+      const text = newItems.length === 1
+        ? newItems[0].message
         : `${newItems.length} پیام جدید دارید`;
-      
+
       new Notification("بهار نارون", {
         body: text,
         icon: "/logo.png" // Assuming logo exists
@@ -80,7 +80,7 @@ export default function NotificationBell() {
     try {
       const res = await apiClient.get('/admin/notifications');
       const currentItems: Notification[] = res.data;
-      
+
       setNotifications(currentItems);
       setUnreadCount(currentItems.length);
 
@@ -118,9 +118,9 @@ export default function NotificationBell() {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
-    
+
     fetchNotifications();
-    
+
     // Poll every 30 seconds
     const interval = setInterval(fetchNotifications, 30 * 1000);
     return () => clearInterval(interval);
@@ -128,10 +128,10 @@ export default function NotificationBell() {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'order': return <ShoppingCart className="h-4 w-4 text-blue-500" />;
-      case 'stock': return <Package className="h-4 w-4 text-orange-500" />;
-      case 'return': return <RefreshCcw className="h-4 w-4 text-red-500" />;
-      default: return <AlertTriangle className="h-4 w-4 text-gray-500" />;
+      case 'order': return <CartLinear className="h-4 w-4 text-blue-500" />;
+      case 'stock': return <BoxLinear className="h-4 w-4 text-orange-500" />;
+      case 'return': return <RestartLinear className="h-4 w-4 text-red-500" />;
+      default: return <DangerTriangleLinear className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -151,7 +151,7 @@ export default function NotificationBell() {
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-800">
-          <Bell size={20} />
+          <BellLinear size={20} />
           {unreadCount > 0 && (
             <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white animate-pulse" />
           )}
@@ -160,28 +160,28 @@ export default function NotificationBell() {
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-4 border-b bg-slate-50/50">
           <h4 className="font-semibold text-sm">اعلان‌ها</h4>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-6 w-6" 
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
             onClick={fetchNotifications}
             disabled={isLoading}
           >
-            <RefreshCcw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
+            <RestartLinear className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
           </Button>
         </div>
-        
+
         <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
           {notifications.length === 0 ? (
             <div className="p-8 text-center text-slate-500 text-sm">
-              <Check className="mx-auto h-8 w-8 text-slate-300 mb-2" />
+              <CheckCircleLinear className="mx-auto h-8 w-8 text-slate-300 mb-2" />
               <p>همه چیز مرتب است!</p>
               <p className="text-xs mt-1">اعلان جدیدی ندارید.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {notifications.map((notification) => (
-                <div 
+                <div
                   key={notification.id}
                   className="p-4 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3 items-start"
                   onClick={() => handleNotificationClick(notification.link)}
@@ -203,7 +203,7 @@ export default function NotificationBell() {
                       {notification.message}
                     </p>
                     <p className="text-[10px] text-slate-400 pt-1">
-                       {new Date(notification.timestamp).toLocaleDateString('fa-IR')}
+                      {new Date(notification.timestamp).toLocaleDateString('fa-IR')}
                     </p>
                   </div>
                 </div>

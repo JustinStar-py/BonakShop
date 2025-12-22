@@ -1,6 +1,11 @@
 // next.config.ts
 import type { NextConfig } from "next";
 
+const optimizePackageImports =
+  process.env.NODE_ENV === "production"
+    ? ["@solar-icons/react-perf", "@radix-ui/react-dialog", "@radix-ui/react-popover"]
+    : ["@radix-ui/react-dialog", "@radix-ui/react-popover"];
+
 const nextConfig: NextConfig = {
   images: {
 
@@ -63,7 +68,7 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-popover'],
+    optimizePackageImports,
     serverActions: {
       bodySizeLimit: '2mb',
     },

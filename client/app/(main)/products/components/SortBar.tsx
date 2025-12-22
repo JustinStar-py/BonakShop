@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from 'react';
-import { ArrowUpDown } from 'lucide-react';
+import { SortFromTopToBottomLinear as ArrowUpDown } from '@solar-icons/react-perf';
 import { SORT_OPTIONS } from '../constants';
 import type { SortOption } from '../types';
 
@@ -20,11 +20,10 @@ export const SortBar = memo(function SortBar({ value, onChange }: SortBarProps) 
         <button
           key={option.id}
           onClick={() => onChange(option.id as SortOption)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-            value === option.id
+          className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${value === option.id
               ? 'bg-gray-800 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
+            }`}
           aria-pressed={value === option.id}
         >
           {option.label}

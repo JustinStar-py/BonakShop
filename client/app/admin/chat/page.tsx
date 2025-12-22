@@ -4,7 +4,7 @@ import apiClient from "@/lib/apiClient";
 import { getErrorMessage } from "@/lib/errors";
 import ChatWindow from "@/components/features/chat/ChatWindow";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, MessageSquare } from "lucide-react";
+import { RestartLinear as RefreshCw, ChatDotsLinear as MessageSquare } from "@solar-icons/react-perf";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
@@ -62,14 +62,14 @@ export default function AdminChatPage() {
         <div className="container mx-auto px-4 py-8 min-h-screen">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <MessageSquare className="text-blue-600"/> مدیریت پشتیبانی
+                    <MessageSquare className="text-blue-600" /> مدیریت پشتیبانی
                 </h1>
                 <div className="flex gap-2">
                     <Button variant={filter === 'ALL' ? 'default' : 'outline'} onClick={() => setFilter('ALL')} size="sm">همه</Button>
                     <Button variant={filter === 'OPEN' ? 'default' : 'outline'} onClick={() => setFilter('OPEN')} size="sm">باز</Button>
                     <Button variant={filter === 'CLOSED' ? 'default' : 'outline'} onClick={() => setFilter('CLOSED')} size="sm">بسته</Button>
                     <Button variant="ghost" size="icon" onClick={fetchSessions}>
-                        <RefreshCw size={18}/>
+                        <RefreshCw size={18} />
                     </Button>
                 </div>
             </div>
@@ -86,13 +86,13 @@ export default function AdminChatPage() {
                     ) : (
                         <div className="space-y-2">
                             {sessions.map((s) => (
-                                <div 
+                                <div
                                     key={s.id}
                                     onClick={() => setSelectedSessionId(s.id)}
                                     className={cn(
                                         "p-3 rounded-lg cursor-pointer transition-all border",
-                                        selectedSessionId === s.id 
-                                            ? "bg-blue-50 border-blue-200 ring-1 ring-blue-300" 
+                                        selectedSessionId === s.id
+                                            ? "bg-blue-50 border-blue-200 ring-1 ring-blue-300"
                                             : "bg-gray-50 border-gray-100 hover:bg-gray-100"
                                     )}
                                 >
@@ -124,8 +124,8 @@ export default function AdminChatPage() {
                 {/* Chat Window */}
                 <div className="md:col-span-2">
                     {selectedSession && user ? (
-                        <ChatWindow 
-                            sessionId={selectedSession.id} 
+                        <ChatWindow
+                            sessionId={selectedSession.id}
                             currentUserId={user.id}
                             isAdminView={true}
                             sessionOwnerId={selectedSession.userId}
@@ -133,7 +133,7 @@ export default function AdminChatPage() {
                         />
                     ) : (
                         <div className="h-full flex items-center justify-center bg-gray-50 border rounded-lg text-gray-400 flex-col gap-2">
-                            <MessageSquare size={48} className="opacity-20"/>
+                            <MessageSquare size={48} className="opacity-20" />
                             <p>یک گفتگو را جهت پاسخگویی انتخاب کنید.</p>
                         </div>
                     )}

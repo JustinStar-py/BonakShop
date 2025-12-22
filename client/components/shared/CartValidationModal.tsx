@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CartChange } from "@/hooks/useCartValidator";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { DangerTriangleLinear } from "@solar-icons/react-perf";
 
 interface CartValidationModalProps {
   changes: CartChange[];
@@ -28,7 +28,7 @@ export default function CartValidationModal({ changes, open, onConfirm, onCancel
       <AlertDialogContent className="max-w-md" dir="rtl">
         <AlertDialogHeader>
           <div className="flex items-center gap-2 text-amber-600 mb-2">
-            <AlertTriangle className="h-6 w-6" />
+            <DangerTriangleLinear size={20} className="text-orange-500" />
             <AlertDialogTitle>تغییرات در سبد خرید</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="text-slate-600">
@@ -37,23 +37,23 @@ export default function CartValidationModal({ changes, open, onConfirm, onCancel
         </AlertDialogHeader>
 
         <div className="py-4 space-y-3 max-h-[300px] overflow-y-auto">
-            {changes.map((change, index) => (
-                <div key={index} className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm">
-                    <p className="font-medium text-slate-900">{change.productName || "محصول نامشخص"}</p>
-                    <p className="text-slate-500 mt-1 text-xs leading-relaxed">{change.message}</p>
-                </div>
-            ))}
+          {changes.map((change, index) => (
+            <div key={index} className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm">
+              <p className="font-medium text-slate-900">{change.productName || "محصول نامشخص"}</p>
+              <p className="text-slate-500 mt-1 text-xs leading-relaxed">{change.message}</p>
+            </div>
+          ))}
         </div>
 
         <AlertDialogFooter className="flex-row-reverse gap-2 sm:gap-0">
-          <AlertDialogAction 
+          <AlertDialogAction
             onClick={onConfirm}
             className="bg-blue-600 hover:bg-blue-700 flex-1"
           >
             اعمال تغییرات و ادامه
           </AlertDialogAction>
           <div className="w-2"></div>
-           {/* Use a div spacer or margin because Shadcn footer flex-row-reverse behavior can be tricky with gap */}
+          {/* Use a div spacer or margin because Shadcn footer flex-row-reverse behavior can be tricky with gap */}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

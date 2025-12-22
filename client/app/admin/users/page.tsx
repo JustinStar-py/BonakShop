@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import apiClient from "@/lib/apiClient";
 import { useSimpleToast } from "@/components/ui/toast-notification";
-import type { User, WalletOperation } from "@/types";
 import {
   Table,
   TableBody,
@@ -17,28 +16,35 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Wallet, Search, Loader2 } from "lucide-react";
+import { Pen2Linear as Edit, WalletLinear as Wallet, MagniferLinear as Search, RestartLinear as Loader2 } from "@solar-icons/react-perf";
 import { formatToToman } from "@/utils/currencyFormatter";
 import toPersianDigits from "@/utils/numberFormatter";
 
 export default function UsersPage() {
   const toast = useSimpleToast();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Array<{
+    id: string;
+    name?: string | null;
+    phone: string;
+    userType: string;
+    role: string;
+    balance: number;
+    shopName?: string | null;
+  }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Edit State
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<typeof users[0] | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   // Charge State
-  const [chargingUser, setChargingUser] = useState<any>(null);
+  const [chargingUser, setChargingUser] = useState<typeof users[0] | null>(null);
   const [chargeAmount, setChargeAmount] = useState("");
   const [walletOperation, setWalletOperation] = useState<'increase' | 'decrease'>('increase');
   const [isChargeOpen, setIsChargeOpen] = useState(false);
@@ -125,7 +131,7 @@ export default function UsersPage() {
             {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name || "---"}</TableCell>
-                <TableCell>{toPersianDigits(user.phone)}</TableCell>
+                <TableCell>{user.phone}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs ${user.userType === 'SHOP_OWNER' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
                     }`}>
@@ -251,8 +257,8 @@ export default function UsersPage() {
                 type="button"
                 onClick={() => setWalletOperation('increase')}
                 className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${walletOperation === 'increase'
-                    ? 'bg-green-600 text-white shadow'
-                    : 'text-gray-600 hover:bg-gray-200'
+                  ? 'bg-green-600 text-white shadow'
+                  : 'text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 ✓ افزایش موجودی
@@ -261,8 +267,8 @@ export default function UsersPage() {
                 type="button"
                 onClick={() => setWalletOperation('decrease')}
                 className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${walletOperation === 'decrease'
-                    ? 'bg-red-600 text-white shadow'
-                    : 'text-gray-600 hover:bg-gray-200'
+                  ? 'bg-red-600 text-white shadow'
+                  : 'text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 ✗ کسر موجودی

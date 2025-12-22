@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import ProductCard from '@/components/shared/ProductCard';
-import { Loader2, Search } from 'lucide-react';
+import { RestartLinear, MagniferLinear } from '@solar-icons/react-perf';
 import { Button } from '@/components/ui/button';
 import type { CartItem, ProductWithSupplier } from '@/types';
 
@@ -49,7 +49,7 @@ export const ProductGrid = memo(function ProductGrid({
   if (!isLoading && products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-400 animate-in fade-in zoom-in duration-500">
-        <Search size={48} className="mb-4 text-gray-200" />
+        <MagniferLinear size={48} className="mb-4 text-gray-200" />
         <p className="font-medium">محصولی یافت نشد!</p>
         <p className="text-xs mt-1 text-center px-4">
           فیلترها را تغییر دهید یا عبارت دیگری جستجو کنید.
@@ -84,7 +84,7 @@ export const ProductGrid = memo(function ProductGrid({
 
       {isLoadingMore && (
         <div className="text-center py-6 flex justify-center">
-          <Loader2 className="h-8 w-8 text-green-500 animate-spin" />
+          <RestartLinear className="h-8 w-8 text-green-500 animate-spin" />
         </div>
       )}
 

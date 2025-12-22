@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import apiClient from "@/lib/apiClient";
 import ChatWindow from "@/components/features/chat/ChatWindow";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MessageSquare, RotateCcw } from "lucide-react";
+import { AddCircleLinear as PlusCircle, ChatDotsLinear as MessageSquare, RestartLinear as RotateCcw } from "@solar-icons/react-perf";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/errors";

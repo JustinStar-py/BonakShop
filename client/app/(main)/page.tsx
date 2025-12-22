@@ -7,16 +7,25 @@ import type { Product, Category, ProductWithSupplier } from "@/types";
 import ProductCard from "@/components/shared/ProductCard";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { 
-    Search, Loader2,
-    Star, TrendingUp, Sparkles,
-    ArrowUp,
-    Droplets, Milk, Cookie, Cake, Drumstick, Coffee, SprayCan, Utensils, Fish, Bean
-} from "lucide-react";
+import {
+  MagniferLinear, RestartLinear,
+  StarLinear as Star, GraphUpLinear as TrendingUp, StarsLinear as Sparkles,
+  AltArrowUpLinear,
+  WaterdropsLinear as Droplets,
+  BottleLinear as Milk,
+  DonutLinear as Cookie,
+  DonutLinear as Cake,
+  BoneLinear as Drumstick,
+  CupLinear as Coffee,
+  CosmeticLinear as SprayCan,
+  ChefHatLinear as Utensils,
+  WaterLinear as Fish,
+  BoxLinear as Bean
+} from "@solar-icons/react-perf";
 import useDebounce from "@/hooks/useDebounce";
 import useProductPagination from "@/hooks/useProductPagination";
 import { useRouter } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
+import type { ElementType } from "react";
 
 // Components
 import Header from "@/components/layout/Header";
@@ -37,7 +46,7 @@ type Banner = {
 interface CategoryRow {
   id: string;
   title: string;
-  icon: LucideIcon;
+  icon: ElementType;
   products: ProductWithSupplier[];
 }
 
@@ -56,7 +65,7 @@ export default function HomePage() {
   const [initError, setInitError] = useState<string | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  
+
   // Static Promo Data
   const promoBanner = {
     image: "https://www.digikala.com/mag/wp-content/uploads/2024/03/9b6907ac-5dd5-4fcd-b4c8-3a0874fcb16d-22-pickles.jpg",
@@ -67,7 +76,7 @@ export default function HomePage() {
   // Search & Pagination State
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  
+
   // Pagination Hook
   const {
     products: paginatedProducts,
@@ -99,7 +108,7 @@ export default function HomePage() {
           { title: "حبوبات", id: "cmi653u260000l804nq41jqqz", icon: Bean },
         ];
 
-        const categoryPromises = categoryConfigs.map(c => 
+        const categoryPromises = categoryConfigs.map(c =>
           apiClient.get(`/products?categoryId=${c.id}&limit=10`).catch(() => ({ data: { products: [] } }))
         );
 
@@ -118,7 +127,7 @@ export default function HomePage() {
         setNewestProducts(newRes.data);
         setBestsellerProducts(bestRes.data);
         setBanners(bannersRes.data || []);
-        
+
         // Process category rows
         const rows = categoryConfigs.map((c, i) => ({
           id: c.id,
@@ -126,15 +135,15 @@ export default function HomePage() {
           icon: c.icon,
           products: catRowsRes[i]?.data?.products || []
         })).filter(row => row.products.length > 0);
-        
+
         setCategoryRows(rows);
 
         // Set initial paginated products from the hook's state perspective
         setPaginatedProducts(prodRes.data.products);
-        
+
         // Fix for scroll issue: Start from page 2 since page 1 is already loaded
         setPage(2);
-        
+
       } catch (err) {
         setInitError("خطا در دریافت اطلاعات فروشگاه.");
         console.error(err);
@@ -148,7 +157,7 @@ export default function HomePage() {
   // Search & Category Filter Effect
   useEffect(() => {
     if (isLoading) return;
-    
+
     resetPagination();
     // Ensure we pass "all" explicitly for category when searching/resetting on home
     fetchPaginatedProducts(1, debouncedSearchTerm, "all", true);
@@ -165,17 +174,17 @@ export default function HomePage() {
 
   // Scroll Handler (Infinite Scroll)
   useEffect(() => {
-      const onScroll = () => {
-          if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-              if (!isLoadingMore && hasMore) {
-                  fetchPaginatedProducts(page, debouncedSearchTerm, "all");
-              }
-          }
-          setShowScrollTop(window.scrollY > 400);
-      };
-      
-      window.addEventListener("scroll", onScroll);
-      return () => window.removeEventListener("scroll", onScroll);
+    const onScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+        if (!isLoadingMore && hasMore) {
+          fetchPaginatedProducts(page, debouncedSearchTerm, "all");
+        }
+      }
+      setShowScrollTop(window.scrollY > 400);
+    };
+
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, [page, isLoadingMore, hasMore, debouncedSearchTerm, fetchPaginatedProducts]);
 
 
@@ -203,7 +212,7 @@ export default function HomePage() {
       {debouncedSearchTerm ? (
         <div className="p-4 animate-in fade-in slide-in-from-bottom-2">
           <h2 className="text-sm font-bold text-gray-500 mb-4 flex items-center gap-2">
-            <Search size={16} /> نتایج جستجو
+            <MagniferLinear size={18} /> نتایج جستجو
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {paginatedProducts.map((p) => (
@@ -221,7 +230,7 @@ export default function HomePage() {
           </div>
           {isLoadingMore && (
             <div className="py-8 flex justify-center">
-              <Loader2 className="animate-spin text-green-500" />
+              <RestartLinear className="animate-spin text-green-500" />
             </div>
           )}
         </div>
@@ -313,7 +322,7 @@ export default function HomePage() {
           className="fixed bottom-24 right-4 rounded-full bg-white text-green-600 hover:bg-green-50 border border-green-100"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         >
-          <ArrowUp className="w-5 h-5" />
+          <AltArrowUpLinear className="w-5 h-5" />
         </Button>
       )}
 

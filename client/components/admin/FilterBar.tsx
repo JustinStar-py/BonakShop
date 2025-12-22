@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { CloseCircleLinear, FilterLinear } from '@solar-icons/react-perf';
 import { Badge } from '@/components/ui/badge';
 
 export interface Filter {
@@ -41,7 +41,7 @@ export default function FilterBar({
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="gap-2"
                 >
-                    <SlidersHorizontal size={16} />
+                    <FilterLinear size={16} />
                     فیلترها
                     {activeFiltersCount > 0 && (
                         <Badge variant="default" className="mr-1 px-1.5 py-0.5 text-xs">
@@ -57,7 +57,7 @@ export default function FilterBar({
                         onClick={onClearAll}
                         className="gap-1 text-zinc-500 hover:text-zinc-900"
                     >
-                        <X size={14} />
+                        <CloseCircleLinear size={14} />
                         پاک کردن همه
                     </Button>
                 )}

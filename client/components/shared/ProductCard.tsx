@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProductWithRelations, CartItem } from "@/types";
-import { Plus, Minus, Trash2 } from "lucide-react";
+import { AddCircleLinear, MinusCircleLinear, TrashBinMinimalisticLinear } from "@solar-icons/react-perf";
 import Image from "next/image";
 import { useState } from "react";
 import toPersianDigits from "@/utils/numberFormatter";
@@ -84,7 +84,7 @@ export default function ProductCard({
             onClick={handleIncrement}
             className="absolute bottom-2 right-3 flex h-9 w-9 items-center justify-center rounded-xl border border-[#FF3D57] bg-white text-[#FF3D57] shadow-sm transition-transform duration-150 active:scale-95"
           >
-            <Plus strokeWidth={3} className="h-4 w-4" />
+            <AddCircleLinear size={20} />
           </button>
         ) : (
           <div className="absolute bottom-2 right-3 flex items-center gap-1 rounded-xl border border-[#FF3D57] bg-white px-2 py-1 shadow-sm">
@@ -92,7 +92,7 @@ export default function ProductCard({
               onClick={handleIncrement}
               className="flex h-7 w-7 items-center justify-center text-[#00A79D] transition-transform duration-150 active:scale-95"
             >
-              <Plus className="h-4 w-4" strokeWidth={3} />
+              <AddCircleLinear size={18} />
             </button>
 
             <span className="px-1 text-[12px] font-bold text-gray-800">
@@ -104,9 +104,9 @@ export default function ProductCard({
               className="flex h-7 w-7 items-center justify-center text-[#FF3D57] transition-transform duration-150 active:scale-95"
             >
               {quantityInCart === 1 ? (
-                <Trash2 className="h-4 w-4" />
+                <TrashBinMinimalisticLinear size={18} />
               ) : (
-                <Minus className="h-4 w-4" strokeWidth={3} />
+                <MinusCircleLinear size={18} />
               )}
             </button>
           </div>

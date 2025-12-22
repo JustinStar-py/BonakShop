@@ -122,11 +122,14 @@ async function findSimilarUsers(
 
     similarOrders.forEach(order => {
         const otherProducts = new Set(order.items.map(i => i.productId));
-        const intersection = new Set(
-            [...purchasedSet].filter(x => otherProducts.has(x))
-        );
-        const union = new Set([...purchasedSet, ...otherProducts]);
-        const similarity = intersection.size / union.size;
+
+        let intersectionSize = 0;
+        for (const productId of otherProducts) {
+            if (purchasedSet.has(productId)) intersectionSize += 1;
+        }
+
+        const unionSize = purchasedSet.size + otherProducts.size - intersectionSize;
+        const similarity = unionSize === 0 ? 0 : intersectionSize / unionSize;
 
         userScores.set(
             order.userId,

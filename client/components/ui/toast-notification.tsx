@@ -4,7 +4,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircleLinear, CloseCircleLinear, DangerCircleLinear, InfoCircleLinear } from '@solar-icons/react-perf';
 import { cn } from '@/lib/utils';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -69,10 +69,10 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
     const { type, message } = toast;
 
     const icons = {
-        success: CheckCircle,
-        error: XCircle,
-        warning: AlertCircle,
-        info: Info
+        success: CheckCircleLinear,
+        error: CloseCircleLinear,
+        warning: DangerCircleLinear,
+        info: InfoCircleLinear
     };
 
     const colors = {
@@ -100,7 +100,7 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
                 onClick={onClose}
                 className="flex-shrink-0 hover:bg-white/20 rounded-lg p-1 transition-colors"
             >
-                <X size={16} />
+                <CloseCircleLinear size={16} />
             </button>
         </div>
     );

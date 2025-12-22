@@ -24,7 +24,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
-import { RefreshCw, XCircle, StickyNote, CalendarCheck, ShoppingBag, CreditCard } from "lucide-react";
+import { RestartLinear, CloseCircleLinear, NotesLinear, CalendarLinear, BagLinear } from "@solar-icons/react-perf";
 import { ReturnRequestDialog } from "@/components/shared/ReturnRequestDialog";
 import toPersianDigits from "@/utils/numberFormatter";
 import OrderCard from "@/components/shared/OrderCard"; // ایمپورت کارت جدید
@@ -80,7 +80,7 @@ export default function OrdersPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[70vh] p-4">
                 <div className="bg-green-50 p-6 rounded-full mb-4">
-                    <ShoppingBag className="w-12 h-12 text-green-500" />
+                    <BagLinear size={48} className="text-green-500" />
                 </div>
                 <h2 className="text-lg font-bold text-gray-700 mb-2">هنوز سفارشی ثبت نکرده‌اید</h2>
                 <p className="text-gray-400 text-sm mb-6 text-center">محصولات متنوع ما را مشاهده کنید و اولین سفارش خود را ثبت کنید.</p>
@@ -94,12 +94,12 @@ export default function OrdersPage() {
     return (
         <div className="pb-24 min-h-screen bg-gray-50 p-4">
             <h1 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <CalendarCheck className="w-6 h-6 text-green-600" />
+                <CalendarLinear size={24} className="text-green-600" />
                 تاریخچه سفارشات
             </h1>
 
             <Accordion type="single" collapsible className="w-full space-y-3">
-                {orders.map((order) => (
+                {orders.map((order, index) => (
                     <AccordionItem
                         key={order.id}
                         value={order.id}
@@ -107,7 +107,7 @@ export default function OrdersPage() {
                     >
                         {/* اینجا از OrderCard به عنوان تریگر استفاده می‌کنیم */}
                         <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div]:ring-2 [&[data-state=open]>div]:ring-green-500">
-                            <OrderCard order={order} />
+                            <OrderCard order={order} orderNumber={orders.length - index} />
                         </AccordionTrigger>
 
                         <AccordionContent className="px-1 py-2">
@@ -122,7 +122,7 @@ export default function OrdersPage() {
                                 {order.notes && (
                                     <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mb-4">
                                         <div className="flex items-center gap-2 text-yellow-700 text-xs font-bold mb-1">
-                                            <StickyNote size={14} />
+                                            <NotesLinear size={14} />
                                             توضیحات شما:
                                         </div>
                                         <p className="text-xs text-gray-700 leading-relaxed">{order.notes}</p>
@@ -149,7 +149,7 @@ export default function OrdersPage() {
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button variant="destructive" className="flex-1 h-10 rounded-xl text-xs">
-                                                    <XCircle size={16} className="ml-2" /> لغو سفارش
+                                                    <CloseCircleLinear size={16} className="ml-2" /> لغو سفارش
                                                 </Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
@@ -173,7 +173,7 @@ export default function OrdersPage() {
                                             className="flex-1 h-10 rounded-xl text-xs border-orange-300 text-orange-600 hover:bg-orange-50"
                                             onClick={() => setSelectedOrderForReturn(order)}
                                         >
-                                            <RefreshCw size={16} className="ml-2" /> درخواست مرجوعی
+                                            <RestartLinear size={16} className="ml-2" /> درخواست مرجوعی
                                         </Button>
                                     )}
                                 </div>

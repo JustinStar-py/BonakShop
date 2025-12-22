@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } catch (err) {
-    console.error("JWT Verification Error:", err);
+    // JWT verification failed - do NOT log token data for security
 
     // Remove from cache if verification fails
     tokenCache.delete(token);

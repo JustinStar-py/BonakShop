@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2 } from 'lucide-react';
+import { MagniferLinear, RestartLinear } from '@solar-icons/react-perf';
 
 interface SearchBarProps {
   value: string;
@@ -10,17 +10,17 @@ interface SearchBarProps {
   isSearching?: boolean;
 }
 
-export const SearchBar = memo(function SearchBar({ 
-  value, 
-  onChange, 
-  isSearching = false 
+export const SearchBar = memo(function SearchBar({
+  value,
+  onChange,
+  isSearching = false
 }: SearchBarProps) {
   return (
     <div className="relative flex-grow group">
       {isSearching ? (
-        <Loader2 className="absolute right-3 top-3 h-5 w-5 text-green-500 animate-spin" />
+        <RestartLinear className="absolute right-3 top-3 h-5 w-5 text-green-500 animate-spin" />
       ) : (
-        <Search className="absolute right-3 top-3 h-5 w-5 text-gray-400 group-focus-within:text-green-500 transition-colors" />
+        <MagniferLinear className="absolute right-3 top-3 h-5 w-5 text-gray-400 group-focus-within:text-green-500 transition-colors" />
       )}
       <Input
         placeholder="جستجوی محصول..."

@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
-import { Truck, CheckCircle, Loader2, LogOut, FileText, ArrowRight, MapPin, Phone, Building, User as UserIcon, RefreshCw, Package } from "lucide-react";
+import { DeliveryLinear as Truck, CheckCircleLinear as CheckCircle, RestartLinear as Loader2, LogoutLinear as LogOut, DocumentTextLinear as FileText, AltArrowRightLinear as ArrowRight, MapPointLinear as MapPin, PhoneLinear as Phone, ShopLinear as Building, UserLinear as UserIcon, RestartLinear as RefreshCw, BoxLinear as Package } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -19,12 +19,12 @@ import { formatToToman } from "@/utils/currencyFormatter";
 
 // --- Type Definitions ---
 type OrderForDelivery = Order & {
-  user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; latitude: number | null; longitude: number | null; };
-  items: OrderItem[];
+    user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; latitude: number | null; longitude: number | null; };
+    items: OrderItem[];
 };
 
 type ReturnForDelivery = ReturnRequest & {
-    order: { user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; }};
+    order: { user: { name: string | null; shopName: string | null; shopAddress: string | null; phone: string; } };
     items: (ReturnRequestItem & { orderItem: { productName: string } })[];
 }
 
@@ -36,11 +36,13 @@ const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
 // --- Utility Functions ---
 const formatPrice = (p: number) => formatToToman(p) || "۰ تومان";
 
-const getOrderStatusInfo = (status: OrderStatus): { text: string; variant: "default" | "secondary" | "destructive" } => {
+const getOrderStatusInfo = (
+    status: OrderStatus
+): { text: string; variant: "default" | "secondary" | "destructive" | "success" } => {
     const map = {
         PENDING: { text: "در حال بررسی", variant: "secondary" as "secondary" },
         SHIPPED: { text: "ارسال شده", variant: "default" as "default" },
-        DELIVERED: { text: "تحویل داده شد", variant: "default" as "default" },
+        DELIVERED: { text: "تحویل داده شد", variant: "success" as "success" },
         CANCELED: { text: "لغو شده", variant: "destructive" as "destructive" }
     };
     return map[status];
@@ -84,7 +86,7 @@ export default function DeliveryPage() {
 
     useEffect(() => {
         if (!isLoadingUser && (!user || (user.role !== 'WORKER' && user.role !== 'ADMIN'))) router.replace('/');
-        if(user && (user.role === 'WORKER' || user.role === 'ADMIN')) fetchData();
+        if (user && (user.role === 'WORKER' || user.role === 'ADMIN')) fetchData();
     }, [user, isLoadingUser, router]);
 
     const handleLogout = async () => {
@@ -92,7 +94,7 @@ export default function DeliveryPage() {
             await fetch('/api/auth/logout', { method: 'POST' });
             setUser(null);
             router.push('/');
-        } catch(e) { console.error(e) }
+        } catch (e) { console.error(e) }
     };
 
     if (isLoadingUser || !user) {
@@ -101,7 +103,7 @@ export default function DeliveryPage() {
 
     return (
         <div className="min-h-screen bg-gray-100 font-sans" dir="rtl">
-             <header className="sticky top-0 bg-white z-10 p-4 border-b flex justify-between items-center">
+            <header className="sticky top-0 bg-white z-10 p-4 border-b flex justify-between items-center">
                 <div>
                     <h1 className="text-xl font-bold">پنل مدیریت و تحویل</h1>
                     <p className="text-sm text-muted-foreground">سلام، {user.name}</p>
@@ -130,8 +132,14 @@ export default function DeliveryPage() {
 }
 
 // --- Orders Panel Component ---
-function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery[], isLoading: boolean, refreshData: () => void}) {
+function OrdersPanel({ orders, isLoading, refreshData }: { orders: OrderForDelivery[], isLoading: boolean, refreshData: () => void }) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+    const getAllowedNextStatuses = (current: OrderStatus): OrderStatus[] => {
+        if (current === "PENDING") return ["SHIPPED"];
+        if (current === "SHIPPED") return ["DELIVERED"];
+        return [];
+    };
 
     const handleStatusChange = async (orderId: string, status: OrderStatus) => {
         setActionLoading(orderId);
@@ -165,7 +173,7 @@ function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery
                     <Badge variant={getOrderStatusInfo(order.status).variant}>{getOrderStatusInfo(order.status).text}</Badge>
                 </div>
                 <CardDescription>
-                   {new Date(order.createdAt).toLocaleDateString('fa-IR')}
+                    {new Date(order.createdAt).toLocaleDateString('fa-IR')}
                 </CardDescription>
                 <div className="space-y-1.5 text-sm text-muted-foreground pt-2">
                     <p className="flex items-center gap-2"><UserIcon className="h-4 w-4" />{order.user.name}</p>
@@ -174,10 +182,28 @@ function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 mt-auto">
-                <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full"><FileText className="ml-2 h-4 w-4"/>مشاهده فاکتور</Button></DialogTrigger><DialogContent className="max-w-sm"><CardHeader><CardTitle>فاکتور سفارش</CardTitle><CardDescription>شماره: ...{order.id.slice(-6)}</CardDescription></CardHeader><CardContent className="space-y-3 text-sm">{order.items.map(item => (<div key={item.id} className="flex justify-between"><span>{item.productName} (×{item.quantity})</span><span>{formatPrice(item.price * item.quantity)}</span></div>))}<Separator /><div className="flex justify-between font-bold"><span>مبلغ کل:</span><span>{formatPrice(order.totalPrice)}</span></div></CardContent></DialogContent></Dialog>
-                {order.user.latitude && order.user.longitude && <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full"><MapPin className="ml-2 h-4 w-4"/>نمایش روی نقشه</Button></DialogTrigger><DialogContent><MapPicker readOnly marker={{ position: [order.user.latitude, order.user.longitude], popupText: order.user.shopName || 'موقعیت'}}/></DialogContent></Dialog>}
+                <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full"><FileText className="ml-2 h-4 w-4" />مشاهده فاکتور</Button></DialogTrigger><DialogContent className="max-w-sm"><CardHeader><CardTitle>فاکتور سفارش</CardTitle><CardDescription>شماره: ...{order.id.slice(-6)}</CardDescription></CardHeader><CardContent className="space-y-3 text-sm">{order.items.map(item => (<div key={item.id} className="flex justify-between"><span>{item.productName} (×{item.quantity})</span><span>{formatPrice(item.price * item.quantity)}</span></div>))}<Separator /><div className="flex justify-between font-bold"><span>مبلغ کل:</span><span>{formatPrice(order.totalPrice)}</span></div></CardContent></DialogContent></Dialog>
+                {order.user.latitude != null && order.user.longitude != null && <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full"><MapPin className="ml-2 h-4 w-4" />نمایش روی نقشه</Button></DialogTrigger><DialogContent><MapPicker readOnly marker={{ position: [order.user.latitude, order.user.longitude], popupText: order.user.shopName || 'موقعیت' }} /></DialogContent></Dialog>}
                 <div className="flex items-center gap-2">
-                    <Select onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)} defaultValue={order.status} disabled={actionLoading === order.id}><SelectTrigger className="w-full"><SelectValue placeholder="تغییر وضعیت..." /></SelectTrigger><SelectContent><SelectItem value="PENDING">در حال بررسی</SelectItem><SelectItem value="SHIPPED">ارسال شده</SelectItem><SelectItem value="DELIVERED">تحویل داده شد</SelectItem><SelectItem value="CANCELED">لغو شده</SelectItem></SelectContent></Select>
+                    <Select
+                        onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
+                        value={order.status}
+                        disabled={actionLoading === order.id || getAllowedNextStatuses(order.status).length === 0}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="تغییر وضعیت..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={order.status} disabled>
+                                {getOrderStatusInfo(order.status).text}
+                            </SelectItem>
+                            {getAllowedNextStatuses(order.status).map((next) => (
+                                <SelectItem key={next} value={next}>
+                                    {getOrderStatusInfo(next).text}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     {actionLoading === order.id && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
                 </div>
             </CardContent>
@@ -202,7 +228,7 @@ function OrdersPanel({orders, isLoading, refreshData}: {orders: OrderForDelivery
 }
 
 // --- Returns Panel Component ---
-function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDelivery[], isLoading: boolean, refreshData: () => void}) {
+function ReturnsPanel({ returns, isLoading, refreshData }: { returns: ReturnForDelivery[], isLoading: boolean, refreshData: () => void }) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const handleStatusChange = async (returnId: string, status: ReturnStatus) => {

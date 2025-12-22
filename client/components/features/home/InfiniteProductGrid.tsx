@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/shared/ProductCard";
 import { Product, CartItem, ProductWithSupplier } from "@/types";
-import { LayoutGridIcon, ArrowLeft, Loader2 } from "lucide-react";
+import { WidgetLinear, AltArrowLeftLinear, RestartLinear } from "@solar-icons/react-perf";
 import { useRouter } from "next/navigation";
 
 interface InfiniteProductGridProps {
@@ -36,14 +36,14 @@ export default function InfiniteProductGrid({
       <div className="p-4">
         <div className="flex justify-between items-center mb-5 mt-2">
           <h2 className="text-md font-bold text-gray-800 flex items-center gap-2">
-            <LayoutGridIcon className="text-green-500" size={18} /> همه محصولات
+            <WidgetLinear className="text-green-500" size={18} /> همه محصولات
           </h2>
           <Button
             variant="ghost"
             className="text-green-600 text-xs hover:bg-green-50"
             onClick={() => router.push("/products")}
           >
-            مشاهده لیست کامل <ArrowLeft className="mr-1 h-3 w-3" />
+            مشاهده لیست کامل <AltArrowLeftLinear className="mr-1 h-3 w-3" />
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -62,7 +62,7 @@ export default function InfiniteProductGrid({
         </div>
         {isLoadingMore && (
           <div className="py-8 flex justify-center">
-            <Loader2 className="animate-spin text-green-500 w-8 h-8" />
+            <RestartLinear className="animate-spin text-green-500 w-8 h-8" />
           </div>
         )}
         {!hasMore && products.length > 0 && (

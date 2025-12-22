@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { SlidersHorizontal, Filter, Tag, Check } from 'lucide-react';
+import { FilterLinear, TagLinear, CheckCircleLinear as Check } from '@solar-icons/react-perf';
 import type { Category, Supplier } from '@/types';
 
 interface FilterSheetProps {
@@ -41,7 +41,7 @@ export const FilterSheet = memo(function FilterSheet({
           className="h-11 px-3 rounded-xl border-gray-200 bg-white hover:bg-gray-50 relative"
           aria-label="فیلتر محصولات"
         >
-          <SlidersHorizontal size={20} className="text-gray-600" />
+          <FilterLinear size={20} className="text-gray-600" />
           {activeFiltersCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
               {activeFiltersCount}
@@ -54,7 +54,7 @@ export const FilterSheet = memo(function FilterSheet({
         <SheetHeader className="p-5 border-b sticky top-0 bg-white z-10">
           <div className="flex justify-between items-center">
             <SheetTitle className="text-right flex items-center gap-2 text-gray-800">
-              <Filter size={18} /> فیلتر محصولات
+              <FilterLinear size={18} /> فیلتر محصولات
             </SheetTitle>
             {activeFiltersCount > 0 && (
               <Button
@@ -72,7 +72,7 @@ export const FilterSheet = memo(function FilterSheet({
         <div className="p-5 space-y-6">
           <div>
             <h3 className="font-bold text-sm mb-3 text-gray-700 flex items-center gap-2">
-              <Tag size={16} /> دسته‌بندی
+              <TagLinear size={16} /> دسته‌بندی
             </h3>
             <div className="flex flex-wrap gap-2">
               <CategoryBadge
@@ -138,9 +138,8 @@ const CategoryBadge = memo(function CategoryBadge({
   return (
     <Badge
       variant={isSelected ? 'default' : 'outline'}
-      className={`cursor-pointer h-9 px-4 rounded-lg transition-all ${
-        isSelected ? 'bg-green-500 hover:bg-green-600' : 'hover:bg-gray-100'
-      }`}
+      className={`cursor-pointer h-9 px-4 rounded-lg transition-all ${isSelected ? 'bg-green-500 hover:bg-green-600' : 'hover:bg-gray-100'
+        }`}
       onClick={onClick}
     >
       {label}
@@ -159,11 +158,10 @@ const SupplierItem = memo(function SupplierItem({
 }) {
   return (
     <div
-      className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
-        isSelected
-          ? 'border-green-500 bg-green-50 text-green-700'
-          : 'border-gray-200 hover:border-gray-300'
-      }`}
+      className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${isSelected
+        ? 'border-green-500 bg-green-50 text-green-700'
+        : 'border-gray-200 hover:border-gray-300'
+        }`}
       onClick={onClick}
     >
       <span className="text-sm truncate">{label}</span>

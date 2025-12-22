@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react';
+import { AltArrowLeftLinear, AltArrowRightLinear, MagniferLinear, FilterLinear } from "@solar-icons/react-perf";
 import { EnhancedCard, EnhancedCardContent } from '@/components/ui/enhanced-card';
 import { Shimmer } from '@/components/ui/shimmer-effect';
 
@@ -60,7 +60,7 @@ export default function DataTable<T extends Record<string, any>>({
                 <div className="flex flex-col md:flex-row gap-4 justify-between">
                     {searchable && (
                         <div className="relative flex-1 max-w-md">
-                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 h-5 w-5" />
+                            <MagniferLinear className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 h-5 w-5" />
                             <Input
                                 value={searchTerm}
                                 onChange={(e) => handleSearch(e.target.value)}
@@ -89,7 +89,7 @@ export default function DataTable<T extends Record<string, any>>({
                                         <TableHead
                                             key={column.key}
                                             className={`font-bold text-zinc-700 ${column.align === 'center' ? 'text-center' :
-                                                    column.align === 'left' ? 'text-left' : 'text-right'
+                                                column.align === 'left' ? 'text-left' : 'text-right'
                                                 }`}
                                             style={{ width: column.width }}
                                         >
@@ -119,7 +119,7 @@ export default function DataTable<T extends Record<string, any>>({
                                             className="h-32 text-center"
                                         >
                                             <div className="flex flex-col items-center gap-2 text-zinc-400">
-                                                <SlidersHorizontal className="h-12 w-12" />
+                                                <FilterLinear className="h-12 w-12" />
                                                 <p className="text-sm font-medium">{emptyMessage}</p>
                                             </div>
                                         </TableCell>
@@ -165,7 +165,7 @@ export default function DataTable<T extends Record<string, any>>({
                         disabled={pagination.currentPage === 1}
                         className="gap-1"
                     >
-                        <ChevronRight size={16} />
+                        <AltArrowRightLinear size={16} />
                         قبلی
                     </Button>
 
@@ -181,7 +181,7 @@ export default function DataTable<T extends Record<string, any>>({
                         className="gap-1"
                     >
                         بعدی
-                        <ChevronLeft size={16} />
+                        <AltArrowLeftLinear size={16} />
                     </Button>
                 </div>
             )}

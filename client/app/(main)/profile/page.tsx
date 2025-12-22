@@ -4,7 +4,7 @@ import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Phone, Wallet, History, ChevronLeft, Store, MapPin, ArrowRight, MessageSquare } from "lucide-react";
+import { UserLinear, LogoutLinear, PhoneLinear, WalletLinear, HistoryLinear, AltArrowLeftLinear, ShopLinear, MapPointLinear, AltArrowRightLinear, ChatDotsLinear } from "@solar-icons/react-perf";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,13 +30,13 @@ export default function ProfilePage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    const [formData, setFormData] = useState({ 
-        name: "", 
-        shopName: "", 
-        shopAddress: "", 
-        landline: "", 
-        latitude: null as number | null, 
-        longitude: null as number | null 
+    const [formData, setFormData] = useState({
+        name: "",
+        shopName: "",
+        shopAddress: "",
+        landline: "",
+        latitude: null as number | null,
+        longitude: null as number | null
     });
 
     useEffect(() => {
@@ -68,10 +68,10 @@ export default function ProfilePage() {
             setUser(res.data);
             setSuccess("اطلاعات با موفقیت به‌روز شد.");
             setTimeout(() => setCurrentView('DASHBOARD'), 1500);
-        } catch (error) { 
-            setError(getErrorMessage(error, "خطا در ذخیره اطلاعات")); 
-        } finally { 
-            setIsLoading(false); 
+        } catch (error) {
+            setError(getErrorMessage(error, "خطا در ذخیره اطلاعات"));
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -85,7 +85,7 @@ export default function ProfilePage() {
             <div className="pb-20 min-h-screen bg-white">
                 <header className="sticky top-0 bg-white/80 backdrop-blur-md z-20 p-4 border-b flex items-center gap-3">
                     <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => setCurrentView('DASHBOARD')}>
-                        <ArrowRight className="h-6 w-6 text-gray-700" />
+                        <AltArrowRightLinear className="h-6 w-6 text-gray-700" />
                     </Button>
                     <h1 className="text-md font-bold text-gray-800">ویرایش اطلاعات</h1>
                 </header>
@@ -110,14 +110,14 @@ export default function ProfilePage() {
                             <Label htmlFor="shopAddress" className="text-gray-600">آدرس دقیق</Label>
                             <Textarea id="shopAddress" name="shopAddress" value={formData.shopAddress || ''} onChange={handleInfoChange} className="min-h-[100px] rounded-xl bg-gray-50 border-gray-200 focus:bg-white" />
                         </div>
-                        
+
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-gray-600"><MapPin size={16}/> موقعیت روی نقشه</Label>
+                            <Label className="flex items-center gap-2 text-gray-600"><MapPointLinear size={16} /> موقعیت روی نقشه</Label>
                             <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
                                 <MapPicker onLocationChange={handleLocationChange} initialPosition={initialMapPosition} />
                             </div>
                         </div>
-                        
+
                         <div className="pt-4">
                             <Button type="submit" className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white text-md shadow-lg shadow-green-200" disabled={isLoading}>
                                 {isLoading ? "در حال ذخیره..." : "ذخیره تغییرات"}
@@ -135,14 +135,14 @@ export default function ProfilePage() {
         <div className="pb-24 min-h-screen bg-gray-50">
             {/* Header Card */}
             <div className="bg-gradient-to-br from-green-600 to-green-800 text-white pt-8 pb-16 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
-                    <div className="flex items-center gap-4 relative z-10">
+                <div className="flex items-center gap-4 relative z-10">
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30">
-                            <User className="w-8 h-8 text-white" />
+                        <UserLinear className="w-8 h-8 text-white" />
                     </div>
                     <div>
                         <h1 className="text-lg font-bold">{user.name || "کاربر جدید"}</h1>
                         <p className="text-green-100 text-sm mt-1 flex items-center gap-1 opacity-90">
-                            <Phone className="w-3 h-3" />
+                            <PhoneLinear className="w-3 h-3" />
                             {toPersianDigits(Number(user.phone))}
                         </p>
                     </div>
@@ -155,7 +155,7 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2 text-gray-700">
                             <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                                <Wallet className="w-5 h-5" />
+                                <WalletLinear className="w-5 h-5" />
                             </div>
                             <span className="font-bold text-sm">کیف پول</span>
                         </div>
@@ -176,33 +176,33 @@ export default function ProfilePage() {
             <div className="px-4 space-y-3">
                 <button onClick={() => setCurrentView('EDIT_INFO')} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group active:scale-95 transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-blue-50 text-blue-600"><Store className="w-5 h-5" /></div>
+                        <div className="p-2 rounded-xl bg-blue-50 text-blue-600"><ShopLinear className="w-5 h-5" /></div>
                         <span className="text-sm font-medium text-gray-700">ویرایش اطلاعات فروشگاه</span>
                     </div>
-                    <ChevronLeft className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                    <AltArrowLeftLinear className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
                 </button>
 
                 <button className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group active:scale-95 transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-orange-50 text-orange-600"><History className="w-5 h-5" /></div>
+                        <div className="p-2 rounded-xl bg-orange-50 text-orange-600"><HistoryLinear className="w-5 h-5" /></div>
                         <span className="text-sm font-medium text-gray-700">تاریخچه تراکنش‌ها</span>
                     </div>
-                    <ChevronLeft className="w-5 h-5 text-gray-300 group-hover:text-orange-500 transition-colors" />
+                    <AltArrowLeftLinear className="w-5 h-5 text-gray-300 group-hover:text-orange-500 transition-colors" />
                 </button>
 
                 <button onClick={() => router.push('/chat')} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group active:scale-95 transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-green-50 text-green-600"><MessageSquare className="w-5 h-5" /></div>
+                        <div className="p-2 rounded-xl bg-green-50 text-green-600"><ChatDotsLinear className="w-5 h-5" /></div>
                         <span className="text-sm font-medium text-gray-700">پشتیبانی آنلاین</span>
                     </div>
-                    <ChevronLeft className="w-5 h-5 text-gray-300 group-hover:text-green-500 transition-colors" />
+                    <AltArrowLeftLinear className="w-5 h-5 text-gray-300 group-hover:text-green-500 transition-colors" />
                 </button>
 
                 <button onClick={logout} className="w-full bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center justify-center gap-2 text-red-600 mt-6 hover:bg-red-100 transition-colors">
-                    <LogOut className="w-5 h-5" />
+                    <LogoutLinear className="w-5 h-5" />
                     <span className="font-bold text-sm">خروج از حساب</span>
                 </button>
-                
+
                 <div className="text-center pt-6 text-gray-400 text-xs">
                     Behar Naron App v1.0.0
                 </div>

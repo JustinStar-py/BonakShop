@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Send, XCircle, ArrowRight } from "lucide-react";
+import { PlainLinear, CloseCircleLinear, AltArrowRightLinear } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import apiClient from "@/lib/apiClient";
@@ -123,7 +123,7 @@ export default function ChatWindow({
                 <div className="flex items-center gap-2">
                     {!isAdminView && onBack && (
                         <Button variant="ghost" size="icon" onClick={onBack} className="text-gray-600 hover:bg-gray-100">
-                            <ArrowRight size={20} />
+                            <AltArrowRightLinear size={20} />
                         </Button>
                     )}
 
@@ -147,7 +147,7 @@ export default function ChatWindow({
                         onClick={handleCloseSession}
                         className="text-red-500 hover:text-red-600 hover:bg-red-50"
                     >
-                        <XCircle size={18} className="ml-1" /> پایان گفتگو
+                        <CloseCircleLinear size={18} className="ml-1" /> پایان گفتگو
                     </Button>
                 )}
             </div>
@@ -215,7 +215,7 @@ export default function ChatWindow({
                         disabled={sending || !input.trim()}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                        <Send size={18} className={cn(sending && "animate-pulse")} />
+                        <PlainLinear size={18} className={cn(sending && "animate-pulse")} />
                     </Button>
                 </div>
             ) : (

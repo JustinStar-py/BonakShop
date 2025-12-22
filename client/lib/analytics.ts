@@ -2,6 +2,7 @@
 // DESCRIPTION: Analytics and demand forecasting utilities
 
 import prisma from '@/lib/prisma';
+import { mapWithConcurrency } from './concurrency';
 
 interface SalesData {
     date: Date;
@@ -18,6 +19,72 @@ interface DemandForecast {
     daysOfStockRemaining: number;
     recommendedReorder: number;
     urgency: 'low' | 'medium' | 'high' | 'critical';
+}
+
+function toUtcDateKey(date: Date): string {
+    return date.toISOString().slice(0, 10);
+}
+
+function getUtcStartOfDay(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function getRecentUtcDateKeys(days: number, now: Date = new Date()): string[] {
+    const end = getUtcStartOfDay(now);
+    const keys: string[] = [];
+
+    for (let offset = days - 1; offset >= 0; offset--) {
+        const d = new Date(end);
+        d.setUTCDate(end.getUTCDate() - offset);
+        keys.push(toUtcDateKey(d));
+    }
+
+    return keys;
+}
+
+function buildQuantityMap(history: SalesData[]): Map<string, number> {
+    const map = new Map<string, number>();
+    for (const day of history) {
+        map.set(toUtcDateKey(day.date), day.quantity);
+    }
+    return map;
+}
+
+function forecastDemandFromHistory(
+    history: SalesData[],
+    historyDays: number,
+    daysAhead: number
+): number {
+    if (historyDays <= 0 || daysAhead <= 0) return 0;
+
+    const quantityByDay = buildQuantityMap(history);
+    const series = getRecentUtcDateKeys(historyDays).map((key) => quantityByDay.get(key) ?? 0);
+
+    const totalQuantity = series.reduce((sum, q) => sum + q, 0);
+    const averageDailySales = totalQuantity / historyDays;
+
+    // Simple exponential smoothing
+    const alpha = 0.3; // Smoothing factor
+    let forecast = averageDailySales;
+
+    for (const quantity of series) {
+        forecast = alpha * quantity + (1 - alpha) * forecast;
+    }
+
+    // Trend: compare first vs last week in the window (treat missing days as 0)
+    const week = Math.min(7, series.length);
+    const older = series.slice(0, week);
+    const recent = series.slice(series.length - week);
+
+    const olderAvg = older.reduce((sum, q) => sum + q, 0) / week;
+    const recentAvg = recent.reduce((sum, q) => sum + q, 0) / week;
+
+    if (olderAvg > 0) {
+        const trend = (recentAvg - olderAvg) / olderAvg;
+        forecast = forecast * (1 + trend * 0.3); // dampening
+    }
+
+    return Math.max(0, Math.ceil(forecast * daysAhead));
 }
 
 /**
@@ -38,6 +105,11 @@ export async function getProductSalesHistory(
                 status: { in: ['DELIVERED', 'SHIPPED'] }
             }
         },
+        orderBy: {
+            order: {
+                createdAt: 'asc'
+            }
+        },
         include: {
             order: {
                 select: { createdAt: true }
@@ -49,7 +121,7 @@ export async function getProductSalesHistory(
     const dailySales = new Map<string, { quantity: number; revenue: number }>();
 
     sales.forEach(item => {
-        const dateKey = item.order.createdAt.toISOString().split('T')[0];
+        const dateKey = toUtcDateKey(item.order.createdAt);
         const existing = dailySales.get(dateKey) || { quantity: 0, revenue: 0 };
 
         dailySales.set(dateKey, {
@@ -58,11 +130,13 @@ export async function getProductSalesHistory(
         });
     });
 
-    return Array.from(dailySales.entries()).map(([dateStr, data]) => ({
-        date: new Date(dateStr),
-        quantity: data.quantity,
-        revenue: data.revenue
-    }));
+    return Array.from(dailySales.entries())
+        .map(([dateStr, data]) => ({
+            date: new Date(dateStr),
+            quantity: data.quantity,
+            revenue: data.revenue
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
 /**
@@ -72,39 +146,10 @@ export async function forecastProductDemand(
     productId: string,
     daysAhead: number = 7
 ): Promise<number> {
-    const salesHistory = await getProductSalesHistory(productId, 90);
-
-    if (salesHistory.length === 0) {
-        return 0;
-    }
-
-    // Calculate average daily sales
-    const totalQuantity = salesHistory.reduce((sum, day) => sum + day.quantity, 0);
-    const averageDailySales = totalQuantity / salesHistory.length;
-
-    // Simple exponential smoothing
-    const alpha = 0.3; // Smoothing factor
-    let forecast = averageDailySales;
-
-    salesHistory.forEach(day => {
-        forecast = alpha * day.quantity + (1 - alpha) * forecast;
-    });
-
-    // Apply trend if present
-    const recentSales = salesHistory.slice(-7);
-    const olderSales = salesHistory.slice(0, 7);
-
-    if (recentSales.length > 0 && olderSales.length > 0) {
-        const recentAvg = recentSales.reduce((sum, d) => sum + d.quantity, 0) / recentSales.length;
-        const olderAvg = olderSales.reduce((sum, d) => sum + d.quantity, 0) / olderSales.length;
-        const trend = (recentAvg - olderAvg) / olderAvg;
-
-        // Apply trend with dampening
-        forecast = forecast * (1 + trend * 0.3);
-    }
-
-    // Multiply by days ahead
-    return Math.ceil(forecast * daysAhead);
+    const historyDays = 90;
+    const salesHistory = await getProductSalesHistory(productId, historyDays);
+    if (salesHistory.length === 0) return 0;
+    return forecastDemandFromHistory(salesHistory, historyDays, daysAhead);
 }
 
 /**
@@ -122,20 +167,23 @@ export async function getInventoryRecommendations(): Promise<DemandForecast[]> {
         }
     });
 
-    const recommendations: DemandForecast[] = [];
+    const historyDays = 90;
+    const averageDays = 30;
+    const daysAhead = 7;
 
-    for (const product of products) {
-        const salesHistory = await getProductSalesHistory(product.id, 30);
+    const computed = await mapWithConcurrency(products, 5, async (product) => {
+        const history = await getProductSalesHistory(product.id, historyDays);
+        if (history.length === 0) return null;
 
-        if (salesHistory.length === 0) continue;
+        const quantityByDay = buildQuantityMap(history);
+        const last30 = getRecentUtcDateKeys(averageDays).reduce(
+            (sum, key) => sum + (quantityByDay.get(key) ?? 0),
+            0
+        );
+        const averageDailySales = last30 / averageDays;
+        const forecastedDemand = forecastDemandFromHistory(history, historyDays, daysAhead);
 
-        const totalSales = salesHistory.reduce((sum, day) => sum + day.quantity, 0);
-        const averageDailySales = totalSales / salesHistory.length;
-        const forecastedDemand = await forecastProductDemand(product.id, 7);
-
-        const daysOfStock = averageDailySales > 0
-            ? product.stock / averageDailySales
-            : 999;
+        const daysOfStock = averageDailySales > 0 ? product.stock / averageDailySales : 999;
 
         let urgency: 'low' | 'medium' | 'high' | 'critical' = 'low';
         if (daysOfStock < 3) urgency = 'critical';
@@ -145,7 +193,7 @@ export async function getInventoryRecommendations(): Promise<DemandForecast[]> {
         const recommendedReorder = Math.max(0, forecastedDemand - product.stock);
 
         if (daysOfStock < 14 || recommendedReorder > 0) {
-            recommendations.push({
+            return {
                 productId: product.id,
                 productName: product.name,
                 currentStock: product.stock,
@@ -154,9 +202,13 @@ export async function getInventoryRecommendations(): Promise<DemandForecast[]> {
                 daysOfStockRemaining: Math.round(daysOfStock),
                 recommendedReorder,
                 urgency
-            });
+            } satisfies DemandForecast;
         }
-    }
+
+        return null;
+    });
+
+    const recommendations = computed.filter((r): r is DemandForecast => r !== null);
 
     return recommendations.sort((a, b) => {
         const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -200,12 +252,25 @@ export async function calculateRFMSegments(): Promise<RFMSegment[]> {
     });
 
     const now = new Date();
-    const rfmData = users.map(user => {
+
+    type RfmRaw = {
+        userId: string;
+        userName: string | null;
+        shopName: string | null;
+        recency: number;
+        frequency: number;
+        monetary: number;
+        lastOrderDate: Date;
+    };
+
+    const rfmData: RfmRaw[] = users.map((user) => {
         if (user.orders.length === 0) {
             return null;
         }
 
-        const lastOrder = user.orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+        const lastOrder = user.orders.reduce((latest, current) => {
+            return current.createdAt.getTime() > latest.createdAt.getTime() ? current : latest;
+        });
         const recency = Math.floor((now.getTime() - lastOrder.createdAt.getTime()) / (1000 * 60 * 60 * 24));
         const frequency = user.orders.length;
         const monetary = user.orders.reduce((sum, o) => sum + o.totalPrice, 0);
@@ -219,7 +284,7 @@ export async function calculateRFMSegments(): Promise<RFMSegment[]> {
             monetary,
             lastOrderDate: lastOrder.createdAt
         };
-    }).filter(Boolean) as any[];
+    }).filter((d): d is RfmRaw => d !== null);
 
     if (rfmData.length === 0) {
         return [];
@@ -230,17 +295,28 @@ export async function calculateRFMSegments(): Promise<RFMSegment[]> {
     const frequencies = rfmData.map(d => d.frequency).sort((a, b) => a - b);
     const monetaries = rfmData.map(d => d.monetary).sort((a, b) => a - b);
 
-    const getQuintile = (value: number, arr: number[], inverse: boolean = false) => {
-        const index = arr.findIndex(v => v >= value);
-        const percentile = index / arr.length;
-        const score = Math.ceil(percentile * 5);
+    const getQuintileThresholds = (arr: number[]) => {
+        const n = arr.length;
+        const at = (p: number) => arr[Math.floor(p * (n - 1))];
+        return [at(0.2), at(0.4), at(0.6), at(0.8)] as const;
+    };
+
+    const getQuintileScore = (value: number, thresholds: readonly number[], inverse = false) => {
+        let score = 1;
+        for (const t of thresholds) {
+            if (value > t) score += 1;
+        }
         return inverse ? 6 - score : score;
     };
 
+    const recencyThresholds = getQuintileThresholds(recencies);
+    const frequencyThresholds = getQuintileThresholds(frequencies);
+    const monetaryThresholds = getQuintileThresholds(monetaries);
+
     const segments = rfmData.map(data => {
-        const recencyScore = getQuintile(data.recency, recencies, true); // Lower is better
-        const frequencyScore = getQuintile(data.frequency, frequencies);
-        const monetaryScore = getQuintile(data.monetary, monetaries);
+        const recencyScore = getQuintileScore(data.recency, recencyThresholds, true); // Lower is better
+        const frequencyScore = getQuintileScore(data.frequency, frequencyThresholds);
+        const monetaryScore = getQuintileScore(data.monetary, monetaryThresholds);
         const totalScore = recencyScore + frequencyScore + monetaryScore;
 
         let segment = 'Lost';

@@ -8,6 +8,7 @@ import type {
     ZarinpalVerifyResponse,
     ZarinpalErrorCode,
 } from '@/types/zarinpal';
+import { logger } from '@/lib/logger';
 
 // Zarinpal API endpoints configuration
 // Use ZARINPAL_ENV to explicitly control which environment to use
@@ -38,8 +39,8 @@ const ZARINPAL_PAYMENT_URL = ZARINPAL_ENV === 'production'
 
 // Log which environment is being used (helpful for debugging)
 if (typeof window === 'undefined') { // Server-side only
-    console.log(`🔧 [Zarinpal] Environment: ${ZARINPAL_ENV.toUpperCase()}`);
-    console.log(`🔗 [Zarinpal] Request URL: ${ZARINPAL_REQUEST_URL}`);
+    logger.info(`Zarinpal Environment: ${ZARINPAL_ENV.toUpperCase()}`);
+    logger.debug(`Zarinpal Request URL: ${ZARINPAL_REQUEST_URL}`);
 }
 
 /**
@@ -67,8 +68,8 @@ export async function createPaymentRequest(
     };
 
     try {
-        console.log('🔵 [Zarinpal] Payment Request Started');
-        console.log('📤 Request Body:', JSON.stringify(requestBody, null, 2));
+        logger.info('Zarinpal Payment Request Started');
+        logger.debug('Payment Request Body', logger.redact(requestBody as unknown as Record<string, unknown>, ['merchant_id', 'amount']));
 
         const response = await fetch(ZARINPAL_REQUEST_URL, {
             method: 'POST',
@@ -79,31 +80,29 @@ export async function createPaymentRequest(
             body: JSON.stringify(requestBody),
         });
 
-        console.log('📊 HTTP Status:', response.status, response.statusText);
+        logger.debug(`Payment Request HTTP Status: ${response.status}`);
 
         const data: ZarinpalPaymentResponse = await response.json();
-        console.log('📥 Response Data:', JSON.stringify(data, null, 2));
+        logger.debug('Payment Response Data', { code: data.data?.code, hasAuthority: !!data.data?.authority });
 
         // Check for successful response
         if (data.data && data.data.code === 100) {
             const authority = data.data.authority;
             const redirectUrl = `${ZARINPAL_PAYMENT_URL}${authority}`;
 
-            console.log('✅ [Zarinpal] Payment Request Success');
-            console.log('🔑 Authority:', authority);
-            console.log('🔗 Redirect URL:', redirectUrl);
+            logger.info('Zarinpal Payment Request Success');
+            logger.debug('Authority received', { authorityLength: authority?.length });
 
             return { authority, redirectUrl };
         }
 
         // Handle Zarinpal errors
         const errorMsg = `Zarinpal payment request failed: ${data.data?.message || 'Unknown error'} (Code: ${data.data?.code})`;
-        console.error('❌ [Zarinpal] Payment Request Failed:', errorMsg);
-        console.error('📋 Full Error Response:', JSON.stringify(data, null, 2));
+        logger.error('Zarinpal Payment Request Failed', errorMsg);
 
         throw new Error(errorMsg);
     } catch (error) {
-        console.error('💥 [Zarinpal] Exception during payment request:', error);
+        logger.error('Exception during Zarinpal payment request', error);
         throw error;
     }
 }
@@ -129,8 +128,8 @@ export async function verifyPayment(
     };
 
     try {
-        console.log('🔵 [Zarinpal] Payment Verification Started');
-        console.log('📤 Verify Request:', JSON.stringify(requestBody, null, 2));
+        logger.info('Zarinpal Payment Verification Started');
+        logger.debug('Verification Request', logger.redact(requestBody as unknown as Record<string, unknown>, ['merchant_id', 'amount', 'authority']));
 
         const response = await fetch(ZARINPAL_VERIFY_URL, {
             method: 'POST',
@@ -141,16 +140,15 @@ export async function verifyPayment(
             body: JSON.stringify(requestBody),
         });
 
-        console.log('📊 Verify HTTP Status:', response.status, response.statusText);
+        logger.debug(`Verification HTTP Status: ${response.status}`);
 
         const data: ZarinpalVerifyResponse = await response.json();
-        console.log('📥 Verify Response:', JSON.stringify(data, null, 2));
+        logger.debug('Verification Response', { code: data.data?.code, hasRefId: !!data.data?.ref_id });
 
         // Check for successful verification (100 = success, 101 = already verified)
         if (data.data && (data.data.code === 100 || data.data.code === 101)) {
-            console.log('✅ [Zarinpal] Verification Success');
-            console.log('🎫 Ref ID:', data.data.ref_id);
-            console.log('💳 Card PAN:', data.data.card_pan);
+            logger.info('Zarinpal Verification Success');
+            logger.debug('Payment verified', { code: data.data.code, hasRefId: !!data.data.ref_id });
 
             return {
                 refId: data.data.ref_id,
@@ -160,12 +158,11 @@ export async function verifyPayment(
 
         // Handle verification errors
         const errorMsg = `Zarinpal verification failed: ${data.data?.message || 'Unknown error'} (Code: ${data.data?.code})`;
-        console.error('❌ [Zarinpal] Verification Failed:', errorMsg);
-        console.error('📋 Full Verify Error:', JSON.stringify(data, null, 2));
+        logger.error('Zarinpal Verification Failed', errorMsg);
 
         throw new Error(errorMsg);
     } catch (error) {
-        console.error('💥 [Zarinpal] Exception during verification:', error);
+        logger.error('Exception during Zarinpal verification', error);
         throw error;
     }
 }

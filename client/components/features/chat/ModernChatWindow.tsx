@@ -4,7 +4,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, Smile, MoreVertical, ArrowRight, Check, CheckCheck, Image as ImageIcon } from 'lucide-react';
+import { PlainLinear, LinkLinear, EmojiFunnyCircleLinear, MenuDotsLinear, AltArrowRightLinear, CheckCircleLinear, GalleryLinear } from '@solar-icons/react-perf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import apiClient from '@/lib/apiClient';
@@ -133,7 +133,7 @@ export default function ModernChatWindow({
                             onClick={onBack}
                             className="text-white hover:bg-white/20"
                         >
-                            <ArrowRight size={20} />
+                            <AltArrowRightLinear size={20} />
                         </Button>
                     )}
 
@@ -166,7 +166,7 @@ export default function ModernChatWindow({
                         onClick={handleCloseSession}
                         className="text-white hover:bg-white/20"
                     >
-                        <MoreVertical size={20} />
+                        <MenuDotsLinear size={20} />
                     </Button>
                 )}
             </div>
@@ -231,9 +231,9 @@ export default function ModernChatWindow({
                                     </span>
                                     {isMine && (
                                         msg.read ? (
-                                            <CheckCheck size={14} className="text-blue-300" />
+                                            <CheckCircleLinear size={14} className="text-blue-300" />
                                         ) : (
-                                            <Check size={14} />
+                                            <CheckCircleLinear size={14} />
                                         )
                                     )}
                                 </div>
@@ -280,7 +280,7 @@ export default function ModernChatWindow({
                             size="icon"
                             className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100"
                         >
-                            <Smile size={22} />
+                            <EmojiFunnyCircleLinear size={22} />
                         </Button>
 
                         <Button
@@ -288,7 +288,7 @@ export default function ModernChatWindow({
                             size="icon"
                             className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100"
                         >
-                            <Paperclip size={22} />
+                            <LinkLinear size={22} />
                         </Button>
 
                         <Input
@@ -310,7 +310,7 @@ export default function ModernChatWindow({
                                     : 'bg-zinc-300 scale-90'
                             )}
                         >
-                            <Send size={18} className={cn(sending && 'animate-pulse')} />
+                            <PlainLinear size={18} className={cn(sending && 'animate-pulse')} />
                         </Button>
                     </div>
                 </div>

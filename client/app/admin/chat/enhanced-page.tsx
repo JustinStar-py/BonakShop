@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import ChatSessionsList from '@/components/features/chat/ChatSessionsList';
 import ModernChatWindow from '@/components/features/chat/ModernChatWindow';
-import { MessageSquare } from 'lucide-react';
+import { ChatDotsLinear as MessageSquare } from '@solar-icons/react-perf';
 import { useAppContext } from '@/context/AppContext';
 
 interface ChatSession {

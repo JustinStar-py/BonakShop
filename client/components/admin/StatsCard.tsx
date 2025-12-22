@@ -3,14 +3,14 @@
 
 'use client';
 
-import { LucideIcon } from 'lucide-react';
+import React from 'react';
 import { EnhancedCard, EnhancedCardContent, EnhancedCardHeader, EnhancedCardTitle } from '@/components/ui/enhanced-card';
 import { cn } from '@/lib/utils';
 
 interface StatsCardProps {
     title: string;
     value: string | number;
-    icon: LucideIcon;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
     trend?: {
         value: string;
         isPositive?: boolean;

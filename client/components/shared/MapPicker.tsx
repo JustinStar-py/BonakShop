@@ -3,7 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { Icon, LatLngTuple, Map } from 'leaflet';
 import { useEffect, useState, useRef } from 'react';
-import { LocateFixed, Loader2, MapPin } from 'lucide-react';
+import { GpsLinear, RestartLinear, MapPointLinear } from '@solar-icons/react-perf';
 import { Button } from '@/components/ui/button';
 
 // Import Leaflet CSS directly here to make the component self-contained
@@ -39,8 +39,8 @@ function MapEventsController({ setPosition, onLocationChange }: {
     return null;
 }
 
-export default function MapPicker({ 
-    onLocationChange, 
+export default function MapPicker({
+    onLocationChange,
     initialPosition,
     marker,
     readOnly = false,
@@ -70,21 +70,21 @@ export default function MapPicker({
                 onLocationChange?.(newPos[0], newPos[1]);
                 map.flyTo(newPos, 15, { duration: 1.5 });
                 setIsLocating(false);
-            }).on("locationerror", function(){
+            }).on("locationerror", function () {
                 alert("امکان دسترسی به موقعیت مکانی شما وجود ندارد. لطفاً GPS را روشن کنید.");
                 setIsLocating(false);
             });
         }
     };
-    
+
     // Default center: Tehran
     const mapCenter = readOnly && marker ? marker.position : (initialPosition || [35.7219, 51.3347]);
 
     return (
         <div className={`${height} w-full rounded-2xl overflow-hidden relative border border-gray-200 shadow-sm z-0`}>
-             <MapContainer 
-                center={mapCenter} 
-                zoom={13} 
+            <MapContainer
+                center={mapCenter}
+                zoom={13}
                 style={{ height: '100%', width: '100%' }}
                 ref={mapRef}
                 zoomControl={false} // We can add custom controls if needed, or keep default top-left
@@ -94,21 +94,21 @@ export default function MapPicker({
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                     subdomains="abcd"
                 />
-                
+
                 {readOnly && marker ? (
-                     <Marker position={marker.position} icon={DefaultIcon}>
-                         <Popup>{marker.popupText}</Popup>
-                     </Marker>
+                    <Marker position={marker.position} icon={DefaultIcon}>
+                        <Popup>{marker.popupText}</Popup>
+                    </Marker>
                 ) : (
                     <>
-                        <MapEventsController 
-                            setPosition={setMarkerPosition} 
-                            onLocationChange={onLocationChange} 
+                        <MapEventsController
+                            setPosition={setMarkerPosition}
+                            onLocationChange={onLocationChange}
                         />
                         {markerPosition && (
-                            <Marker 
-                                position={markerPosition} 
-                                icon={DefaultIcon} 
+                            <Marker
+                                position={markerPosition}
+                                icon={DefaultIcon}
                                 draggable={true}
                                 eventHandlers={{
                                     dragend: (e) => {
@@ -135,9 +135,9 @@ export default function MapPicker({
                     className="absolute bottom-4 right-4 z-[1000] rounded-full w-12 h-12 bg-white shadow-lg hover:bg-gray-50 text-green-600 border border-gray-100 transition-transform active:scale-95"
                 >
                     {isLocating ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <RestartLinear className="h-5 w-5 animate-spin" />
                     ) : (
-                        <LocateFixed className="h-6 w-6" />
+                        <GpsLinear className="h-6 w-6" />
                     )}
                 </Button>
             )}
@@ -145,7 +145,7 @@ export default function MapPicker({
             {/* Overlay Tip */}
             {!readOnly && !markerPosition && (
                 <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-sm text-xs font-bold text-gray-700 pointer-events-none z-[1000] flex items-center gap-2 border border-gray-100">
-                    <MapPin size={14} className="text-red-500 fill-red-500"/>
+                    <MapPointLinear size={18} className="text-red-500" />
                     موقعیت خود را روی نقشه انتخاب کنید
                 </div>
             )}

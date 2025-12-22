@@ -35,26 +35,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        let isMounted = true;
+
         const checkUserSession = async () => {
-            const token = localStorage.getItem('accessToken');
+            let token: string | null = null;
+            try {
+                token = localStorage.getItem('accessToken');
+            } catch (e) {
+                console.error("Failed to read access token.", e);
+            }
+
             if (!token) {
-                setIsLoadingUser(false);
+                if (isMounted) {
+                    setIsLoadingUser(false);
+                }
                 return;
             }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+
             try {
-                const response = await apiClient.get('/auth/user');
-                setUser(response.data.user);
+                const response = await apiClient.get('/auth/user', { signal: controller.signal });
+                if (isMounted) {
+                    setUser(response.data.user);
+                }
             } catch (e) {
                 console.error("Session check failed, logging out.", e);
-                setUser(null);
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
+                if (isMounted) {
+                    setUser(null);
+                }
+                try {
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                } catch (storageError) {
+                    console.error("Failed to clear tokens.", storageError);
+                }
             } finally {
-                setIsLoadingUser(false);
+                clearTimeout(timeoutId);
+                if (isMounted) {
+                    setIsLoadingUser(false);
+                }
             }
         };
 
         checkUserSession();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
 

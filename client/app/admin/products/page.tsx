@@ -14,14 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Pencil, PlusCircle, Trash2, Upload, Star, Search, ChevronLeft, ChevronRight, DollarSign, Percent } from "lucide-react";
+import { RestartLinear as Loader2, Pen2Linear as Pencil, AddCircleLinear as PlusCircle, TrashBinMinimalisticLinear as Trash2, UploadLinear as Upload, StarLinear as Star, MagniferLinear as Search, AltArrowLeftLinear as ChevronLeft, AltArrowRightLinear as ChevronRight, DollarLinear as DollarSign, TagLinear as Percent } from "@solar-icons/react-perf";
 import { Badge } from "@/components/ui/badge";
 import { formatToToman } from "@/utils/currencyFormatter";
-
-function formatPrice(price: number) {
-    const formatted = formatToToman(price);
-    return formatted || "۰ تومان";
-}
+import Image from "next/image";
 
 type ProductWithRelations = Product & { category: Category, supplier: Supplier, distributor: Distributor };
 type EntityType = 'category' | 'supplier' | 'distributor';
@@ -33,7 +29,7 @@ export default function ProductManagementPage() {
     const [distributors, setDistributors] = useState<Distributor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [totalProducts, setTotalProducts] = useState(0);
-    
+
     // Dialog states
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any | null>(null);
@@ -59,7 +55,7 @@ export default function ProductManagementPage() {
         // Prevent Radix Select from interpreting typed keys as typeahead selection
         e.stopPropagation();
     };
-    
+
     // Search, Filter, and Pagination states
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -75,12 +71,12 @@ export default function ProductManagementPage() {
 
     useEffect(() => {
         if (editingProduct) {
-            setPriceInToman(formatToToman(editingProduct.price));
-            setConsumerPriceInToman(formatToToman(editingProduct.consumerPrice));
+            setPriceInToman(formatToToman(editingProduct.price as number || 0));
+            setConsumerPriceInToman(formatToToman(editingProduct.consumerPrice as number || 0));
             setDiscountedPriceInToman(formatToToman(discountedPrice));
         }
     }, [editingProduct, discountedPrice]);
-    
+
     // Fetch function now handles pagination, search and status filter
     const fetchProducts = useCallback(async (
         page: number,
@@ -127,15 +123,15 @@ export default function ProductManagementPage() {
     useEffect(() => {
         fetchDropdownData();
     }, []);
-    
+
     useEffect(() => {
         fetchProducts(
             currentPage,
             debouncedSearchTerm,
             statusFilter,
-                categoryFilter || undefined,
-                supplierFilter || undefined,
-                distributorFilter || undefined
+            categoryFilter || undefined,
+            supplierFilter || undefined,
+            distributorFilter || undefined
         );
     }, [currentPage, debouncedSearchTerm, statusFilter, categoryFilter, supplierFilter, distributorFilter, fetchProducts]);
 
@@ -166,7 +162,7 @@ export default function ProductManagementPage() {
 
     const handleSelectChange = (field: EntityType, value: string) => {
         const addValueMap = { 'category': 'add-new-category', 'supplier': 'add-new-supplier', 'distributor': 'add-new-distributor' };
-        if (value === addValueMap[field]) { setAddEntity({ type: field, isOpen: true }); } 
+        if (value === addValueMap[field]) { setAddEntity({ type: field, isOpen: true }); }
         else { handleFormChange(`${field}Id`, value); }
     };
 
@@ -182,7 +178,7 @@ export default function ProductManagementPage() {
             await fetchDropdownData();
             handleFormChange(key, res.data.id);
             setAddEntity({ type: null, isOpen: false }); setNewEntityName("");
-        } catch (error) { alert(`خطا در افزودن آیتم جدید: ${error}`); } 
+        } catch (error) { alert(`خطا در افزودن آیتم جدید: ${error}`); }
         finally { setActionLoading(false); }
     };
 
@@ -194,7 +190,7 @@ export default function ProductManagementPage() {
         try {
             const res = await fetch(`https://api.imgbb.com/1/upload?key=4b2ba5e2eec4847988305b536b6f4a50`, { method: "POST", body: formData });
             const data = await res.json();
-            if (data.success) { handleFormChange('image', data.data.url); } 
+            if (data.success) { handleFormChange('image', data.data.url); }
             else { alert("آپلود عکس موفق نبود."); }
         } catch { alert("خطا در آپلود عکس"); }
         finally { setActionLoading(false); }
@@ -226,7 +222,7 @@ export default function ProductManagementPage() {
                 distributorFilter || undefined
             );
             setIsDialogOpen(false);
-        } catch (error) { alert(`خطا در ذخیره محصول: ${error}`); } 
+        } catch (error) { alert(`خطا در ذخیره محصول: ${error}`); }
         finally { setActionLoading(false); }
     };
 
@@ -237,7 +233,7 @@ export default function ProductManagementPage() {
             await apiClient.delete(`/products/${productId}`);
             await fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
             setDeleteDialog({ isOpen: false, productId: null, productName: null });
-        } catch (error) { alert(`خطا در حذف محصول: ${error}`); } 
+        } catch (error) { alert(`خطا در حذف محصول: ${error}`); }
         finally { setActionLoading(false); }
     };
 
@@ -307,9 +303,9 @@ export default function ProductManagementPage() {
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="relative flex-grow">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <Input 
-                        placeholder="جستجو در محصولات..." 
-                        className="pr-10" 
+                    <Input
+                        placeholder="جستجو در محصولات..."
+                        className="pr-10"
                         value={searchTerm}
                         onChange={(e) => {
                             setSearchTerm(e.target.value);
@@ -400,38 +396,46 @@ export default function ProductManagementPage() {
                     </SelectContent>
                 </Select>
             </div>
-            
+
             <Card>
                 <CardContent className="pt-6">
                     {isLoading ? (
-                         <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                        <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
                     ) : (
-                    <Table>
-                        <TableHeader><TableRow>
-                            <TableHead className="w-[60px] text-right">تصویر</TableHead>
-                            <TableHead className="text-right">نام محصول</TableHead>
-                            <TableHead className="text-right">موجودی</TableHead>
-                            <TableHead className="text-right">وضعیت</TableHead>
-                            <TableHead className="text-center w-[120px]">عملیات</TableHead>
-                        </TableRow></TableHeader>
-                        <TableBody>
-                        {products.map(p => (
-                            <TableRow key={p.id}>
-                                <TableCell className="text-right"><img src={p.image || "/placeholder.svg"} alt={p.name} className="h-12 w-12 rounded-md object-cover" /></TableCell>
-                                <TableCell className="font-medium text-right flex items-center gap-2">
-                                    {p.name}
-                                    {p.isFeatured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />}
-                                </TableCell>
-                                <TableCell className="text-right">{p.stock.toLocaleString('fa-IR')} {p.unit}</TableCell>
-                                <TableCell className="text-right"><Badge variant={p.available ? 'default' : 'destructive'}>{p.available ? "موجود" : "ناموجود"}</Badge></TableCell>
-                                <TableCell className="text-center"><div className="flex justify-center gap-2">
-                                    <Button size="sm" variant="outline" onClick={() => handleOpenDialog(p)}><Pencil className="h-4 w-4" /></Button>
-                                    <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({ isOpen: true, productId: p.id, productName: p.name })}><Trash2 className="h-4 w-4" /></Button>
-                                </div></TableCell>
-                            </TableRow>
-                        ))}
-                        </TableBody>
-                    </Table>
+                        <Table>
+                            <TableHeader><TableRow>
+                                <TableHead className="w-[60px] text-right">تصویر</TableHead>
+                                <TableHead className="text-right">نام محصول</TableHead>
+                                <TableHead className="text-right">موجودی</TableHead>
+                                <TableHead className="text-right">وضعیت</TableHead>
+                                <TableHead className="text-center w-[120px]">عملیات</TableHead>
+                            </TableRow></TableHeader>
+                            <TableBody>
+                                {products.map(p => (
+                                    <TableRow key={p.id}>
+                                        <TableCell className="text-right">
+                                            <Image
+                                                src={p.image || "/placeholder.svg"}
+                                                alt={p.name}
+                                                width={48}
+                                                height={48}
+                                                className="rounded-md object-cover"
+                                            />
+                                        </TableCell>
+                                        <TableCell className="font-medium text-right flex items-center gap-2">
+                                            {p.name}
+                                            {p.isFeatured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />}
+                                        </TableCell>
+                                        <TableCell className="text-right">{p.stock.toLocaleString('fa-IR')} {p.unit}</TableCell>
+                                        <TableCell className="text-right"><Badge variant={p.available ? 'default' : 'destructive'}>{p.available ? "موجود" : "ناموجود"}</Badge></TableCell>
+                                        <TableCell className="text-center"><div className="flex justify-center gap-2">
+                                            <Button size="sm" variant="outline" onClick={() => handleOpenDialog(p)}><Pencil className="h-4 w-4" /></Button>
+                                            <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({ isOpen: true, productId: p.id, productName: p.name })}><Trash2 className="h-4 w-4" /></Button>
+                                        </div></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     )}
                 </CardContent>
             </Card>
@@ -445,11 +449,11 @@ export default function ProductManagementPage() {
                         صفحه {currentPage.toLocaleString('fa-IR')} از {totalPages.toLocaleString('fa-IR')}
                     </span>
                     <Button variant="outline" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
-                       بعدی <ChevronLeft className="h-4 w-4" /> 
+                        بعدی <ChevronLeft className="h-4 w-4" />
                     </Button>
                 </div>
             )}
-            
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent dir="rtl" className="sm:max-w-lg">
                     <DialogHeader><DialogTitle>{editingProduct?.id ? 'ویرایش محصول' : 'افزودن محصول جدید'}</DialogTitle></DialogHeader>

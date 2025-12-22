@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from 'react';
-import { X } from 'lucide-react';
+import { CloseCircleLinear as X } from '@solar-icons/react-perf';
 import type { Category, Supplier } from '@/types';
 
 interface ActiveFiltersProps {

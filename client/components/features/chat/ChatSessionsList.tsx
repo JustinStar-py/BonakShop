@@ -4,7 +4,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageSquare, Clock, User, Search, Filter } from 'lucide-react';
+import { ChatDotsLinear as MessageSquare, ClockCircleLinear as Clock, UserLinear as User, MagniferLinear as Search, FilterLinear as Filter } from '@solar-icons/react-perf';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

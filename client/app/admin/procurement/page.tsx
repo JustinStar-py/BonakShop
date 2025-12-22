@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Filter, X } from "lucide-react";
+import { RestartLinear as Loader2, FilterLinear as Filter, CloseCircleLinear as X } from "@solar-icons/react-perf";
 
 // --- Type Definitions ---
 type ProductWithRelations = Product & { supplier: Supplier; distributor: Distributor };
@@ -43,7 +43,7 @@ export default function ProcurementPage() {
                     apiClient.get('/distributors'),
                     apiClient.get('/products?limit=1000') // Fetch all products for filter dropdown
                 ]);
-                
+
                 const allOrders: OrderForProcurement[] = ordersRes.data;
                 const distributors: Distributor[] = distributorsRes.data;
                 const allProductsForFilter: Product[] = productsRes.data.products;
@@ -70,7 +70,7 @@ export default function ProcurementPage() {
                         }
                     });
                 });
-                
+
                 const procurementList = Object.values(productDemand).map(({ product, details, neededDate }) => ({
                     ...product,
                     neededDate: neededDate,
@@ -79,10 +79,10 @@ export default function ProcurementPage() {
                 }));
 
                 setRawProcurementList(procurementList);
-            } catch (error) { 
-                console.error("Failed to calculate procurement list:", error); 
-            } finally { 
-                setIsLoading(false); 
+            } catch (error) {
+                console.error("Failed to calculate procurement list:", error);
+            } finally {
+                setIsLoading(false);
             }
         };
         calculateProcurement();
@@ -106,9 +106,9 @@ export default function ProcurementPage() {
         });
         return Object.entries(grouped);
     }, [rawProcurementList, filterDistributor, filterProduct, filterDate]);
-    
+
     const lastTenDates = useMemo(() => {
-        const dates = Array.from(new Set(rawProcurementList.map(item => item.neededDate))).sort((a,b) => new Date(a).getTime() - new Date(b).getTime());
+        const dates = Array.from(new Set(rawProcurementList.map(item => item.neededDate))).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
         return dates.slice(-10);
     }, [rawProcurementList]);
 
@@ -124,12 +124,12 @@ export default function ProcurementPage() {
             <h1 className="text-3xl font-bold">تدارکات و سفارش از پخش‌کننده‌ها</h1>
             <p className="text-muted-foreground">لیست هوشمند محصولات مورد نیاز برای ارسال‌های پیش رو.</p>
             <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5"/> فیلترها</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5" /> فیلترها</CardTitle></CardHeader>
                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-1.5"><Label>شرکت پخش</Label><Select value={filterDistributor} onValueChange={setFilterDistributor} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه شرکت‌ها</SelectItem>{allDistributors.map(d=> <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="space-y-1.5"><Label>محصول</Label><Select value={filterProduct} onValueChange={setFilterProduct} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه محصولات</SelectItem>{allProducts.map(p=> <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="space-y-1.5"><Label>تاریخ نیاز</Label><Select value={filterDate} onValueChange={setFilterDate} dir="rtl"><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه تاریخ‌ها</SelectItem>{lastTenDates.map(d => (<SelectItem key={d} value={d}>{new Date(d).toLocaleDateString('fa-IR')}</SelectItem>))}</SelectContent></Select></div>
-                    <div className="flex items-end"><Button variant="outline" onClick={() => { setFilterDistributor('all'); setFilterProduct('all'); setFilterDate('all'); }} className="w-full"><X className="ml-2 h-4 w-4"/>پاک کردن</Button></div>
+                    <div className="space-y-1.5"><Label>شرکت پخش</Label><Select value={filterDistributor} onValueChange={setFilterDistributor} dir="rtl"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">همه شرکت‌ها</SelectItem>{allDistributors.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="space-y-1.5"><Label>محصول</Label><Select value={filterProduct} onValueChange={setFilterProduct} dir="rtl"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">همه محصولات</SelectItem>{allProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="space-y-1.5"><Label>تاریخ نیاز</Label><Select value={filterDate} onValueChange={setFilterDate} dir="rtl"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">همه تاریخ‌ها</SelectItem>{lastTenDates.map(d => (<SelectItem key={d} value={d}>{new Date(d).toLocaleDateString('fa-IR')}</SelectItem>))}</SelectContent></Select></div>
+                    <div className="flex items-end"><Button variant="outline" onClick={() => { setFilterDistributor('all'); setFilterProduct('all'); setFilterDate('all'); }} className="w-full"><X className="ml-2 h-4 w-4" />پاک کردن</Button></div>
                 </CardContent>
             </Card>
             {filteredAndGroupedList.length === 0 ? (<Card><CardContent className="pt-6 text-center text-muted-foreground">موردی یافت نشد.</CardContent></Card>) : (filteredAndGroupedList.map(([distributorName, products]) => (<Card key={distributorName}><CardHeader><CardTitle>شرکت پخش: {distributorName}</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead className="text-right">تاریخ نیاز</TableHead><TableHead className="text-right">محصول</TableHead><TableHead className="text-right">تعداد</TableHead><TableHead className="text-center">عملیات</TableHead></TableRow></TableHeader><TableBody>{products.map(p => (<TableRow key={`${p.id}-${p.neededDate}`}><TableCell>{new Date(p.neededDate).toLocaleDateString('fa-IR')}</TableCell><TableCell>{p.name} <span className="text-muted-foreground text-xs">({p.supplier.name})</span></TableCell><TableCell>{p.neededQuantity.toLocaleString('fa-IR')} {p.unit}</TableCell><TableCell className="text-center"><Button variant="ghost" size="sm" onClick={() => handleOpenDetails(p)}>جزئیات</Button></TableCell></TableRow>))}</TableBody></Table></CardContent></Card>)))}

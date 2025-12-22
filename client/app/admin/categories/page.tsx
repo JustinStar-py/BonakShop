@@ -13,11 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Pencil, PlusCircle, Trash2, Upload, ArrowRightLeft, Search } from "lucide-react";
+import { RestartLinear as Loader2, Pen2Linear as Pencil, AddCircleLinear as PlusCircle, TrashBinMinimalisticLinear as Trash2, UploadLinear as Upload, TransferHorizontalLinear as ArrowRightLeft, MagniferLinear as Search } from "@solar-icons/react-perf";
 
 type CategoryForm = Pick<Category, "id" | "name" | "icon" | "image"> & {
-  icon?: string;
-  image?: string;
+    icon?: string;
+    image?: string;
 };
 
 export default function CategoryManagementPage() {
@@ -35,12 +35,12 @@ export default function CategoryManagementPage() {
         try {
             const res = await apiClient.get('/categories');
             setCategories(res.data);
-        } catch(e) { console.error(e); } 
+        } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
     };
     useEffect(() => { fetchCategories(); }, []);
 
-    const filteredCategories = categories.filter(c => 
+    const filteredCategories = categories.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -52,7 +52,7 @@ export default function CategoryManagementPage() {
     const handleFormChange = <K extends keyof CategoryForm>(field: K, value: CategoryForm[K]) => {
         setEditingCategory((prev) => (prev ? { ...prev, [field]: value } : prev));
     };
-    
+
     const handleImageUpload = async (file: File) => {
         if (!file) return;
         setActionLoading(true);
@@ -64,10 +64,10 @@ export default function CategoryManagementPage() {
             if (data.success) {
                 handleFormChange('image', data.data.url);
             } else { alert("آپلود عکس موفق نبود."); }
-        } catch { alert("خطا در آپلود عکس"); } 
+        } catch { alert("خطا در آپلود عکس"); }
         finally { setActionLoading(false); }
     };
-    
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!editingCategory) return;
@@ -86,10 +86,10 @@ export default function CategoryManagementPage() {
             await apiClient.request({ url, method, data: payload });
             await fetchCategories();
             setIsDialogOpen(false);
-        } catch (error) { alert(getErrorMessage(error, "خطا در ذخیره دسته‌بندی")); } 
+        } catch (error) { alert(getErrorMessage(error, "خطا در ذخیره دسته‌بندی")); }
         finally { setActionLoading(false); }
     };
-    
+
     const handleDelete = async (categoryId: string | null) => {
         if (!categoryId) return;
         setActionLoading(true);
@@ -97,7 +97,7 @@ export default function CategoryManagementPage() {
             await apiClient.delete(`/categories/${categoryId}`);
             await fetchCategories();
             setDeleteDialog({ isOpen: false, categoryId: null, categoryName: null });
-        } catch (error) { alert(getErrorMessage(error, "خطا در حذف دسته‌بندی")); } 
+        } catch (error) { alert(getErrorMessage(error, "خطا در حذف دسته‌بندی")); }
         finally { setActionLoading(false); }
     };
 
@@ -178,14 +178,14 @@ export default function CategoryManagementPage() {
                     </Table>
                 </CardContent>
             </Card>
-            
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent dir="rtl">
                     <DialogHeader><DialogTitle>{editingCategory?.id ? 'ویرایش' : 'افزودن'} دسته‌بندی</DialogTitle></DialogHeader>
                     {editingCategory && <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                        <div><Label>نام دسته‌بندی</Label><Input value={editingCategory.name} onChange={e => handleFormChange('name', e.target.value)} required/></div>
+                        <div><Label>نام دسته‌بندی</Label><Input value={editingCategory.name} onChange={e => handleFormChange('name', e.target.value)} required /></div>
                         <div><Label>آیکون (Emoji)</Label><Input value={editingCategory.icon || ""} onChange={e => handleFormChange('icon', e.target.value)} /></div>
-                        <div><Label>تصویر</Label><div className="flex items-center gap-2"><Input value={editingCategory.image || ''} onChange={e => handleFormChange('image', e.target.value)} placeholder="آدرس را وارد یا آپلود کنید"/><input type="file" accept="image/*" id="category-image-upload" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && handleImageUpload(e.target.files[0])}/><Button type="button" variant="outline" size="icon" onClick={() => document.getElementById('category-image-upload')?.click()} disabled={actionLoading}><Upload className="h-4 w-4"/></Button></div></div>
+                        <div><Label>تصویر</Label><div className="flex items-center gap-2"><Input value={editingCategory.image || ''} onChange={e => handleFormChange('image', e.target.value)} placeholder="آدرس را وارد یا آپلود کنید" /><input type="file" accept="image/*" id="category-image-upload" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && handleImageUpload(e.target.files[0])} /><Button type="button" variant="outline" size="icon" onClick={() => document.getElementById('category-image-upload')?.click()} disabled={actionLoading}><Upload className="h-4 w-4" /></Button></div></div>
                         <DialogFooter><Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>انصراف</Button><Button type="submit" disabled={actionLoading}>{actionLoading ? <Loader2 className="animate-spin" /> : "ذخیره"}</Button></DialogFooter>
                     </form>}
                 </DialogContent>

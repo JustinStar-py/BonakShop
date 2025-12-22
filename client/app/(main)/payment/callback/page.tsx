@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, XCircle, Loader2, ArrowRight, Receipt } from "lucide-react";
+import { CheckCircleLinear as CheckCircle2, CloseCircleLinear as XCircle, RestartLinear as Loader2, AltArrowRightLinear as ArrowRight, BillListLinear as Receipt } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";

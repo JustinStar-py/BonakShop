@@ -3,7 +3,7 @@
 
 'use client';
 
-import { ChevronLeft } from 'lucide-react';
+import { AltArrowLeftLinear } from '@solar-icons/react-perf';
 import { ReactNode } from 'react';
 
 interface PageHeaderProps {
@@ -37,7 +37,7 @@ export default function PageHeader({
                                 <span className="text-zinc-900 font-medium">{crumb.label}</span>
                             )}
                             {index < breadcrumbs.length - 1 && (
-                                <ChevronLeft size={14} className="text-zinc-400" />
+                                <AltArrowLeftLinear size={14} className="text-zinc-400" />
                             )}
                         </div>
                     ))}

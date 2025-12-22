@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Minus, Loader2 } from "lucide-react";
+import { AddCircleLinear, MinusCircleLinear, RestartLinear } from "@solar-icons/react-perf";
 
 type OrderWithItems = Order & { items: OrderItem[] };
 
@@ -57,7 +57,7 @@ export function ReturnRequestDialog({ order, onOpenChange, onSuccess }: ReturnRe
             alert("لطفا حداقل یک محصول برای مرجوعی انتخاب کنید.");
             return;
         }
-        
+
         setIsLoading(true);
         try {
             await apiClient.post('/returns', {
@@ -93,11 +93,11 @@ export function ReturnRequestDialog({ order, onOpenChange, onSuccess }: ReturnRe
                             </div>
                             <div className="flex items-center gap-2">
                                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(item.id, item.quantity, -1)}>
-                                    <Minus className="h-4 w-4" />
+                                    <MinusCircleLinear size={20} />
                                 </Button>
                                 <span className="w-8 text-center font-bold">{returnItems[item.id] || 0}</span>
                                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(item.id, item.quantity, 1)}>
-                                    <Plus className="h-4 w-4" />
+                                    <AddCircleLinear size={20} />
                                 </Button>
                             </div>
                         </div>
@@ -110,7 +110,7 @@ export function ReturnRequestDialog({ order, onOpenChange, onSuccess }: ReturnRe
                 <DialogFooter>
                     <Button variant="secondary" onClick={onOpenChange}>انصراف</Button>
                     <Button onClick={handleSubmitReturn} disabled={isLoading}>
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "ثبت درخواست"}
+                        {isLoading ? <RestartLinear size={18} className="animate-spin" /> : "ثبت درخواست"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -8,7 +8,7 @@ import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { useSimpleToast } from "@/components/ui/toast-notification";
 import Image from "next/image";
-import { Plus, Minus, Trash2, CalendarIcon, Loader2, StickyNote, ArrowRight, ShoppingCart, Wallet } from "lucide-react";
+import { AddCircleLinear as Plus, MinusCircleLinear as Minus, TrashBinMinimalisticLinear as Trash2, CalendarLinear as CalendarIcon, RestartLinear as Loader2, NotesLinear as StickyNote, AltArrowRightLinear as ArrowRight, CartLinear as ShoppingCart, WalletLinear as Wallet } from "@solar-icons/react-perf";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";

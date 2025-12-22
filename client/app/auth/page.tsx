@@ -7,7 +7,7 @@ import apiClient from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Phone, ArrowRight, ShieldCheck } from "lucide-react";
+import { RestartLinear as Loader2, PhoneLinear as Phone, AltArrowRightLinear as ArrowRight, VerifiedCheckLinear as ShieldCheck } from "@solar-icons/react-perf";
 import Image from "next/image";
 import { useSimpleToast } from "@/components/ui/toast-notification";
 

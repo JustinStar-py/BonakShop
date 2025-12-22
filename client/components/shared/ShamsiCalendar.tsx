@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AltArrowLeftLinear, AltArrowRightLinear } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toJalaali, toGregorian } from "jalaali-js";
@@ -24,18 +24,18 @@ type JalaaliDate = { jy: number; jm: number; jd: number };
 
 // --- FIX: A robust function to parse a 'YYYY-MM-DD' string into a Jalaali date ---
 function jalaaliFromDateString(dateString: string): JalaaliDate {
-    const [year, month, day] = dateString.split('-').map(Number);
-    // Convert Gregorian parts to Jalaali
-    return toJalaali(year, month, day);
+  const [year, month, day] = dateString.split('-').map(Number);
+  // Convert Gregorian parts to Jalaali
+  return toJalaali(year, month, day);
 }
 
 // --- FIX: Converts Jalaali date parts to a standard 'YYYY-MM-DD' string ---
 function dateStringToJalaali(jy: number, jm: number, jd: number): string {
-    const g = toGregorian(jy, jm, jd);
-    // Pad month and day with a leading zero if needed
-    const month = String(g.gm).padStart(2, '0');
-    const day = String(g.gd).padStart(2, '0');
-    return `${g.gy}-${month}-${day}`;
+  const g = toGregorian(jy, jm, jd);
+  // Pad month and day with a leading zero if needed
+  const month = String(g.gm).padStart(2, '0');
+  const day = String(g.gd).padStart(2, '0');
+  return `${g.gy}-${month}-${day}`;
 }
 
 function getDaysInPersianMonth(year: number, month: number): number {
@@ -70,10 +70,10 @@ export function ShamsiCalendar({ onSelectDate, initialDate, minDate: minDateProp
 
   // On initial render, if no date is selected, notify the parent of the default date.
   useEffect(() => {
-      if (!selected) {
-          onSelectDate(initialDate || todayString);
-      }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!selected) {
+      onSelectDate(initialDate || todayString);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { jy: currentYear, jm: currentMonth } = display;
@@ -100,14 +100,14 @@ export function ShamsiCalendar({ onSelectDate, initialDate, minDate: minDateProp
     // Notify parent with the 'YYYY-MM-DD' string
     onSelectDate(dateStringToJalaali(newSel.jy, newSel.jm, newSel.jd));
   };
-  
+
   const navigateMonth = (delta: number) => {
     setDisplay(prev => {
-        let ny = prev.jy;
-        let nm = prev.jm + delta;
-        if (nm > 12) { nm = 1; ny++; }
-        if (nm < 1) { nm = 12; ny--; }
-        return { ...prev, jy: ny, jm: nm };
+      let ny = prev.jy;
+      let nm = prev.jm + delta;
+      if (nm > 12) { nm = 1; ny++; }
+      if (nm < 1) { nm = 12; ny--; }
+      return { ...prev, jy: ny, jm: nm };
     });
   };
 
@@ -121,31 +121,31 @@ export function ShamsiCalendar({ onSelectDate, initialDate, minDate: minDateProp
 
   return (
     <div className="p-3 w-full max-w-sm mx-auto" dir="rtl">
-        <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" size="icon" onClick={() => navigateMonth(-1)}><ChevronRight className="h-5 w-5" /></Button>
-            <div className="text-sm font-semibold text-center">{PERSIAN_MONTHS[currentMonth - 1]} {currentYear.toLocaleString("fa-IR")}</div>
-            <Button variant="ghost" size="icon" onClick={() => navigateMonth(1)}><ChevronLeft className="h-5 w-5" /></Button>
-        </div>
-        <div className="grid grid-cols-7 text-center text-xs text-gray-500">{PERSIAN_WEEKDAYS.map(day => <div key={day} className="py-2">{day}</div>)}</div>
-        <div className="grid grid-cols-7 gap-1">
-            {calendarGrid.map((day, idx) => {
-                if (!day) return <div key={`empty-${idx}`} />;
-                const isToday = todayJ.jy === currentYear && todayJ.jm === currentMonth && todayJ.jd === day;
-                const isSelected = selected && selected.jy === currentYear && selected.jm === currentMonth && selected.jd === day;
-                const isDisabled = isBeforeMin(currentYear, currentMonth, day);
-                return (
-                    <Button
-                        key={day}
-                        variant="ghost"
-                        disabled={isDisabled}
-                        onClick={() => handleSelectDay(day)}
-                        className={cn("h-9 w-9 p-0 text-sm font-normal rounded-full", isToday && "border-2 border-blue-400", isSelected && "bg-primary text-primary-foreground", isDisabled && "text-gray-300")}>
-                        {day.toLocaleString("fa-IR")}
-                    </Button>
-                );
-            })}
-        </div>
-        {selected && (<div className="mt-4 p-2 bg-gray-50 rounded-lg text-center text-sm"><strong>تاریخ انتخابی:</strong> {selected.jd.toLocaleString("fa-IR")} {PERSIAN_MONTHS[selected.jm - 1]} {selected.jy.toLocaleString("fa-IR")}</div>)}
+      <div className="flex items-center justify-between mb-4">
+        <Button variant="ghost" size="icon" onClick={() => navigateMonth(-1)}><AltArrowRightLinear size={20} /></Button>
+        <div className="text-sm font-semibold text-center">{PERSIAN_MONTHS[currentMonth - 1]} {currentYear.toLocaleString("fa-IR")}</div>
+        <Button variant="ghost" size="icon" onClick={() => navigateMonth(1)}><AltArrowLeftLinear size={20} /></Button>
+      </div>
+      <div className="grid grid-cols-7 text-center text-xs text-gray-500">{PERSIAN_WEEKDAYS.map(day => <div key={day} className="py-2">{day}</div>)}</div>
+      <div className="grid grid-cols-7 gap-1">
+        {calendarGrid.map((day, idx) => {
+          if (!day) return <div key={`empty-${idx}`} />;
+          const isToday = todayJ.jy === currentYear && todayJ.jm === currentMonth && todayJ.jd === day;
+          const isSelected = selected && selected.jy === currentYear && selected.jm === currentMonth && selected.jd === day;
+          const isDisabled = isBeforeMin(currentYear, currentMonth, day);
+          return (
+            <Button
+              key={day}
+              variant="ghost"
+              disabled={isDisabled}
+              onClick={() => handleSelectDay(day)}
+              className={cn("h-9 w-9 p-0 text-sm font-normal rounded-full", isToday && "border-2 border-blue-400", isSelected && "bg-primary text-primary-foreground", isDisabled && "text-gray-300")}>
+              {day.toLocaleString("fa-IR")}
+            </Button>
+          );
+        })}
+      </div>
+      {selected && (<div className="mt-4 p-2 bg-gray-50 rounded-lg text-center text-sm"><strong>تاریخ انتخابی:</strong> {selected.jd.toLocaleString("fa-IR")} {PERSIAN_MONTHS[selected.jm - 1]} {selected.jy.toLocaleString("fa-IR")}</div>)}
     </div>
   );
 }

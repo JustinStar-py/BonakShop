@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { RestartLinear as Loader2, AddCircleLinear as PlusCircle, Pen2Linear as Pencil, TrashBinMinimalisticLinear as Trash2 } from "@solar-icons/react-perf";
 
 function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
     const [items, setItems] = useState<(Supplier | Distributor)[]>([]);
@@ -20,7 +20,7 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<any | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; itemId: string | null; itemName: string | null }>({ isOpen: false, itemId: null, itemName: null });
-    
+
     const apiPath = useMemo(() => (type === 'supplier' ? '/suppliers' : '/distributors'), [type]);
     const title = useMemo(() => (type === 'supplier' ? 'تولیدکننده' : 'پخش‌کننده'), [type]);
 
@@ -29,7 +29,7 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
         try {
             const res = await apiClient.get(apiPath);
             setItems(res.data);
-        } catch (e) { console.error(`Failed to fetch ${type}s`, e); } 
+        } catch (e) { console.error(`Failed to fetch ${type}s`, e); }
         finally { setIsLoading(false); }
     };
 
@@ -55,10 +55,10 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
             await apiClient({ url, method, data: editingItem });
             await fetchData();
             setIsDialogOpen(false);
-        } catch (e: any) { alert(`خطا در ذخیره ${title}: ${e.response?.data?.error || e.message}`); } 
+        } catch (e: any) { alert(`خطا در ذخیره ${title}: ${e.response?.data?.error || e.message}`); }
         finally { setActionLoading(false); }
     };
-    
+
     const handleDelete = async (itemId: string | null) => {
         if (!itemId) return;
         setActionLoading(true);
@@ -66,10 +66,10 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
             await apiClient.delete(`${apiPath}/${itemId}`);
             await fetchData();
             setDeleteDialog({ isOpen: false, itemId: null, itemName: null });
-        } catch (error: any) { alert(`خطا در حذف: ${error.response?.data?.error || error.message}`); } 
+        } catch (error: any) { alert(`خطا در حذف: ${error.response?.data?.error || error.message}`); }
         finally { setActionLoading(false); }
     };
-    
+
     if (isLoading) return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
     return (
@@ -102,7 +102,7 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
                                             alt={item.name}
                                             className="h-10 w-10 rounded-full object-contain bg-gray-100 p-1 justify-self-center"
                                         />
-                                        </TableCell>
+                                    </TableCell>
                                     <TableCell className="font-medium text-right">{item.name}</TableCell>
                                 </TableRow>
                             ))}
@@ -116,7 +116,7 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
                     <DialogHeader><DialogTitle>{editingItem?.id ? `ویرایش ${title}` : `افزودن ${title} جدید`}</DialogTitle></DialogHeader>
                     {editingItem && (
                         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                            <div><Label>نام {title}</Label><Input value={editingItem.name} onChange={e => handleFormChange('name', e.target.value)} required/></div>
+                            <div><Label>نام {title}</Label><Input value={editingItem.name} onChange={e => handleFormChange('name', e.target.value)} required /></div>
                             <div><Label>لوگو (آدرس URL)</Label><Input value={editingItem.logo || ''} onChange={e => handleFormChange('logo', e.target.value)} /></div>
                             <DialogFooter>
                                 <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>انصراف</Button>

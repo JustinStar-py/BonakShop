@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, Image as ImageIcon, Save, Link as LinkIcon, ShieldCheck, Key } from "lucide-react";
+import { TrashBinMinimalisticLinear as Trash2, AddCircleLinear as Plus, GalleryLinear as ImageIcon, DisketteLinear as Save, LinkLinear as LinkIcon, VerifiedCheckLinear as ShieldCheck, KeyLinear as Key } from "@solar-icons/react-perf";
 import apiClient from "@/lib/apiClient";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -66,6 +66,7 @@ export default function SettingsPage() {
       await apiClient.post("/admin/settings", settings);
       alert("تنظیمات با موفقیت ذخیره شد");
     } catch (error) {
+      console.error("خطا در ذخیره تنظیمات:", error);
       alert("خطا در ذخیره تنظیمات");
     }
   };
@@ -78,6 +79,7 @@ export default function SettingsPage() {
       setIsAddOpen(false);
       fetchBanners();
     } catch (error) {
+      console.error("خطا در افزودن بنر:", error);
       alert("خطا در افزودن بنر");
     }
   };
@@ -88,6 +90,7 @@ export default function SettingsPage() {
       await apiClient.delete(`/admin/banners/${id}`);
       fetchBanners();
     } catch (error) {
+      console.error("خطا در حذف بنر:", error);
       alert("خطا در حذف بنر");
     }
   };
@@ -118,63 +121,63 @@ export default function SettingsPage() {
 
         <TabsContent value="banners" className="space-y-4 mt-6">
           <div className="flex justify-between items-center">
-             <h2 className="text-xl font-semibold">بنرهای اسلایدر اصلی</h2>
-             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-               <DialogTrigger asChild>
-                 <Button className="gap-2 bg-primary hover:bg-primary/90">
-                   <Plus size={16} /> افزودن بنر جدید
-                 </Button>
-               </DialogTrigger>
-               <DialogContent>
-                 <DialogHeader>
-                   <DialogTitle>افزودن بنر جدید</DialogTitle>
-                 </DialogHeader>
-                 <form onSubmit={handleAddBanner} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>آدرس تصویر (لینک مستقیم)</Label>
-                      <div className="relative">
-                        <ImageIcon className="absolute right-3 top-3 text-slate-400" size={16} />
-                        <Input 
-                          className="pr-10" 
-                          placeholder="https://example.com/banner.jpg" 
-                          value={newBanner.image}
-                          onChange={e => setNewBanner({...newBanner, image: e.target.value})}
-                          required 
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>عنوان (اختیاری)</Label>
-                      <Input 
-                        placeholder="مثلا: تخفیف ویژه تابستانه" 
-                        value={newBanner.title}
-                        onChange={e => setNewBanner({...newBanner, title: e.target.value})}
+            <h2 className="text-xl font-semibold">بنرهای اسلایدر اصلی</h2>
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 bg-primary hover:bg-primary/90">
+                  <Plus size={16} /> افزودن بنر جدید
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>افزودن بنر جدید</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddBanner} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>آدرس تصویر (لینک مستقیم)</Label>
+                    <div className="relative">
+                      <ImageIcon className="absolute right-3 top-3 text-slate-400" size={16} />
+                      <Input
+                        className="pr-10"
+                        placeholder="https://example.com/banner.jpg"
+                        value={newBanner.image}
+                        onChange={e => setNewBanner({ ...newBanner, image: e.target.value })}
+                        required
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>لینک مقصد (اختیاری)</Label>
-                      <div className="relative">
-                        <LinkIcon className="absolute right-3 top-3 text-slate-400" size={16} />
-                        <Input 
-                          className="pr-10" 
-                          placeholder="/products/123" 
-                          value={newBanner.link}
-                          onChange={e => setNewBanner({...newBanner, link: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>اولویت نمایش (عدد بزرگتر = بالاتر)</Label>
-                      <Input 
-                        type="number"
-                        value={newBanner.priority}
-                        onChange={e => setNewBanner({...newBanner, priority: Number(e.target.value)})}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>عنوان (اختیاری)</Label>
+                    <Input
+                      placeholder="مثلا: تخفیف ویژه تابستانه"
+                      value={newBanner.title}
+                      onChange={e => setNewBanner({ ...newBanner, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>لینک مقصد (اختیاری)</Label>
+                    <div className="relative">
+                      <LinkIcon className="absolute right-3 top-3 text-slate-400" size={16} />
+                      <Input
+                        className="pr-10"
+                        placeholder="/products/123"
+                        value={newBanner.link}
+                        onChange={e => setNewBanner({ ...newBanner, link: e.target.value })}
                       />
                     </div>
-                    <Button type="submit" className="w-full">ذخیره</Button>
-                 </form>
-               </DialogContent>
-             </Dialog>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>اولویت نمایش (عدد بزرگتر = بالاتر)</Label>
+                    <Input
+                      type="number"
+                      value={newBanner.priority}
+                      onChange={e => setNewBanner({ ...newBanner, priority: Number(e.target.value) })}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">ذخیره</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -187,22 +190,22 @@ export default function SettingsPage() {
                 <Card key={banner.id} className="overflow-hidden group">
                   <div className="relative h-48 w-full bg-slate-100">
                     {banner.image ? (
-                        <Image 
-                          src={banner.image} 
-                          alt={banner.title || "Banner"} 
-                          fill 
-                          className="object-cover"
-                          unoptimized 
-                        />
+                      <Image
+                        src={banner.image}
+                        alt={banner.title || "Banner"}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
                     ) : (
-                        <div className="flex items-center justify-center h-full text-slate-400">
-                            <ImageIcon size={40} />
-                        </div>
+                      <div className="flex items-center justify-center h-full text-slate-400">
+                        <ImageIcon size={40} />
+                      </div>
                     )}
                     <div className="absolute top-2 right-2 flex gap-2">
-                        <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                            اولویت: {banner.priority}
-                        </span>
+                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                        اولویت: {banner.priority}
+                      </span>
                     </div>
                   </div>
                   <CardContent className="p-4">
@@ -211,9 +214,9 @@ export default function SettingsPage() {
                         <h3 className="font-bold text-slate-800">{banner.title || "بدون عنوان"}</h3>
                         <p className="text-xs text-slate-500 truncate max-w-[200px]" dir="ltr">{banner.link || "بدون لینک"}</p>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="text-red-500 hover:bg-red-50"
                         onClick={() => handleDeleteBanner(banner.id)}
                       >
@@ -221,11 +224,11 @@ export default function SettingsPage() {
                       </Button>
                     </div>
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                        <span className="text-sm text-slate-600">وضعیت نمایش:</span>
-                        <Switch 
-                            checked={banner.isActive} 
-                            onCheckedChange={() => handleToggleActive(banner)}
-                        />
+                      <span className="text-sm text-slate-600">وضعیت نمایش:</span>
+                      <Switch
+                        checked={banner.isActive}
+                        onCheckedChange={() => handleToggleActive(banner)}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -235,72 +238,72 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="general" className="space-y-6 mt-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <ShieldCheck className="text-primary" />
-                        تنظیمات لیست سفید (Whitelist)
-                    </CardTitle>
-                    <CardDescription>
-                        در صورت فعال‌سازی، تنها کاربرانی که تایید شده‌اند یا کد ورود معتبر دارند می‌توانند وارد شوند.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
-                        <div className="space-y-0.5">
-                            <Label className="text-base">فعال‌سازی حالت لیست سفید</Label>
-                            <p className="text-sm text-slate-500">محدود کردن دسترسی به کاربران تایید شده</p>
-                        </div>
-                        <Switch 
-                            checked={settings.whitelistEnabled}
-                            onCheckedChange={(checked) => setSettings({...settings, whitelistEnabled: checked})}
-                        />
-                    </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="text-primary" />
+                تنظیمات لیست سفید (Whitelist)
+              </CardTitle>
+              <CardDescription>
+                در صورت فعال‌سازی، تنها کاربرانی که تایید شده‌اند یا کد ورود معتبر دارند می‌توانند وارد شوند.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
+                <div className="space-y-0.5">
+                  <Label className="text-base">فعال‌سازی حالت لیست سفید</Label>
+                  <p className="text-sm text-slate-500">محدود کردن دسترسی به کاربران تایید شده</p>
+                </div>
+                <Switch
+                  checked={settings.whitelistEnabled}
+                  onCheckedChange={(checked) => setSettings({ ...settings, whitelistEnabled: checked })}
+                />
+              </div>
 
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                            <Key size={16} />
-                            کدهای عضویت ثابت (Static Codes)
-                        </Label>
-                        <Textarea 
-                            placeholder="کدها را با کاما جدا کنید. مثال: 123456, 333333, admin_code"
-                            value={settings.joinCodes}
-                            onChange={(e) => setSettings({...settings, joinCodes: e.target.value})}
-                            className="font-mono text-left"
-                            dir="ltr"
-                            rows={3}
-                        />
-                        <p className="text-xs text-slate-500">
-                            کاربران جدید می‌توانند با وارد کردن یکی از این کدها، به صورت خودکار تایید و وارد شوند.
-                        </p>
-                    </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Key size={16} />
+                  کدهای عضویت ثابت (Static Codes)
+                </Label>
+                <Textarea
+                  placeholder="کدها را با کاما جدا کنید. مثال: 123456, 333333, admin_code"
+                  value={settings.joinCodes}
+                  onChange={(e) => setSettings({ ...settings, joinCodes: e.target.value })}
+                  className="font-mono text-left"
+                  dir="ltr"
+                  rows={3}
+                />
+                <p className="text-xs text-slate-500">
+                  کاربران جدید می‌توانند با وارد کردن یکی از این کدها، به صورت خودکار تایید و وارد شوند.
+                </p>
+              </div>
 
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                            <ShieldCheck size={16} />
-                            شماره‌های تست (Whitelisted Numbers)
-                        </Label>
-                        <Textarea 
-                            placeholder="شماره‌ها را با کاما جدا کنید. مثال: 09120000000, 11111"
-                            value={settings.whitelistedNumbers}
-                            onChange={(e) => setSettings({...settings, whitelistedNumbers: e.target.value})}
-                            className="font-mono text-left"
-                            dir="ltr"
-                            rows={3}
-                        />
-                        <p className="text-xs text-slate-500">
-                            این شماره‌ها بدون دریافت پیامک و با کد ثابت 12345 می‌توانند وارد شوند و به صورت خودکار تایید می‌شوند.
-                        </p>
-                    </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <ShieldCheck size={16} />
+                  شماره‌های تست (Whitelisted Numbers)
+                </Label>
+                <Textarea
+                  placeholder="شماره‌ها را با کاما جدا کنید. مثال: 09120000000, 11111"
+                  value={settings.whitelistedNumbers}
+                  onChange={(e) => setSettings({ ...settings, whitelistedNumbers: e.target.value })}
+                  className="font-mono text-left"
+                  dir="ltr"
+                  rows={3}
+                />
+                <p className="text-xs text-slate-500">
+                  این شماره‌ها بدون دریافت پیامک و با کد ثابت 12345 می‌توانند وارد شوند و به صورت خودکار تایید می‌شوند.
+                </p>
+              </div>
 
-                    <div className="pt-4">
-                        <Button onClick={handleSaveSettings} disabled={isSettingsLoading}>
-                            <Save size={16} className="mr-2" />
-                            ذخیره تنظیمات
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+              <div className="pt-4">
+                <Button onClick={handleSaveSettings} disabled={isSettingsLoading}>
+                  <Save size={16} className="mr-2" />
+                  ذخیره تنظیمات
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

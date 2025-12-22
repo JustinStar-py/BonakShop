@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Store, User, MapPin, Phone, CheckCircle2, ArrowRight, ShoppingBag } from "lucide-react";
+import { RestartLinear as Loader2, ShopLinear as Store, UserLinear as User, MapPointLinear as MapPin, PhoneLinear as Phone, CheckCircleLinear as CheckCircle2, AltArrowRightLinear as ArrowRight, BagLinear as ShoppingBag } from "@solar-icons/react-perf";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 // Dynamic import for Map to avoid SSR issues
@@ -19,7 +19,7 @@ const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
     ssr: false,
     loading: () => (
         <div className="h-60 w-full bg-gray-100 animate-pulse rounded-xl flex flex-col items-center justify-center text-gray-400 gap-2">
-            <MapPin size={32} className="opacity-50"/>
+            <MapPin size={32} className="opacity-50" />
             <span className="text-sm">در حال بارگذاری نقشه...</span>
         </div>
     )
@@ -28,16 +28,16 @@ const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), {
 export default function CompleteProfilePage() {
     const { user, setUser, isLoadingUser } = useAppContext();
     const router = useRouter();
-    
+
     const [step, setStep] = useState<1 | 2>(1);
-    const [formData, setFormData] = useState({ 
+    const [formData, setFormData] = useState({
         userType: "SHOP_OWNER" as "SHOP_OWNER" | "INDIVIDUAL",
-        name: "", 
-        shopName: "", 
-        shopAddress: "", 
-        landline: "", 
-        latitude: null as number | null, 
-        longitude: null as number | null 
+        name: "",
+        shopName: "",
+        shopAddress: "",
+        landline: "",
+        latitude: null as number | null,
+        longitude: null as number | null
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -61,43 +61,43 @@ export default function CompleteProfilePage() {
         setFormData({ ...formData, userType: type });
         setStep(2);
     };
-    
+
     const handleInfoSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        
+
         // Validation
         if (!formData.name || !formData.shopAddress) {
             setError("لطفاً نام و آدرس را تکمیل کنید.");
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
-        
+
         if (formData.userType === "SHOP_OWNER" && !formData.shopName) {
             setError("لطفاً نام فروشگاه را وارد کنید.");
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
 
-        setIsLoading(true); 
+        setIsLoading(true);
         setError("");
         try {
             const res = await apiClient.put('/user/profile', formData);
             setUser(res.data);
             router.replace('/');
-        } catch (error) { 
-            setError(getErrorMessage(error, "خطا در ذخیره اطلاعات")); 
-        } finally { 
-            setIsLoading(false); 
+        } catch (error) {
+            setError(getErrorMessage(error, "خطا در ذخیره اطلاعات"));
+        } finally {
+            setIsLoading(false);
         }
     };
-    
+
     if (isLoadingUser || !user) {
         return <LoadingSpinner message="در حال بررسی وضعیت حساب..." />;
     }
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 py-8">
-            
+
             {/* Progress Steps */}
             <div className="w-full max-w-lg mb-6 flex items-center justify-center gap-2">
                 <div className={`flex items-center gap-1 text-xs font-bold ${step >= 1 ? "text-green-600" : "text-gray-400"}`}>
@@ -110,15 +110,15 @@ export default function CompleteProfilePage() {
             </div>
 
             <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden transition-all duration-500">
-                
+
                 {step === 1 ? (
                     // --- STEP 1: Role Selection ---
                     <div className="p-8 text-center animate-in fade-in slide-in-from-right-4">
                         <h1 className="text-xl font-extrabold text-gray-800 mb-2">شما کدام هستید؟</h1>
                         <p className="text-gray-500 text-xs mb-8">لطفاً نوع فعالیت خود را مشخص کنید تا خدمات بهتری دریافت کنید.</p>
-                        
+
                         <div className="space-y-4">
-                            <button 
+                            <button
                                 onClick={() => handleRoleSelect("SHOP_OWNER")}
                                 className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-green-500 hover:bg-green-50 transition-all group text-right"
                             >
@@ -131,7 +131,7 @@ export default function CompleteProfilePage() {
                                 </div>
                             </button>
 
-                            <button 
+                            <button
                                 onClick={() => handleRoleSelect("INDIVIDUAL")}
                                 className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50 transition-all group text-right"
                             >
@@ -161,21 +161,21 @@ export default function CompleteProfilePage() {
                                 {formData.userType === 'SHOP_OWNER' ? "اطلاعات فروشگاه" : "اطلاعات شخصی"}
                             </h1>
                             <p className="text-white/90 text-xs opacity-90">
-                                {formData.userType === 'SHOP_OWNER' 
-                                    ? "برای دریافت فاکتور رسمی، مشخصات دقیق را وارد کنید." 
+                                {formData.userType === 'SHOP_OWNER'
+                                    ? "برای دریافت فاکتور رسمی، مشخصات دقیق را وارد کنید."
                                     : "برای ارسال سفارش، آدرس دقیق خود را وارد کنید."}
                             </p>
                         </div>
 
                         <div className="p-6">
                             <form onSubmit={handleInfoSubmit} className="space-y-5">
-                                
+
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="name" className="text-xs font-bold text-gray-600 flex items-center gap-1"><User size={14}/> نام و نام خانوادگی</Label>
-                                        <Input 
-                                            id="name" name="name" 
-                                            value={formData.name} onChange={handleInfoChange} 
+                                        <Label htmlFor="name" className="text-xs font-bold text-gray-600 flex items-center gap-1"><User size={14} /> نام و نام خانوادگی</Label>
+                                        <Input
+                                            id="name" name="name"
+                                            value={formData.name} onChange={handleInfoChange}
                                             className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500 transition-all"
                                             placeholder="مثال: علی محمدی"
                                             required
@@ -184,10 +184,10 @@ export default function CompleteProfilePage() {
 
                                     {formData.userType === 'SHOP_OWNER' && (
                                         <div className="space-y-2 animate-in fade-in height-0">
-                                            <Label htmlFor="shopName" className="text-xs font-bold text-gray-600 flex items-center gap-1"><Store size={14}/> نام فروشگاه</Label>
-                                            <Input 
-                                                id="shopName" name="shopName" 
-                                                value={formData.shopName} onChange={handleInfoChange} 
+                                            <Label htmlFor="shopName" className="text-xs font-bold text-gray-600 flex items-center gap-1"><Store size={14} /> نام فروشگاه</Label>
+                                            <Input
+                                                id="shopName" name="shopName"
+                                                value={formData.shopName} onChange={handleInfoChange}
                                                 className="h-12 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500 transition-all"
                                                 placeholder="مثال: سوپرمارکت امید"
                                                 required
@@ -197,10 +197,10 @@ export default function CompleteProfilePage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="shopAddress" className="text-xs font-bold text-gray-600 flex items-center gap-1"><MapPin size={14}/> آدرس دقیق</Label>
-                                    <Textarea 
-                                        id="shopAddress" name="shopAddress" 
-                                        value={formData.shopAddress || ''} onChange={handleInfoChange} 
+                                    <Label htmlFor="shopAddress" className="text-xs font-bold text-gray-600 flex items-center gap-1"><MapPin size={14} /> آدرس دقیق</Label>
+                                    <Textarea
+                                        id="shopAddress" name="shopAddress"
+                                        value={formData.shopAddress || ''} onChange={handleInfoChange}
                                         className="min-h-[80px] rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500 transition-all"
                                         placeholder="استان، شهر، خیابان، کوچه، پلاک..."
                                         required
@@ -209,10 +209,10 @@ export default function CompleteProfilePage() {
 
                                 {formData.userType === 'SHOP_OWNER' && (
                                     <div className="space-y-2 animate-in fade-in">
-                                        <Label htmlFor="landline" className="text-xs font-bold text-gray-600 flex items-center gap-1"><Phone size={14}/> تلفن ثابت (اختیاری)</Label>
-                                        <Input 
-                                            id="landline" name="landline" 
-                                            value={formData.landline || ''} onChange={handleInfoChange} 
+                                        <Label htmlFor="landline" className="text-xs font-bold text-gray-600 flex items-center gap-1"><Phone size={14} /> تلفن ثابت (اختیاری)</Label>
+                                        <Input
+                                            id="landline" name="landline"
+                                            value={formData.landline || ''} onChange={handleInfoChange}
                                             className="h-12 text-left rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500 transition-all"
                                             placeholder="مثال: 021..."
                                             type="tel"
@@ -235,8 +235,8 @@ export default function CompleteProfilePage() {
                                 )}
 
                                 <div className="pt-4">
-                                    <Button 
-                                        type="submit" 
+                                    <Button
+                                        type="submit"
                                         className={`w-full h-12 rounded-xl text-white font-bold text-md shadow-lg transition-transform active:scale-[0.98] ${formData.userType === 'SHOP_OWNER' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'}`}
                                         disabled={isLoading}
                                     >

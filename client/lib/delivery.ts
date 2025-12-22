@@ -191,7 +191,7 @@ export async function getOptimizedRoutesForDate(date: Date): Promise<OptimizedRo
 
     // Map to locations
     const locations: Location[] = orders
-        .filter(o => o.user.latitude && o.user.longitude)
+        .filter(o => o.user.latitude != null && o.user.longitude != null)
         .map(o => ({
             orderId: o.id,
             latitude: o.user.latitude!,

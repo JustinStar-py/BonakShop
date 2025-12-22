@@ -5,10 +5,9 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
 
 interface FloatingActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    icon: LucideIcon;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
     label?: string;
     position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
     variant?: 'primary' | 'secondary' | 'success' | 'danger';

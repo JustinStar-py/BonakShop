@@ -1,10 +1,18 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Search, User as UserIcon, Truck, LayoutDashboard, ShoppingBag, MessageCircle } from "lucide-react";
+import {
+  ChatLineLinear,
+  DeliveryLinear,
+  WidgetLinear,
+  RoundedMagniferBold,
+  Cart2Linear,
+  UserCircleLinear
+} from "@solar-icons/react-perf";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { User } from "@/types"; // Assuming User type is in types/index.ts
+import { HeaderIcon } from "@/components/shared/HeaderIcon";
 
 interface HeaderProps {
   user: User | null;
@@ -44,7 +52,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
               className="rounded-full hover:bg-gray-100"
               onClick={() => router.push("/admin/dashboard")}
             >
-              <LayoutDashboard className="h-5 w-5 text-gray-600" />
+              <HeaderIcon icon={WidgetLinear} size={24} className="text-gray-600" />
             </Button>
           )}
           {user?.role === "WORKER" && (
@@ -54,7 +62,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
               className="rounded-full hover:bg-gray-100"
               onClick={() => router.push("/delivery")}
             >
-              <Truck className="h-5 w-5 text-gray-600" />
+              <HeaderIcon icon={DeliveryLinear} size={24} className="text-gray-600" />
             </Button>
           )}
           <Button
@@ -63,7 +71,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
             className="rounded-full hover:bg-gray-100 text-gray-700"
             onClick={() => router.push("/chat")}
           >
-            <MessageCircle className="h-6 w-6" />
+            <HeaderIcon icon={ChatLineLinear} size={24} className="text-gray-700" />
           </Button>
           <Button
             variant="ghost"
@@ -71,7 +79,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
             className="relative rounded-full hover:bg-gray-100"
             onClick={() => router.push("/profile")}
           >
-            <UserIcon className="h-6 w-6 text-gray-700" />
+            <HeaderIcon icon={UserCircleLinear} size={24} className="text-gray-700" />
           </Button>
           <Button
             variant="ghost"
@@ -79,7 +87,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
             className="relative rounded-full hover:bg-gray-100"
             onClick={() => router.push("/cart")}
           >
-            <ShoppingBag className="h-6 w-6 text-gray-700" />
+            <HeaderIcon icon={Cart2Linear} size={24} className="text-gray-700" />
             {cartItemCount > 0 && (
               <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -93,7 +101,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
       {/* SEARCH INPUT */}
       <div className="px-4 pb-3">
         <div className="relative group">
-          <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 group-focus-within:text-green-500 transition-colors" />
+          <HeaderIcon icon={RoundedMagniferBold} size={20} className="absolute right-3 top-2.5 text-gray-400 group-focus-within:text-green-500 transition-colors" />
           <input
             type="text"
             placeholder="جستجو در هزاران محصول..."

@@ -2,7 +2,9 @@
 // DESCRIPTION: Dynamic pricing algorithms based on inventory, demand, and time
 
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { getProductSalesHistory } from './analytics';
+import { mapWithConcurrency } from './concurrency';
 
 export interface PricingFactors {
     stockPressure: number;      // 0-1: Higher = more urgent to sell
@@ -24,6 +26,10 @@ export interface DynamicPriceRecommendation {
     confidence: number;
 }
 
+type ProductWithCategory = Prisma.ProductGetPayload<{
+    include: { category: true };
+}>;
+
 /**
  * Calculate optimal discount for a product based on multiple factors
  */
@@ -37,6 +43,12 @@ export async function calculateOptimalDiscount(
 
     if (!product) return null;
 
+    return calculateOptimalDiscountForProduct(product);
+}
+
+async function calculateOptimalDiscountForProduct(
+    product: ProductWithCategory
+): Promise<DynamicPriceRecommendation> {
     // Get pricing factors
     const factors = await analyzePricingFactors(product);
 
@@ -117,7 +129,7 @@ export async function calculateOptimalDiscount(
 /**
  * Analyze pricing factors for a product
  */
-async function analyzePricingFactors(product: any): Promise<PricingFactors> {
+async function analyzePricingFactors(product: ProductWithCategory): Promise<PricingFactors> {
     // 1. Stock pressure
     const salesHistory = await getProductSalesHistory(product.id, 30);
     const totalSold = salesHistory.reduce((sum, day) => sum + day.quantity, 0);
@@ -162,7 +174,12 @@ async function analyzePricingFactors(product: any): Promise<PricingFactors> {
 
     // 5. Profit margin
     let profitMargin = 20; // Default assumption
-    if (product.consumerPrice && product.consumerPrice > 0) {
+    if (
+        product.consumerPrice &&
+        product.consumerPrice > 0 &&
+        Number.isFinite(product.price) &&
+        product.price > 0
+    ) {
         profitMargin = ((product.price - product.consumerPrice) / product.price) * 100;
     }
 
@@ -228,18 +245,17 @@ export async function getPricingRecommendations(
             available: true,
             ...(categoryId && categoryId !== 'all' ? { categoryId } : {})
         },
+        include: { category: true },
         take: 50 // Limit to avoid overwhelming calculations
     });
 
-    const recommendations: DynamicPriceRecommendation[] = [];
+    const computed = await mapWithConcurrency(products, 5, async (product) => {
+        return calculateOptimalDiscountForProduct(product);
+    });
 
-    for (const product of products) {
-        const rec = await calculateOptimalDiscount(product.id);
-
-        if (rec && Math.abs(rec.recommendedDiscount - rec.currentDiscount) >= minImpact) {
-            recommendations.push(rec);
-        }
-    }
+    const recommendations = computed.filter(
+        (rec) => Math.abs(rec.recommendedDiscount - rec.currentDiscount) >= minImpact
+    );
 
     // Sort by urgency (high stock pressure + old products first)
     return recommendations.sort((a, b) =>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, CreditCard, ShoppingBag, AlertCircle } from "lucide-react";
+import { RestartLinear as Loader2, Card2Linear as CreditCard, BagLinear as ShoppingBag, DangerCircleLinear as AlertCircle } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";

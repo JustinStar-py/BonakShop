@@ -4,20 +4,20 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { 
-    LayoutDashboard, 
-    Package, 
-    Layers, 
-    Building2, 
-    Truck, 
-    LogOut, 
-    Menu,
-    ShoppingBasket,
-    ChevronLeft,
-    Users,
-    Settings,
-    MessageSquare
-} from "lucide-react";
+import {
+    WidgetLinear as LayoutDashboard,
+    BoxLinear as Package,
+    LayersLinear as Layers,
+    ShopLinear as Building2,
+    DeliveryLinear as Truck,
+    LogoutLinear as LogOut,
+    HamburgerMenuLinear as Menu,
+    BagLinear as ShoppingBasket,
+    AltArrowLeftLinear as ChevronLeft,
+    UsersGroupRoundedLinear as Users,
+    SettingsLinear as Settings,
+    ChatDotsLinear as MessageSquare
+} from "@solar-icons/react-perf";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { cn } from "@/lib/utils";
 import NotificationBell from "@/components/admin/NotificationBell";
@@ -38,14 +38,14 @@ const NAV_ITEMS = [
 function NavItem({ href, activePath, icon: Icon, children, onClick }: any) {
     const router = useRouter();
     const isActive = activePath.startsWith(href);
-    
+
     return (
         <Button
             variant="ghost"
             className={cn(
                 "w-full justify-start gap-3 font-normal transition-all duration-200",
-                isActive 
-                    ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary border-r-4 border-primary rounded-none rounded-l-md" 
+                isActive
+                    ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary border-r-4 border-primary rounded-none rounded-l-md"
                     : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
             )}
             onClick={() => {
@@ -69,7 +69,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         await logout();
         router.replace('/auth');
     };
-    
+
     if (isLoadingUser) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -116,10 +116,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                 <p className="text-xs font-semibold text-slate-400 px-4 py-2 mb-2">منوی اصلی</p>
                 {NAV_ITEMS.map((item) => (
-                    <NavItem 
-                        key={item.href} 
-                        href={item.href} 
-                        activePath={pathname} 
+                    <NavItem
+                        key={item.href}
+                        href={item.href}
+                        activePath={pathname}
                         icon={item.icon}
                         onClick={onNavClick}
                     >
@@ -174,10 +174,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
                     <div className="flex items-center gap-3">
                         <NotificationBell />
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={handleLogout} 
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleLogout}
                             className="text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors gap-2"
                         >
                             <LogOut size={18} />

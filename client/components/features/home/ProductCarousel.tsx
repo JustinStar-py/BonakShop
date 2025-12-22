@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/shared/ProductCard";
 import { Product, CartItem, ProductWithSupplier } from "@/types";
-import { ArrowLeft, Bell } from "lucide-react";
+import { ArrowLeftLinear, BellLinear } from "@solar-icons/react-perf";
 import { ElementType } from "react";
 
 interface ProductCarouselProps {
@@ -37,7 +37,7 @@ export default function ProductCarousel({
 }: ProductCarouselProps) {
   if (!products || products.length === 0) return null;
 
-  const StripIcon = Icon || Bell;
+  const StripIcon = Icon || BellLinear;
 
   return (
     <div className="py-4 my-2 border-t border-b border-gray-200 bg-gray-50">
@@ -46,7 +46,7 @@ export default function ProductCarousel({
         <div className="flex items-center gap-2">
           {Icon && (
             <div className="p-1.5 bg-white rounded-lg text-green-600 shadow-sm">
-              <Icon className="h-5 w-5" />
+              <ArrowLeftLinear size={24} />
             </div>
           )}
           <div className="flex flex-col">
@@ -61,7 +61,7 @@ export default function ProductCarousel({
           className="text-xs text-green-600 h-8 px-2 hover:bg-green-50 hover:text-green-700"
           onClick={onViewAll}
         >
-          مشاهده همه <ArrowLeft className="w-3 h-3 mr-1" />
+          مشاهده همه <ArrowLeftLinear className="w-3 h-3 mr-1" />
         </Button>
       </div>
 
@@ -85,7 +85,7 @@ export default function ProductCarousel({
                 ${accentColorClass}
               `}
             >
-              <StripIcon className="w-6 h-6 mb-4 animate-bounce" />
+              {Icon && <BellLinear className="w-6 h-6 mb-4 animate-bounce" />}
               <span className="text-[15px] font-black whitespace-nowrap rotate-90 leading-none">
                 {title}
               </span>

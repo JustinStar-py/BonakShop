@@ -19,6 +19,11 @@ export async function PATCH(
     const { status } = await req.json();
     const userRole = auth.user.role;
 
+    if (typeof status !== "string" || !Object.values(OrderStatus).includes(status as OrderStatus)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    const nextStatus = status as OrderStatus;
+
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
         return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -27,24 +32,32 @@ export async function PATCH(
     // Permission checks
     if (userRole === 'CUSTOMER') {
         // Customers can only cancel their own PENDING orders.
-        if (order.userId !== auth.user.id || status !== 'CANCELED' || order.status !== 'PENDING') {
+        if (
+          order.userId !== auth.user.id ||
+          nextStatus !== OrderStatus.CANCELED ||
+          order.status !== OrderStatus.PENDING
+        ) {
             return NextResponse.json({ error: "Action not allowed" }, { status: 403 });
         }
     } else if (userRole === 'WORKER') {
-        const isShippedOrDelivered = new Set<OrderStatus>([
-          OrderStatus.SHIPPED,
-          OrderStatus.DELIVERED,
-        ]).has(order.status);
-        // Workers can only manage SHIPPED or DELIVERED statuses
-        if (!isShippedOrDelivered || status !== OrderStatus.DELIVERED) {
-            return NextResponse.json({ error: "Workers can only confirm delivery for shipped orders" }, { status: 403 });
+        // Workers can advance orders through delivery workflow.
+        const canMarkShipped =
+          order.status === OrderStatus.PENDING && nextStatus === OrderStatus.SHIPPED;
+        const canMarkDelivered =
+          order.status === OrderStatus.SHIPPED && nextStatus === OrderStatus.DELIVERED;
+
+        if (!canMarkShipped && !canMarkDelivered) {
+          return NextResponse.json(
+            { error: "Workers can only mark PENDING→SHIPPED or SHIPPED→DELIVERED" },
+            { status: 403 }
+          );
         }
     }
     // ADMIN has full control, no extra checks needed.
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: status as OrderStatus },
+      data: { status: nextStatus },
     });
 
     return NextResponse.json(updatedOrder, { status: 200 });
