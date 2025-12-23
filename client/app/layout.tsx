@@ -5,6 +5,7 @@ import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
 import { Arad } from "@/lib/fonts"; // Import the font
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 import GlobalLoader from "@/components/layout/GlobalLoader";
 import { ToastProvider } from "@/components/ui/toast-notification";
 
@@ -30,6 +31,7 @@ export default function RootLayout({
     <html lang="fa" dir="rtl">
       <body className={`${Arad.variable} font-sans antialiased bg-slate-50 text-slate-900`}>
         <SpeedInsights />
+        <Analytics />
         <ToastProvider>
           <AppProvider>
             <GlobalLoader />
