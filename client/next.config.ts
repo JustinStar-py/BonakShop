@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
   },
 
   reactStrictMode: true,
+  reactCompiler: true,
+  cacheComponents: true,
 
   // بقیه تنظیمات شما مشابه قبلی...
   compress: true,

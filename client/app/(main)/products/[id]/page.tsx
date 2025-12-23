@@ -1,8 +1,7 @@
-import Link from "next/link";
+import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { cacheKeys, getCached } from "@/lib/redis";
 import ProductDetailClient, { type ProductDetailData } from "./ProductDetailClient";
-import { Button } from "@/components/ui/button";
 
 type ProductDetailRecord = {
   id: string;
@@ -34,14 +33,7 @@ export default async function ProductDetailPage({
   const rawId = resolvedParams?.id;
   const productId = Array.isArray(rawId) ? rawId[0] : rawId;
   if (!productId) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <h2 className="text-xl font-bold text-gray-700">محصولی یافت نشد</h2>
-        <Button asChild variant="outline">
-          <Link href="/">بازگشت به فروشگاه</Link>
-        </Button>
-      </div>
-    );
+    notFound();
   }
 
   const cacheKey = cacheKeys.products.detail(productId);
@@ -75,14 +67,7 @@ export default async function ProductDetailPage({
   );
 
   if (!product) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <h2 className="text-xl font-bold text-gray-700">محصول مورد نظر یافت نشد.</h2>
-        <Button asChild variant="outline">
-          <Link href="/">بازگشت به فروشگاه</Link>
-        </Button>
-      </div>
-    );
+    notFound();
   }
 
   const createdAt =
