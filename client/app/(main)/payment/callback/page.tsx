@@ -1,12 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircleLinear as CheckCircle2, CloseCircleLinear as XCircle, RestartLinear as Loader2, AltArrowRightLinear as ArrowRight, BillListLinear as Receipt } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
 import toPersianDigits from "@/utils/numberFormatter";
+
+type PaymentVerificationResponse = {
+    success: boolean;
+    message?: string;
+    orderId?: string;
+    refId?: string;
+    cardPan?: string;
+    canRetry?: boolean;
+    error?: string;
+};
+
+const getErrorMessage = (err: unknown) => {
+    if (typeof err === "object" && err && "response" in err) {
+        const response = (err as { response?: { data?: { error?: string } } }).response;
+        return response?.data?.error;
+    }
+    if (err instanceof Error) {
+        return err.message;
+    }
+    return null;
+};
 
 export default function PaymentCallbackPage() {
     const router = useRouter();
@@ -15,13 +36,9 @@ export default function PaymentCallbackPage() {
     const [loading, setLoading] = useState(true);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [paymentData, setPaymentData] = useState<any>(null);
+    const [paymentData, setPaymentData] = useState<PaymentVerificationResponse | null>(null);
 
-    useEffect(() => {
-        verifyPayment();
-    }, []);
-
-    const verifyPayment = async () => {
+    const verifyPayment = useCallback(async () => {
         try {
             const authority = searchParams.get("Authority");
             const status = searchParams.get("Status");
@@ -33,7 +50,7 @@ export default function PaymentCallbackPage() {
             }
 
             // Call verification API
-            const response = await apiClient.post("/payment/verify", {
+            const response = await apiClient.post<PaymentVerificationResponse>("/payment/verify", {
                 authority,
                 status,
             });
@@ -44,13 +61,17 @@ export default function PaymentCallbackPage() {
             } else {
                 setError(response.data.message || "پرداخت ناموفق بود");
             }
-        } catch (err: any) {
+        } catch (err) {
             console.error("Payment verification error:", err);
-            setError(err.response?.data?.error || "خطا در تایید پرداخت");
+            setError(getErrorMessage(err) || "خطا در تایید پرداخت");
         } finally {
             setLoading(false);
         }
-    };
+    }, [searchParams]);
+
+    useEffect(() => {
+        verifyPayment();
+    }, [verifyPayment]);
 
     if (loading) {
         return (
@@ -94,14 +115,14 @@ export default function PaymentCallbackPage() {
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-500">کد پیگیری:</span>
                                 <span className="font-bold text-gray-800">
-                                    {toPersianDigits(paymentData.refId)}
+                                    {toPersianDigits(paymentData.refId ? parseInt(paymentData.refId) : 0)}
                                 </span>
                             </div>
                             {paymentData.cardPan && (
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-500">شماره کارت:</span>
                                     <span className="font-mono text-gray-800">
-                                        {toPersianDigits(paymentData.cardPan)}
+                                        {paymentData.cardPan}
                                     </span>
                                 </div>
                             )}

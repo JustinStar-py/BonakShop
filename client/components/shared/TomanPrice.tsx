@@ -24,7 +24,7 @@ export default function TomanPrice({
 
   return (
     <span className={cn("inline-flex items-baseline gap-1", className)}>
-      <span>{parts.amount}</span>
+      <span className={amountClassName}>{parts.amount}</span>
       <span className={cn("text-[11px] font-semibold leading-none opacity-70", suffixClassName)}>{parts.suffix}</span>
     </span>
   );

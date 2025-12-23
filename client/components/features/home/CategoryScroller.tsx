@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 interface CategoryScrollerProps {
-  categories: Category[];
+  categories: Pick<Category, 'id' | 'name' | 'icon' | 'image'>[];
 }
 
 export default function CategoryScroller({

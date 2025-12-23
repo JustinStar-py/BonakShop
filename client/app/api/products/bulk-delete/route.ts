@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { invalidateCache } from "@/lib/redis";
+import { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
       searchTerm,
     } = await request.json();
 
-    const where: any = {};
+    const where: Prisma.ProductWhereInput = {};
 
     if (Array.isArray(productIds) && productIds.length > 0) {
       where.id = { in: productIds };

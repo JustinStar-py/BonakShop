@@ -39,31 +39,30 @@ type CartChange =
 const formatToman = (value: number) =>
   new Intl.NumberFormat("fa-IR").format(Math.round(value));
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
 const normalizeItems = (items: unknown): CartItemPayload[] => {
   if (!Array.isArray(items)) return [];
 
   return items
     .map((item) => {
-      if (
-        !item ||
-        typeof item !== "object" ||
-        typeof (item as any).id !== "string"
-      ) {
+      if (!isRecord(item) || typeof item.id !== "string") {
         return null;
       }
 
-      const quantity = Number((item as any).quantity);
-      const price = Number((item as any).price);
+      const quantity = Number(item.quantity);
+      const price = Number(item.price);
       const discountPercentage =
-        (item as any).discountPercentage === undefined
+        item.discountPercentage === undefined
           ? undefined
-          : Number((item as any).discountPercentage);
+          : Number(item.discountPercentage);
 
       if (!Number.isFinite(quantity) || quantity <= 0) return null;
       if (!Number.isFinite(price) || price < 0) return null;
 
       return {
-        id: (item as any).id,
+        id: item.id,
         quantity,
         price,
         discountPercentage: Number.isFinite(discountPercentage)

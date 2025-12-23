@@ -3,8 +3,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChatDotsLinear as MessageSquare, ClockCircleLinear as Clock, UserLinear as User, MagniferLinear as Search, FilterLinear as Filter } from '@solar-icons/react-perf';
+import { useState, useEffect, useCallback } from 'react';
+import { ChatDotsLinear as MessageSquare, ClockCircleLinear as Clock, UserLinear as User, MagniferLinear as Search } from '@solar-icons/react-perf';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,13 +40,7 @@ export default function ChatSessionsList({
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'OPEN' | 'CLOSED'>('all');
 
-    useEffect(() => {
-        fetchSessions();
-        const interval = setInterval(fetchSessions, 5000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
         try {
             const res = await apiClient.get('/chat/sessions');
             setSessions(res.data || []);
@@ -55,7 +49,13 @@ export default function ChatSessionsList({
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchSessions();
+        const interval = setInterval(fetchSessions, 5000);
+        return () => clearInterval(interval);
+    }, [fetchSessions]);
 
     const filteredSessions = sessions.filter(session => {
         const matchesSearch =
@@ -97,12 +97,12 @@ export default function ChatSessionsList({
 
                 {/* Filter Tabs */}
                 <div className="flex gap-2 mt-3">
-                    {['all', 'OPEN', 'CLOSED'].map((filter) => (
+                    {(['all', 'OPEN', 'CLOSED'] as const).map((filter) => (
                         <Button
                             key={filter}
                             size="sm"
                             variant={statusFilter === filter ? 'default' : 'outline'}
-                            onClick={() => setStatusFilter(filter as any)}
+                            onClick={() => setStatusFilter(filter)}
                             className="flex-1"
                         >
                             {filter === 'all' ? 'همه' : filter === 'OPEN' ? 'باز' : 'بسته'}

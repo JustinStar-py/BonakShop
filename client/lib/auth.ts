@@ -2,9 +2,15 @@ import jwt from 'jsonwebtoken';
 import prisma from './prisma';
 import type { User } from '@prisma/client';
 
+type AccessTokenPayload = jwt.JwtPayload & {
+  userId?: string;
+  role?: string;
+  phone?: string;
+};
+
 export interface AuthResult {
   user: User;
-  payload: any;
+  payload: AccessTokenPayload;
 }
 
 /**
@@ -17,14 +23,14 @@ export async function getAuthUserFromRequest(req: Request): Promise<AuthResult |
 
   const token = authHeader.split(' ')[1];
   try {
-    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET as string) as any;
-    if (!payload || !payload.userId) return null;
+    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET as string) as AccessTokenPayload;
+    if (!payload || typeof payload.userId !== "string") return null;
 
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) return null;
 
     return { user, payload };
-  } catch (err) {
+  } catch {
     return null;
   }
 }

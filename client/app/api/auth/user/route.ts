@@ -51,7 +51,8 @@ export async function GET(req: Request) {
     }
 
     // 4. Remove the password from the user object before sending it
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
+    void _password;
 
     // 5. Return the user data
     return NextResponse.json({ user: userWithoutPassword }, { status: 200 });

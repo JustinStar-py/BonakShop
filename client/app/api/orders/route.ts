@@ -3,6 +3,24 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
 
+type OrderItemInput = {
+    productId: string;
+    productName: string;
+    quantity: number;
+    price: number;
+};
+
+const isValidOrderItem = (item: unknown): item is OrderItemInput => {
+    if (!item || typeof item !== "object") return false;
+    const record = item as Record<string, unknown>;
+    return (
+        typeof record.productId === "string" &&
+        typeof record.productName === "string" &&
+        Number.isFinite(Number(record.quantity)) &&
+        Number.isFinite(Number(record.price))
+    );
+};
+
 // --- (GET function remains unchanged) ---
 export async function GET(request: Request) {
     const auth = await getAuthUserFromRequest(request);
@@ -38,8 +56,16 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { items, totalPrice, deliveryDate, notes, useCredit } = body;
+        const parsedItems: OrderItemInput[] = Array.isArray(items)
+            ? items.filter(isValidOrderItem).map((item) => ({
+                productId: item.productId,
+                productName: item.productName,
+                quantity: Number(item.quantity),
+                price: Number(item.price),
+            }))
+            : [];
 
-        if (!Array.isArray(items) || items.length === 0 || totalPrice === undefined || !deliveryDate) {
+        if (parsedItems.length === 0 || totalPrice === undefined || !deliveryDate) {
             return NextResponse.json({ error: "Missing required order data" }, { status: 400 });
         }
 
@@ -92,7 +118,7 @@ export async function POST(req: Request) {
                     paymentStatus: amountDue === 0 ? 'PAID' : 'PENDING',
                     paidAt: amountDue === 0 ? new Date() : null,
                     items: {
-                        create: items.map((item: any) => ({
+                        create: parsedItems.map((item) => ({
                             productName: item.productName,
                             quantity: item.quantity,
                             price: item.price,
@@ -104,7 +130,7 @@ export async function POST(req: Request) {
             });
 
             // Decrement product stock
-            for (const item of items) {
+            for (const item of parsedItems) {
                 await tx.product.update({
                     where: { id: item.productId },
                     data: { stock: { decrement: item.quantity } },
@@ -144,9 +170,11 @@ export async function POST(req: Request) {
             message: 'Order created, proceed to payment',
         }, { status: 201 });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error("Order creation failed:", error);
-        if (error.code === 'P2025' || error.message.includes('decrement')) {
+        const code = typeof error === "object" && error && "code" in error ? (error as { code?: string }).code : undefined;
+        const message = error instanceof Error ? error.message : "";
+        if (code === 'P2025' || message.includes('decrement')) {
             return NextResponse.json({ error: "موجودی یکی از محصولات کافی نیست." }, { status: 400 });
         }
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

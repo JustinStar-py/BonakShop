@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { RestartLinear as Loader2, PhoneLinear as Phone, AltArrowRightLinear as ArrowRight, VerifiedCheckLinear as ShieldCheck } from "@solar-icons/react-perf";
 import Image from "next/image";
 import { useSimpleToast } from "@/components/ui/toast-notification";
+import type { User } from "@/types";
 
 // Persian to English number converter
 function persianToEnglish(str: string): string {
@@ -34,6 +35,17 @@ export default function AuthPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isPhoneInputFocused, setIsPhoneInputFocused] = useState(false);
     const codeInputRef = useRef<HTMLInputElement>(null);
+
+    const getErrorMessage = (err: unknown) => {
+        if (typeof err === "object" && err && "response" in err) {
+            const response = (err as { response?: { data?: { error?: string } } }).response;
+            return response?.data?.error;
+        }
+        if (err instanceof Error) {
+            return err.message;
+        }
+        return null;
+    };
 
     useEffect(() => {
         if (user) {
@@ -72,8 +84,8 @@ export default function AuthPage() {
             setPhone(englishPhone); // Update with English numbers
             setStep("verify");
             toast.success("کد ورود ارسال شد. لطفاً ظرف دو دقیقه وارد کنید.");
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || "خطا در ارسال کد.");
+        } catch (err) {
+            toast.error(getErrorMessage(err) || "خطا در ارسال کد.");
         } finally {
             setIsLoading(false);
         }
@@ -87,13 +99,13 @@ export default function AuthPage() {
         const englishCode = persianToEnglish(code);
 
         try {
-            const res = await apiClient.post("/auth/verify-otp", { phone, code: englishCode });
+            const res = await apiClient.post<{ accessToken: string; refreshToken: string; user: User }>("/auth/verify-otp", { phone, code: englishCode });
             const { accessToken, refreshToken, user: u } = res.data;
             await login(phone, undefined, { accessToken, refreshToken, user: u });
             toast.success("ورود موفقیت‌آمیز!");
             router.replace("/");
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || "کد وارد شده نامعتبر است.");
+        } catch (err) {
+            toast.error(getErrorMessage(err) || "کد وارد شده نامعتبر است.");
         } finally {
             setIsLoading(false);
         }
@@ -115,9 +127,10 @@ export default function AuthPage() {
                     otp: { transport: ['sms'] },
                     signal: ac.signal
                 })
-                .then((otp: any) => {
-                    if (otp?.code) {
-                        setCode(otp.code);
+                .then((otp) => {
+                    const codeValue = typeof otp === "object" && otp && "code" in otp ? (otp as { code?: string }).code : undefined;
+                    if (codeValue) {
+                        setCode(codeValue);
                         toast.info('کد از پیامک خوانده شد ✓');
                     }
                 })
@@ -159,7 +172,15 @@ export default function AuthPage() {
             <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden relative z-10 border border-white/50">
                 <div className="p-8 pb-4 text-center">
                     <div className="w-20 h-20 bg-green-50 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-inner transform rotate-3 hover:rotate-0 transition-all duration-500">
-                        <Image src="/logo.png" alt="Logo" width={50} height={50} className="object-contain" priority />
+                        <Image
+                            src="/logo.png"
+                            alt="Logo"
+                            width={50}
+                            height={50}
+                            sizes="50px"
+                            className="object-contain"
+                            priority
+                        />
                     </div>
                     <h1 className="text-2xl font-extrabold text-gray-800 mb-1 tracking-tight">بهار نارون</h1>
                     <p className="text-gray-500 text-sm">سامانه هوشمند خرید عمده</p>
@@ -224,7 +245,15 @@ export default function AuthPage() {
             {step === "request" && !isPhoneInputFocused && (
                 <div className="absolute bottom-4 flex flex-col items-center gap-2 z-10 transition-opacity duration-300">
                     <a referrerPolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=680926&Code=ddh2sBKCxHmWqySC22llyr3LJQGpGOpD'>
-                        <img referrerPolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=680926&Code=ddh2sBKCxHmWqySC22llyr3LJQGpGOpD' alt='' style={{ cursor: 'pointer' }} className="w-20 h-auto bg-white/80 rounded-xl p-1 shadow-lg backdrop-blur-sm hover:scale-105 transition-transform duration-300" />
+                        <Image
+                            referrerPolicy="origin"
+                            src="https://trustseal.enamad.ir/logo.aspx?id=680926&Code=ddh2sBKCxHmWqySC22llyr3LJQGpGOpD"
+                            alt="نماد اعتماد"
+                            width={80}
+                            height={80}
+                            sizes="80px"
+                            className="w-20 h-auto bg-white/80 rounded-xl p-1 shadow-lg backdrop-blur-sm hover:scale-105 transition-transform duration-300"
+                        />
                     </a>
                     <p className="text-white/60 text-xs font-light">امنیت و سرعت با بهار نارون</p>
                 </div>

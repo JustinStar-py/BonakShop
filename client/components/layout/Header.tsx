@@ -2,12 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  ChatLineLinear,
-  DeliveryLinear,
-  WidgetLinear,
+  ChatLineLineDuotone,
+  DeliveryLineDuotone,
+  WidgetLineDuotone,
   RoundedMagniferBold,
-  Cart2Linear,
-  UserCircleLinear
+  Cart2LineDuotone,
+  UserLineDuotone
 } from "@solar-icons/react-perf";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -35,6 +35,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
               alt="بهار نارون"
               width={40}
               height={40}
+              sizes="40px"
               className="object-contain"
               priority
             />
@@ -52,7 +53,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
               className="rounded-full hover:bg-gray-100"
               onClick={() => router.push("/admin/dashboard")}
             >
-              <HeaderIcon icon={WidgetLinear} size={24} className="text-gray-600" />
+              <HeaderIcon icon={WidgetLineDuotone} size={22} className="text-gray-600" />
             </Button>
           )}
           {user?.role === "WORKER" && (
@@ -62,7 +63,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
               className="rounded-full hover:bg-gray-100"
               onClick={() => router.push("/delivery")}
             >
-              <HeaderIcon icon={DeliveryLinear} size={24} className="text-gray-600" />
+              <HeaderIcon icon={DeliveryLineDuotone} size={22} className="text-gray-600" />
             </Button>
           )}
           <Button
@@ -71,15 +72,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
             className="rounded-full hover:bg-gray-100 text-gray-700"
             onClick={() => router.push("/chat")}
           >
-            <HeaderIcon icon={ChatLineLinear} size={24} className="text-gray-700" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative rounded-full hover:bg-gray-100"
-            onClick={() => router.push("/profile")}
-          >
-            <HeaderIcon icon={UserCircleLinear} size={24} className="text-gray-700" />
+            <HeaderIcon icon={ChatLineLineDuotone} size={22} className="text-gray-700" />
           </Button>
           <Button
             variant="ghost"
@@ -87,7 +80,7 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
             className="relative rounded-full hover:bg-gray-100"
             onClick={() => router.push("/cart")}
           >
-            <HeaderIcon icon={Cart2Linear} size={24} className="text-gray-700" />
+            <HeaderIcon icon={Cart2LineDuotone} size={22} className="text-gray-700" />
             {cartItemCount > 0 && (
               <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -95,13 +88,21 @@ export default function Header({ user, cartItemCount, searchTerm, onSearchChange
               </span>
             )}
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative rounded-full hover:bg-gray-100"
+            onClick={() => router.push("/profile")}
+          >
+            <HeaderIcon icon={UserLineDuotone} size={22} className="text-gray-700" />
+          </Button>
         </div>
       </div>
 
       {/* SEARCH INPUT */}
       <div className="px-4 pb-3">
         <div className="relative group">
-          <HeaderIcon icon={RoundedMagniferBold} size={20} className="absolute right-3 top-2.5 text-gray-400 group-focus-within:text-green-500 transition-colors" />
+          <HeaderIcon icon={RoundedMagniferBold} size={22} className="absolute right-3 top-2.5 text-gray-400 group-focus-within:text-green-500 transition-colors" />
           <input
             type="text"
             placeholder="جستجو در هزاران محصول..."

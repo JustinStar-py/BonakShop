@@ -1,7 +1,7 @@
 // FILE: context/AppContext.tsx (FIXED)
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import type { CartItem, User } from "@/types"; // <-- User هم از types وارد شد
 import type { Product as PrismaProduct } from "@prisma/client";
 import apiClient from "@/lib/apiClient";
@@ -102,8 +102,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setUser(user);
                 return true;
             }
-        } catch (err: any) {
-            setError(err.response?.data?.error || "خطای ورود");
+        } catch (err) {
+            const message =
+                typeof err === "object" && err && "response" in err
+                    ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+                    : err instanceof Error
+                        ? err.message
+                        : null;
+            setError(message || "خطای ورود");
             return false;
         } finally {
             setIsLoadingUser(false);

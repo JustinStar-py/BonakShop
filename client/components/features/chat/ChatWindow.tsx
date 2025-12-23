@@ -28,19 +28,13 @@ export default function ChatWindow({
     currentUserId,
     onClose,
     isAdminView,
-    onBack,
-    sessionOwnerId: initialOwnerId
+    onBack
 }: ChatWindowProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [status, setStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');
     const [sending, setSending] = useState(false);
-    const [sessionOwnerId, setSessionOwnerId] = useState<string | undefined>(initialOwnerId);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (initialOwnerId) setSessionOwnerId(initialOwnerId);
-    }, [initialOwnerId]);
 
     useEffect(() => {
         let isMounted = true;
@@ -50,7 +44,6 @@ export default function ChatWindow({
                 if (isMounted) {
                     setMessages(res.data.messages || []);
                     setStatus(res.data.status);
-                    if (res.data.userId) setSessionOwnerId(res.data.userId);
                 }
             } catch (err) {
                 console.error(err);
@@ -104,7 +97,7 @@ export default function ChatWindow({
             await apiClient.patch(`/chat/sessions/${sessionId}`, { status: 'CLOSED' });
             setStatus('CLOSED');
             if (onClose) onClose();
-        } catch (err) {
+        } catch {
             alert("خطا در بستن گفتگو");
         }
     };

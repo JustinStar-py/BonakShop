@@ -44,7 +44,8 @@ export async function PUT(req: Request) {
     });
 
 
-    const { password: _, ...userWithoutPassword } = updatedUser;
+    const { password: _password, ...userWithoutPassword } = updatedUser;
+    void _password;
     return NextResponse.json(userWithoutPassword, { status: 200 });
 
   } catch (error) {

@@ -29,7 +29,7 @@ export interface ZarinpalPaymentResponse {
         fee_type: string;
         fee: number;
     };
-    errors: any[];
+    errors: unknown[];
 }
 
 /**
@@ -54,7 +54,7 @@ export interface ZarinpalVerifyResponse {
         fee_type: string;
         fee: number;
     };
-    errors: any[];
+    errors: unknown[];
 }
 
 /**

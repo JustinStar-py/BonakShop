@@ -69,6 +69,7 @@ export async function POST(req: Request) {
 
     // Remove password before returning the user object
     const { password: _password, ...userWithoutPassword } = user;
+    void _password;
 
     // 6. Set the Refresh Token in a specific HTTP-only cookie
     const response = NextResponse.json({

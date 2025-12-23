@@ -6,7 +6,6 @@ import type {
     ZarinpalPaymentResponse,
     ZarinpalVerifyRequest,
     ZarinpalVerifyResponse,
-    ZarinpalErrorCode,
 } from '@/types/zarinpal';
 import { logger } from '@/lib/logger';
 

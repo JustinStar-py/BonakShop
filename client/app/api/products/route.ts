@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
 import { cacheKeys, getCached, invalidateCache } from "@/lib/redis";
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Prisma.ProductWhereInput = {};
 
     // Default to available: true if status is not provided (for public users)
     if (!status) {
@@ -44,7 +45,7 @@ export async function GET(req: Request) {
       where.supplierId = supplierId;
     }
 
-    let orderBy: any = {};
+    let orderBy: Prisma.ProductOrderByWithRelationInput = {};
     switch (sort) {
       case "bestselling":
         // Assuming we have an orders relation or a 'sales' field. 

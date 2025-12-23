@@ -3,7 +3,6 @@
 // It automatically attaches the access token and handles token refresh logic.
 
 import axios from 'axios';
-import Router from 'next/router';
 import { loaderState } from '@/lib/loaderSignal';
 
 // The base URL for all API requests
@@ -37,9 +36,9 @@ apiClient.interceptors.request.use(
 // --- Response Interceptor ---
 // This runs AFTER a response is received.
 let isRefreshing = false;
-let failedQueue: { resolve: (token: string) => void, reject: (error: any) => void }[] = [];
+let failedQueue: { resolve: (token: string) => void, reject: (error: unknown) => void }[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);

@@ -72,14 +72,16 @@ export async function POST(req: Request) {
             authority,
             redirectUrl,
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error('❌ [Payment Request API] Error:', error);
+        const message = error instanceof Error ? error.message : undefined;
+        const stack = error instanceof Error ? error.stack : undefined;
         console.error('🔍 Error Details:', {
-            message: error.message,
-            stack: error.stack,
+            message,
+            stack,
         });
         return NextResponse.json(
-            { error: error.message || 'Failed to create payment request' },
+            { error: message || 'Failed to create payment request' },
             { status: 500 }
         );
     }

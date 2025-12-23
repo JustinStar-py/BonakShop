@@ -260,7 +260,13 @@ export default function CartPage() {
                     return (
                         <div key={item.id} className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex gap-3 items-start">
                             <div className="w-20 h-20 bg-gray-50 rounded-xl flex-shrink-0 overflow-hidden relative">
-                                <Image src={item.image || "/placeholder.jpg"} alt={item.name} fill className="object-contain p-1" />
+                                <Image
+                                    src={item.image || "/placeholder.jpg"}
+                                    alt={item.name}
+                                    fill
+                                    sizes="80px"
+                                    className="object-contain p-1"
+                                />
                             </div>
 
                             <div className="flex-1 flex flex-col justify-between min-h-[5rem]">

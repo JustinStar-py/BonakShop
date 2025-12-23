@@ -1,9 +1,10 @@
 // FILE: app/admin/companies/page.tsx (UI FIX: Operations column moved to the left)
 "use client";
 
-import { useState, useEffect, useMemo, FormEvent } from "react";
+import { useState, useEffect, useMemo, FormEvent, useCallback } from "react";
 import type { Supplier, Distributor } from "@prisma/client";
 import apiClient from "@/lib/apiClient";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,35 +14,60 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RestartLinear as Loader2, AddCircleLinear as PlusCircle, Pen2Linear as Pencil, TrashBinMinimalisticLinear as Trash2 } from "@solar-icons/react-perf";
 
-function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
-    const [items, setItems] = useState<(Supplier | Distributor)[]>([]);
+type CompanyType = "supplier" | "distributor";
+type CompanyItem = Supplier | Distributor;
+
+type EditableCompany = {
+    id?: string;
+    name: string;
+    logo?: string | null;
+};
+
+const logoLoader = ({ src }: { src: string }) => src;
+
+const getErrorMessage = (err: unknown) => {
+    if (typeof err === "object" && err && "response" in err) {
+        const response = (err as { response?: { data?: { error?: string } } }).response;
+        return response?.data?.error;
+    }
+    if (err instanceof Error) {
+        return err.message;
+    }
+    return "خطای نامشخص";
+};
+
+function ManageCompanyType({ type }: { type: CompanyType }) {
+    const [items, setItems] = useState<CompanyItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<any | null>(null);
+    const [editingItem, setEditingItem] = useState<EditableCompany | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; itemId: string | null; itemName: string | null }>({ isOpen: false, itemId: null, itemName: null });
 
     const apiPath = useMemo(() => (type === 'supplier' ? '/suppliers' : '/distributors'), [type]);
     const title = useMemo(() => (type === 'supplier' ? 'تولیدکننده' : 'پخش‌کننده'), [type]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await apiClient.get(apiPath);
+            const res = await apiClient.get<CompanyItem[]>(apiPath);
             setItems(res.data);
-        } catch (e) { console.error(`Failed to fetch ${type}s`, e); }
-        finally { setIsLoading(false); }
-    };
+        } catch (e) {
+            console.error(`Failed to fetch ${type}s`, e);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [apiPath, type]);
 
-    useEffect(() => { fetchData(); }, [apiPath]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleOpenDialog = (item: any | null = null) => {
+    const handleOpenDialog = (item: CompanyItem | null = null) => {
         setEditingItem(item || { name: "", logo: "" });
         setIsDialogOpen(true);
     };
 
-    const handleFormChange = (field: string, value: any) => {
-        setEditingItem((prev: any) => ({ ...prev, [field]: value }));
+    const handleFormChange = (field: keyof EditableCompany, value: string) => {
+        setEditingItem((prev) => (prev ? { ...prev, [field]: value } : prev));
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -55,7 +81,9 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
             await apiClient({ url, method, data: editingItem });
             await fetchData();
             setIsDialogOpen(false);
-        } catch (e: any) { alert(`خطا در ذخیره ${title}: ${e.response?.data?.error || e.message}`); }
+        } catch (e) {
+            alert(`خطا در ذخیره ${title}: ${getErrorMessage(e)}`);
+        }
         finally { setActionLoading(false); }
     };
 
@@ -66,7 +94,9 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
             await apiClient.delete(`${apiPath}/${itemId}`);
             await fetchData();
             setDeleteDialog({ isOpen: false, itemId: null, itemName: null });
-        } catch (error: any) { alert(`خطا در حذف: ${error.response?.data?.error || error.message}`); }
+        } catch (error) {
+            alert(`خطا در حذف: ${getErrorMessage(error)}`);
+        }
         finally { setActionLoading(false); }
     };
 
@@ -97,9 +127,13 @@ function ManageCompanyType({ type }: { type: 'supplier' | 'distributor' }) {
                                         </div>
                                     </TableCell>
                                     <TableCell className="grid justify-items-center">
-                                        <img
+                                        <Image
+                                            loader={logoLoader}
+                                            unoptimized
                                             src={item.logo || "/placeholder.svg"}
                                             alt={item.name}
+                                            width={40}
+                                            height={40}
                                             className="h-10 w-10 rounded-full object-contain bg-gray-100 p-1 justify-self-center"
                                         />
                                     </TableCell>

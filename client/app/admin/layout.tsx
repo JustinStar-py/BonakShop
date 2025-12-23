@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import type { ElementType, ReactNode } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,7 +36,15 @@ const NAV_ITEMS = [
     { href: "/admin/settings", label: "تنظیمات", icon: Settings },
 ];
 
-function NavItem({ href, activePath, icon: Icon, children, onClick }: any) {
+type NavItemProps = {
+    href: string;
+    activePath: string;
+    icon: ElementType;
+    children: ReactNode;
+    onClick?: () => void;
+};
+
+function NavItem({ href, activePath, icon: Icon, children, onClick }: NavItemProps) {
     const router = useRouter();
     const isActive = activePath.startsWith(href);
 

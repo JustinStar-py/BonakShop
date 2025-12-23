@@ -57,7 +57,7 @@ export async function withTimeout<T>(
 /**
  * Batch multiple queries efficiently
  */
-export async function batchQueries<T extends Record<string, Promise<any>>>(
+export async function batchQueries<T extends Record<string, Promise<unknown>>>(
     queries: T
 ): Promise<{ [K in keyof T]: Awaited<T[K]> }> {
     const keys = Object.keys(queries) as Array<keyof T>;
@@ -66,7 +66,7 @@ export async function batchQueries<T extends Record<string, Promise<any>>>(
     const results = await Promise.all(promises);
 
     return keys.reduce((acc, key, index) => {
-        acc[key] = results[index];
+        acc[key] = results[index] as Awaited<T[typeof key]>;
         return acc;
-    }, {} as any);
+    }, {} as { [K in keyof T]: Awaited<T[K]> });
 }

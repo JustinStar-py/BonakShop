@@ -195,7 +195,7 @@ export default function SettingsPage() {
                         alt={banner.title || "Banner"}
                         fill
                         className="object-cover"
-                        unoptimized
+                        sizes="(max-width: 768px) 100vw, 50vw"
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full text-slate-400">

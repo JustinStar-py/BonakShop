@@ -4,10 +4,14 @@ import { useState, useCallback } from "react";
 import apiClient from "@/lib/apiClient";
 import { Product, ProductWithSupplier } from "@/types";
 
-export default function useProductPagination<T extends Product = ProductWithSupplier>() {
-  const [products, setProducts] = useState<T[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+export default function useProductPagination<T extends Product = ProductWithSupplier>(
+  initialProducts: T[] = [],
+  initialPage = 1,
+  initialHasMore = true
+) {
+  const [products, setProducts] = useState<T[]>(initialProducts);
+  const [page, setPage] = useState(initialPage);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

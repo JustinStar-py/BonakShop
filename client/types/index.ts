@@ -51,7 +51,7 @@ export interface Product {
 }
 
 export interface ProductWithRelations extends Product {
-  category: Category;
+  category: Pick<Category, 'id' | 'name' | 'icon' | 'image'>;
   supplier: Supplier;
   distributor: Distributor;
 }
@@ -344,7 +344,7 @@ export interface ValidationError {
 // API RESPONSE TYPES
 // ============================================
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;

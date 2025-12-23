@@ -1,0 +1,7 @@
+fix: clean types, icons, and build warnings
+
+- replace lucide-react icons with solar-icons
+- tighten API typing and Prisma query shapes
+- update product/admin pages and shared components
+- harden redis/cache helpers and error handling
+- resolve Next.js build warnings and type errors

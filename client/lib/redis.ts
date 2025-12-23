@@ -18,7 +18,7 @@ import { Redis } from '@upstash/redis';
 
 // In-memory fallback for development
 class MemoryCache {
-    private cache: Map<string, { value: any; expiry: number | null }> = new Map();
+    private cache: Map<string, { value: unknown; expiry: number | null }> = new Map();
 
     async get<T>(key: string): Promise<T | null> {
         const item = this.cache.get(key);
@@ -32,7 +32,7 @@ class MemoryCache {
         return item.value as T;
     }
 
-    async set(key: string, value: any, options?: { ex?: number }): Promise<void> {
+    async set(key: string, value: unknown, options?: { ex?: number }): Promise<void> {
         const expiry = options?.ex ? Date.now() + options.ex * 1000 : null;
         this.cache.set(key, { value, expiry });
     }
@@ -135,7 +135,7 @@ export async function getCached<T>(
     if (cached !== null && cached !== undefined) {
         try {
             return JSON.parse(cached as string) as T;
-        } catch (e) {
+        } catch {
             // If parse fails, treat as string
             return cached as T;
         }

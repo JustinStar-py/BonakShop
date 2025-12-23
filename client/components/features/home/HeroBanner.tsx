@@ -107,7 +107,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
                     fill
                     className="object-cover"
                     priority={index === 0}
-                    unoptimized
+                    sizes="(max-width: 768px) 90vw, (max-width: 1024px) 80vw, 70vw"
                   />
 
                   {/* Overlay Gradient */}

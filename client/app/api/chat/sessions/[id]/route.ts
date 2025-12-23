@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getAuthUserFromRequest } from "@/lib/auth";
 
 export async function GET(
@@ -17,7 +18,7 @@ export async function GET(
     const cursor = searchParams.get('cursor');
     const direction = searchParams.get('direction') || 'back'; // 'back' (history) or 'forward' (updates)
 
-    const messagesArgs: any = {
+    const messagesArgs: Prisma.ChatMessageFindManyArgs = {
         orderBy: { createdAt: 'asc' },
         include: { sender: { select: { id: true, name: true, role: true } } }
     };

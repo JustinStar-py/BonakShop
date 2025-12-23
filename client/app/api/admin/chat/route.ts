@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getAuthUserFromRequest } from "@/lib/auth";
 
 export async function GET(req: Request) {
@@ -16,8 +17,10 @@ export async function GET(req: Request) {
     const limit = Math.min(Math.max(isNaN(limitParam) ? 50 : limitParam, 1), 100);
     const skip = (page - 1) * limit;
 
-    const where: any = {};
-    if (status) where.status = status;
+    const where: Prisma.ChatSessionWhereInput = {};
+    if (status === "OPEN" || status === "CLOSED") {
+        where.status = status;
+    }
 
     const [sessions, total] = await prisma.$transaction([
         prisma.chatSession.findMany({

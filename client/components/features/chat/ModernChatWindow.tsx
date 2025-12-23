@@ -4,7 +4,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PlainLinear, LinkLinear, EmojiFunnyCircleLinear, MenuDotsLinear, AltArrowRightLinear, CheckCircleLinear, GalleryLinear } from '@solar-icons/react-perf';
+import { PlainLinear, LinkLinear, EmojiFunnyCircleLinear, MenuDotsLinear, AltArrowRightLinear, CheckCircleLinear } from '@solar-icons/react-perf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import apiClient from '@/lib/apiClient';
@@ -41,7 +41,7 @@ export default function ModernChatWindow({
     const [input, setInput] = useState('');
     const [status, setStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');
     const [sending, setSending] = useState(false);
-    const [isTyping, setIsTyping] = useState(false);
+    const [isTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const toast = useSimpleToast();
 
@@ -94,7 +94,7 @@ export default function ModernChatWindow({
                 sessionId,
                 content: optimisticMsg.content
             });
-        } catch (err) {
+        } catch {
             toast.error('خطا در ارسال پیام');
             setMessages(prev => prev.filter(m => m.id !== tempId));
         } finally {
@@ -108,7 +108,7 @@ export default function ModernChatWindow({
             setStatus('CLOSED');
             toast.success('گفتگو بسته شد');
             if (onClose) onClose();
-        } catch (err) {
+        } catch {
             toast.error('خطا در بستن گفتگو');
         }
     };

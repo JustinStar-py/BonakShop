@@ -16,8 +16,45 @@ export interface SearchOptions {
     sortBy?: 'relevance' | 'price_asc' | 'price_desc' | 'newest';
 }
 
+export interface SearchProduct {
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    consumerPrice: number | null;
+    image: string | null;
+    available: boolean;
+    discountPercentage: number;
+    unit: string;
+    stock: number;
+    isFeatured: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    categoryId: string;
+    supplierId: string;
+    distributorId: string;
+    category: {
+        id: string;
+        name: string | null;
+        icon: string | null;
+        image: string | null;
+    };
+    supplier: {
+        id: string;
+        name: string | null;
+        logo: string | null;
+    };
+    distributor: {
+        id: string;
+        name: string | null;
+        logo: string | null;
+    };
+    relevanceScore?: number;
+    similarityScore?: number;
+}
+
 export interface SearchResult {
-    products: any[];
+    products: SearchProduct[];
     total: number;
     page: number;
     totalPages: number;
@@ -43,7 +80,7 @@ export async function searchProducts(options: SearchOptions): Promise<SearchResu
     const skip = (page - 1) * limit;
 
     // Build WHERE clause
-    const where: any = { available };
+    const where: Prisma.ProductWhereInput = { available };
 
     if (categoryId && categoryId !== 'all') {
         where.categoryId = categoryId;
@@ -64,7 +101,35 @@ export async function searchProducts(options: SearchOptions): Promise<SearchResu
         const searchQuery = query.trim();
 
         // Use raw SQL for full-text search with ranking
-        const products = await prisma.$queryRaw<any[]>`
+        type SearchProductRow = {
+            id: string;
+            name: string;
+            description: string | null;
+            price: number;
+            consumerPrice: number | null;
+            image: string | null;
+            available: boolean;
+            discountPercentage: number;
+            unit: string;
+            stock: number;
+            isFeatured: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            categoryId: string;
+            supplierId: string;
+            distributorId: string;
+            categoryName: string | null;
+            categoryIcon: string | null;
+            categoryImage: string | null;
+            supplierName: string | null;
+            supplierLogo: string | null;
+            distributorName: string | null;
+            distributorLogo: string | null;
+            rank: number;
+            name_similarity: number;
+        };
+
+        const products = await prisma.$queryRaw<SearchProductRow[]>`
       SELECT 
         p.*,
         c.name as "categoryName",
@@ -245,6 +310,7 @@ export async function logSearch(query: string, userId?: string, resultCount?: nu
  * Get search analytics
  */
 export async function getSearchAnalytics(days: number = 7) {
+    void days;
     // TODO: Implement when search logging is in place
     // Would return: top searches, zero-result searches, avg results per search
     return {

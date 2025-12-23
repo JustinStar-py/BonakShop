@@ -17,7 +17,7 @@ export async function GET() {
       3600
     );
     return NextResponse.json(categories);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     await invalidateCache('categories:*');
 
     return NextResponse.json(category, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

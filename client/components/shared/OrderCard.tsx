@@ -3,12 +3,19 @@
 import { Badge } from "@/components/ui/badge";
 import { CalendarLinear, BoxLinear, AltArrowLeftLinear } from "@solar-icons/react-perf";
 import toPersianDigits from "@/utils/numberFormatter";
-import type { Order, OrderItem, OrderStatus, PaymentStatus } from "@prisma/client";
+import type { OrderStatus, PaymentStatus } from "@prisma/client";
 import { formatToTomanParts } from "@/utils/currencyFormatter";
 
 // تعریف دقیق تایپ ورودی طبق دیتای شما
 type OrderCardProps = {
-  order: Order & { items: OrderItem[] };
+  order: {
+    id: string;
+    status: OrderStatus;
+    paymentStatus: PaymentStatus;
+    createdAt: string | Date;
+    totalPrice: number;
+    items: Array<{ id: string }>;
+  };
   orderNumber?: number;
 };
 

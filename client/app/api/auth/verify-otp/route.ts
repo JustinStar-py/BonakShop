@@ -123,7 +123,8 @@ export async function POST(req: Request) {
 
     cache.del(`otp:${normalizedPhone}`);
 
-    const { password, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
+    void _password;
     
     const response = NextResponse.json({
       user: userWithoutPassword,

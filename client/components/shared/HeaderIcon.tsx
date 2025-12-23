@@ -1,7 +1,11 @@
 import React from 'react';
 
 interface HeaderIconProps {
-    icon: React.ComponentType<any>;
+    icon: React.ComponentType<{
+        size?: number;
+        className?: string;
+        style?: React.CSSProperties;
+    }>;
     size?: number;
     className?: string;
 }

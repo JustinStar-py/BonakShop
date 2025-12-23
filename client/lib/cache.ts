@@ -1,10 +1,11 @@
 import { unstable_cache } from 'next/cache';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 // 1. Products Cache
 // Revalidates every 1 min (60s) OR when 'products' tag is invalidated
 export const getCachedProducts = unstable_cache(
-  async (queryOptions: any) => {
+  async (queryOptions: Prisma.ProductFindManyArgs) => {
     return await prisma.product.findMany(queryOptions);
   },
   ['products-list'], 
@@ -12,7 +13,7 @@ export const getCachedProducts = unstable_cache(
 );
 
 export const getCachedProductCount = unstable_cache(
-  async (where: any) => {
+  async (where: Prisma.ProductWhereInput) => {
     return await prisma.product.count({ where });
   },
   ['products-count'],

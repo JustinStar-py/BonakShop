@@ -110,10 +110,11 @@ export async function POST(req: Request) {
             refId: String(refId),
             cardPan,
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error('❌ Payment verification error:', error);
+        const message = error instanceof Error ? error.message : undefined;
         return NextResponse.json(
-            { error: error.message || 'Failed to verify payment' },
+            { error: message || 'Failed to verify payment' },
             { status: 500 }
         );
     }

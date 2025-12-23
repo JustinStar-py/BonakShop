@@ -1,8 +1,7 @@
-// FILE: components/shared/ReturnRequestDialog.tsx (New File)
+// FILE: components/shared/ReturnRequestDialog.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Order, OrderItem } from "@prisma/client";
 import apiClient from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +15,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddCircleLinear, MinusCircleLinear, RestartLinear } from "@solar-icons/react-perf";
 
-type OrderWithItems = Order & { items: OrderItem[] };
+type OrderItemSummary = {
+    id: string;
+    productName: string;
+    quantity: number;
+    price: number;
+};
+
+type OrderWithItems = {
+    id: string;
+    items: OrderItemSummary[];
+};
 
 interface ReturnRequestDialogProps {
     order: OrderWithItems | null;
@@ -50,7 +59,7 @@ export function ReturnRequestDialog({ order, onOpenChange, onSuccess }: ReturnRe
     const handleSubmitReturn = async () => {
         if (!order) return;
         const itemsToReturn = Object.entries(returnItems)
-            .filter(([_, quantity]) => quantity > 0)
+            .filter(([, quantity]) => quantity > 0)
             .map(([orderItemId, quantity]) => ({ orderItemId, quantity }));
 
         if (itemsToReturn.length === 0) {
@@ -67,9 +76,15 @@ export function ReturnRequestDialog({ order, onOpenChange, onSuccess }: ReturnRe
             });
             alert("درخواست مرجوعی با موفقیت ثبت شد.");
             onSuccess();
-        } catch (e: any) {
+        } catch (e) {
+            const errorMessage =
+                typeof e === "object" && e && "response" in e
+                    ? (e as { response?: { data?: { error?: string } } }).response?.data?.error
+                    : e instanceof Error
+                        ? e.message
+                        : null;
             console.error(e);
-            alert(e.response?.data?.error || "خطا در ثبت درخواست مرجوعی");
+            alert(errorMessage || "خطا در ثبت درخواست مرجوعی");
         } finally {
             setIsLoading(false);
         }
@@ -85,7 +100,7 @@ export function ReturnRequestDialog({ order, onOpenChange, onSuccess }: ReturnRe
                     <p className="text-sm text-muted-foreground">
                         محصولات و تعداد مورد نظر برای مرجوعی را انتخاب کنید.
                     </p>
-                    {order?.items.map((item: OrderItem) => (
+                    {order?.items.map((item: OrderItemSummary) => (
                         <div key={item.id} className="flex justify-between items-center border-b pb-2">
                             <div>
                                 <p className="font-semibold">{item.productName}</p>

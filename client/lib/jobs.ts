@@ -32,7 +32,7 @@ class JobQueue {
      * Register a job handler
      */
     register<T>(type: string, handler: JobHandler<T>): void {
-        this.handlers.set(type, handler);
+        this.handlers.set(type, handler as JobHandler<unknown>);
     }
 
     /**

@@ -37,8 +37,6 @@ export default function ProductCarousel({
 }: ProductCarouselProps) {
   if (!products || products.length === 0) return null;
 
-  const StripIcon = Icon || BellLinear;
-
   return (
     <div className="py-4 my-2 border-t border-b border-gray-200 bg-gray-50">
       {/* Header Section */}

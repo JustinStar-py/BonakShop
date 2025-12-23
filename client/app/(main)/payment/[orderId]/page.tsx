@@ -1,22 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { RestartLinear as Loader2, Card2Linear as CreditCard, BagLinear as ShoppingBag, DangerCircleLinear as AlertCircle } from "@solar-icons/react-perf";
+import { RestartLinear as Loader2, Card2Linear as CreditCard, DangerCircleLinear as AlertCircle } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
-import { formatToToman } from "@/utils/currencyFormatter";
-import toPersianDigits from "@/utils/numberFormatter";
+
+type PaymentRequestResponse = {
+    success: boolean;
+    redirectUrl?: string;
+    error?: string;
+};
+
+const getErrorMessage = (err: unknown) => {
+    if (typeof err === "object" && err && "response" in err) {
+        const response = (err as { response?: { data?: { error?: string } } }).response;
+        return response?.data?.error;
+    }
+    if (err instanceof Error) {
+        return err.message;
+    }
+    return null;
+};
 
 export default function PaymentPage() {
-    const params = useParams();
+    const params = useParams<{ orderId?: string | string[] }>();
     const router = useRouter();
-    const orderId = params.orderId as string;
+    const orderId = typeof params.orderId === "string" ? params.orderId : params.orderId?.[0];
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [orderData, setOrderData] = useState<any>(null);
+
+    const initiatePayment = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Call payment request API
+            const response = await apiClient.post<PaymentRequestResponse>("/payment/request", { orderId });
+
+            if (response.data.success && response.data.redirectUrl) {
+                // Redirect to Zarinpal
+                window.location.href = response.data.redirectUrl;
+            } else {
+                setError("خطا در ایجاد درخواست پرداخت");
+            }
+        } catch (err) {
+            console.error("Payment initiation error:", err);
+            setError(getErrorMessage(err) || "خطا در برقراری ارتباط با درگاه پرداخت");
+            setLoading(false);
+        }
+    }, [orderId]);
 
     useEffect(() => {
         if (!orderId) {
@@ -26,28 +61,7 @@ export default function PaymentPage() {
         }
 
         initiatePayment();
-    }, [orderId]);
-
-    const initiatePayment = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            // Call payment request API
-            const response = await apiClient.post("/payment/request", { orderId });
-
-            if (response.data.success && response.data.redirectUrl) {
-                // Redirect to Zarinpal
-                window.location.href = response.data.redirectUrl;
-            } else {
-                setError("خطا در ایجاد درخواست پرداخت");
-            }
-        } catch (err: any) {
-            console.error("Payment initiation error:", err);
-            setError(err.response?.data?.error || "خطا در برقراری ارتباط با درگاه پرداخت");
-            setLoading(false);
-        }
-    };
+    }, [orderId, initiatePayment]);
 
     if (loading) {
         return (

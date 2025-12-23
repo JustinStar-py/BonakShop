@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import type { ElementType, ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +15,8 @@ import {
 } from "@solar-icons/react-perf";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import apiClient from "@/lib/apiClient";
-import { formatToToman } from "@/utils/currencyFormatter";
 import { cn } from "@/lib/utils";
+import { formatToToman } from "@/utils/currencyFormatter";
 import { useAppContext } from "@/context/AppContext";
 import TomanPrice from "@/components/shared/TomanPrice";
 
@@ -26,7 +27,25 @@ function formatPriceLabel(price: number) {
 }
 
 // KPI Card Component for reusability
-function KpiCard({ title, value, icon: Icon, className, trend }: any) {
+type KpiCardProps = {
+    title: string;
+    value: ReactNode;
+    icon: ElementType;
+    className?: string;
+    trend?: string;
+};
+
+type DashboardStats = {
+    kpiData: {
+        totalRevenue: number;
+        totalOrders: number;
+        totalCustomers: number;
+    };
+    customerStats?: Array<{ name: string; count: number; total: number }>;
+    dailySalesData: Array<{ name: string; فروش: number }>;
+};
+
+function KpiCard({ title, value, icon: Icon, className, trend }: KpiCardProps) {
     return (
         <Card className={cn("overflow-hidden transition-all hover:shadow-md border-slate-200", className)}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -55,15 +74,15 @@ function KpiCard({ title, value, icon: Icon, className, trend }: any) {
 
 export default function DashboardHomePage() {
     const { isLoadingUser } = useAppContext();
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const res = await apiClient.get('/admin/dashboard');
+            const res = await apiClient.get<DashboardStats>('/admin/dashboard');
             setStats(res.data);
         } catch (e) {
             console.error("Failed to fetch dashboard data", e);
@@ -71,13 +90,13 @@ export default function DashboardHomePage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (!isLoadingUser) {
             fetchDashboardData();
         }
-    }, [isLoadingUser]);
+    }, [isLoadingUser, fetchDashboardData]);
 
     if (isLoadingUser || isLoading) {
         return (
@@ -180,7 +199,7 @@ export default function DashboardHomePage() {
                     </CardHeader>
                     <CardContent className="flex-1 overflow-auto">
                         <ul className="space-y-5">
-                            {stats.customerStats?.map((stat: any, index: number) => (
+                            {stats.customerStats?.map((stat, index) => (
                                 <li key={index} className="flex items-center justify-between group">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs group-hover:bg-primary group-hover:text-white transition-colors">

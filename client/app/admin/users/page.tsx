@@ -23,7 +23,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pen2Linear as Edit, WalletLinear as Wallet, MagniferLinear as Search, RestartLinear as Loader2 } from "@solar-icons/react-perf";
 import { formatToToman } from "@/utils/currencyFormatter";
-import toPersianDigits from "@/utils/numberFormatter";
 import TomanPrice from "@/components/shared/TomanPrice";
 
 export default function UsersPage() {
@@ -73,7 +72,7 @@ export default function UsersPage() {
       toast.success("کاربر با موفقیت ویرایش شد");
       setIsEditOpen(false);
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast.error("خطا در ویرایش کاربر");
     }
   };
@@ -89,7 +88,7 @@ export default function UsersPage() {
       setChargeAmount("");
       setWalletOperation('increase');
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast.error("خطا در تغییر موجودی کیف پول");
     }
   };

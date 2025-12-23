@@ -1,4 +1,4 @@
-import type { Product, ProductWithSupplier } from '@/types';
+import type { ProductWithSupplier } from '@/types';
 
 export type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'bestselling';
 

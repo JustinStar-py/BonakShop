@@ -19,8 +19,48 @@ import { Badge } from "@/components/ui/badge";
 import { formatToToman } from "@/utils/currencyFormatter";
 import Image from "next/image";
 
-type ProductWithRelations = Product & { category: Category, supplier: Supplier, distributor: Distributor };
-type EntityType = 'category' | 'supplier' | 'distributor';
+type ProductWithRelations = Product & { category: Category; supplier: Supplier; distributor: Distributor };
+type EntityType = "category" | "supplier" | "distributor";
+type BulkDirection = "increase" | "decrease";
+type BulkReductionType = "percentage" | "fixed";
+
+type EditableProduct = {
+    id?: string;
+    name: string;
+    price: string | number;
+    description?: string | null;
+    categoryId: string;
+    image?: string | null;
+    available: boolean;
+    discountPercentage: string | number;
+    unit: string;
+    stock: string | number;
+    supplierId: string;
+    distributorId: string;
+    isFeatured: boolean;
+    consumerPrice?: string | number | null;
+};
+
+const toNumber = (value: string | number | null | undefined | boolean) => {
+    if (typeof value === 'boolean') return 0;
+    return Number(value ?? 0);
+};
+
+const isBulkDirection = (value: string): value is BulkDirection =>
+    value === "increase" || value === "decrease";
+const isBulkReductionType = (value: string): value is BulkReductionType =>
+    value === "percentage" || value === "fixed";
+
+const getErrorMessage = (err: unknown) => {
+    if (typeof err === "object" && err && "response" in err) {
+        const response = (err as { response?: { data?: { error?: string } } }).response;
+        return response?.data?.error;
+    }
+    if (err instanceof Error) {
+        return err.message;
+    }
+    return "خطای نامشخص";
+};
 
 export default function ProductManagementPage() {
     const [products, setProducts] = useState<ProductWithRelations[]>([]);
@@ -32,7 +72,7 @@ export default function ProductManagementPage() {
 
     // Dialog states
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<any | null>(null);
+    const [editingProduct, setEditingProduct] = useState<EditableProduct | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; productId: string | null; productName: string | null; }>({ isOpen: false, productId: null, productName: null });
     const [addEntity, setAddEntity] = useState<{ type: EntityType | null, isOpen: boolean }>({ type: null, isOpen: false });
@@ -41,9 +81,9 @@ export default function ProductManagementPage() {
     const [consumerPriceInToman, setConsumerPriceInToman] = useState('');
     const [discountedPriceInToman, setDiscountedPriceInToman] = useState('');
     const [isBulkUpdateDialogOpen, setIsBulkUpdateDialogOpen] = useState(false);
-    const [bulkReductionType, setBulkReductionType] = useState<'percentage' | 'fixed'>('percentage');
+    const [bulkReductionType, setBulkReductionType] = useState<BulkReductionType>("percentage");
     const [bulkReductionValue, setBulkReductionValue] = useState('');
-    const [bulkDirection, setBulkDirection] = useState<'increase' | 'decrease'>('decrease');
+    const [bulkDirection, setBulkDirection] = useState<BulkDirection>("decrease");
     const [categoryFilter, setCategoryFilter] = useState<string>("all");
     const [supplierFilter, setSupplierFilter] = useState<string>("all");
     const [distributorFilter, setDistributorFilter] = useState<string>("all");
@@ -64,15 +104,15 @@ export default function ProductManagementPage() {
     const [totalPages, setTotalPages] = useState(1);
 
     const discountedPrice = useMemo(() => {
-        if (!editingProduct?.price || isNaN(Number(editingProduct.price))) return 0;
-        const discount = Number(editingProduct.discountPercentage) || 0;
-        return Number(editingProduct.price) * (1 - discount / 100);
+        if (!editingProduct?.price || Number.isNaN(Number(editingProduct.price))) return 0;
+        const discount = toNumber(editingProduct.discountPercentage);
+        return toNumber(editingProduct.price) * (1 - discount / 100);
     }, [editingProduct?.price, editingProduct?.discountPercentage]);
 
     useEffect(() => {
         if (editingProduct) {
-            setPriceInToman(formatToToman(editingProduct.price as number || 0));
-            setConsumerPriceInToman(formatToToman(editingProduct.consumerPrice as number || 0));
+            setPriceInToman(formatToToman(toNumber(editingProduct.price)));
+            setConsumerPriceInToman(formatToToman(toNumber(editingProduct.consumerPrice)));
             setDiscountedPriceInToman(formatToToman(discountedPrice));
         }
     }, [editingProduct, discountedPrice]);
@@ -107,7 +147,7 @@ export default function ProductManagementPage() {
         }
     }, []);
 
-    const fetchDropdownData = async () => {
+    const fetchDropdownData = useCallback(async () => {
         try {
             const [cRes, sRes, dRes] = await Promise.all([
                 apiClient.get('/categories'),
@@ -118,11 +158,11 @@ export default function ProductManagementPage() {
             setSuppliers(sRes.data || []);
             setDistributors(dRes.data || []);
         } catch (e) { console.error("Failed to fetch dropdown data:", e); }
-    };
+    }, []);
 
     useEffect(() => {
         fetchDropdownData();
-    }, []);
+    }, [fetchDropdownData]);
 
     useEffect(() => {
         fetchProducts(
@@ -136,26 +176,55 @@ export default function ProductManagementPage() {
     }, [currentPage, debouncedSearchTerm, statusFilter, categoryFilter, supplierFilter, distributorFilter, fetchProducts]);
 
 
-    const handleOpenDialog = (product: any | null = null) => {
-        setEditingProduct(product || {
-            name: "", price: "", description: "", categoryId: "", image: "",
-            available: true, discountPercentage: "0", unit: "عدد", stock: "",
-            supplierId: "", distributorId: "", isFeatured: false, consumerPrice: ""
-        });
+    const handleOpenDialog = (product: ProductWithRelations | null = null) => {
+        if (product) {
+            setEditingProduct({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                description: product.description,
+                categoryId: product.categoryId,
+                image: product.image,
+                available: product.available,
+                discountPercentage: product.discountPercentage,
+                unit: product.unit,
+                stock: product.stock,
+                supplierId: product.supplierId,
+                distributorId: product.distributorId,
+                isFeatured: product.isFeatured,
+                consumerPrice: product.consumerPrice,
+            });
+        } else {
+            setEditingProduct({
+                name: "",
+                price: "",
+                description: "",
+                categoryId: "",
+                image: "",
+                available: true,
+                discountPercentage: "0",
+                unit: "عدد",
+                stock: "",
+                supplierId: "",
+                distributorId: "",
+                isFeatured: false,
+                consumerPrice: "",
+            });
+        }
         setIsDialogOpen(true);
     };
 
-    const handleFormChange = (field: string, value: any) => {
-        setEditingProduct((prev: any) => ({ ...prev, [field]: value }));
+    const handleFormChange = (field: keyof EditableProduct, value: string | number | boolean) => {
+        setEditingProduct((prev) => (prev ? { ...prev, [field]: value } : prev));
 
         if (field === 'price') {
-            setPriceInToman(formatToToman(value));
+            setPriceInToman(formatToToman(toNumber(value)));
         } else if (field === 'consumerPrice') {
-            setConsumerPriceInToman(formatToToman(value));
+            setConsumerPriceInToman(formatToToman(toNumber(value)));
         } else if (field === 'discountPercentage') {
-            const price = editingProduct?.price || 0;
-            const discount = Number(value) || 0;
-            const newDiscountedPrice = Number(price) * (1 - discount / 100);
+            const price = toNumber(editingProduct?.price);
+            const discount = toNumber(value);
+            const newDiscountedPrice = price * (1 - discount / 100);
             setDiscountedPriceInToman(formatToToman(newDiscountedPrice));
         }
     };
@@ -163,7 +232,7 @@ export default function ProductManagementPage() {
     const handleSelectChange = (field: EntityType, value: string) => {
         const addValueMap = { 'category': 'add-new-category', 'supplier': 'add-new-supplier', 'distributor': 'add-new-distributor' };
         if (value === addValueMap[field]) { setAddEntity({ type: field, isOpen: true }); }
-        else { handleFormChange(`${field}Id`, value); }
+        else { handleFormChange(`${field}Id` as keyof EditableProduct, value); }
     };
 
     const handleAddNewEntity = async () => {
@@ -174,11 +243,11 @@ export default function ProductManagementPage() {
         };
         const { path, key } = apiMap[addEntity.type];
         try {
-            const res = await apiClient.post(path, { name: newEntityName });
+            const res = await apiClient.post<{ id: string }>(path, { name: newEntityName });
             await fetchDropdownData();
-            handleFormChange(key, res.data.id);
+            handleFormChange(key as keyof EditableProduct, res.data.id);
             setAddEntity({ type: null, isOpen: false }); setNewEntityName("");
-        } catch (error) { alert(`خطا در افزودن آیتم جدید: ${error}`); }
+        } catch (error) { alert(`خطا در افزودن آیتم جدید: ${getErrorMessage(error)}`); }
         finally { setActionLoading(false); }
     };
 
@@ -203,13 +272,13 @@ export default function ProductManagementPage() {
         const isEditing = !!editingProduct.id;
         const url = isEditing ? `/products/${editingProduct.id}` : '/products';
         const method = isEditing ? 'PUT' : 'POST';
-        const body = {
+        const body: EditableProduct = {
             ...editingProduct,
-            price: parseFloat(editingProduct.price) || 0,
-            stock: Number(editingProduct.stock) || 0,
-            discountPercentage: Number(editingProduct.discountPercentage) || 0,
+            price: toNumber(editingProduct.price),
+            stock: toNumber(editingProduct.stock),
+            discountPercentage: toNumber(editingProduct.discountPercentage),
             isFeatured: Boolean(editingProduct.isFeatured),
-            consumerPrice: editingProduct.consumerPrice ? parseFloat(editingProduct.consumerPrice) : null
+            consumerPrice: editingProduct.consumerPrice ? toNumber(editingProduct.consumerPrice) : null
         };
         try {
             await apiClient({ url, method, data: body });
@@ -222,7 +291,7 @@ export default function ProductManagementPage() {
                 distributorFilter || undefined
             );
             setIsDialogOpen(false);
-        } catch (error) { alert(`خطا در ذخیره محصول: ${error}`); }
+        } catch (error) { alert(`خطا در ذخیره محصول: ${getErrorMessage(error)}`); }
         finally { setActionLoading(false); }
     };
 
@@ -233,7 +302,7 @@ export default function ProductManagementPage() {
             await apiClient.delete(`/products/${productId}`);
             await fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
             setDeleteDialog({ isOpen: false, productId: null, productName: null });
-        } catch (error) { alert(`خطا در حذف محصول: ${error}`); }
+        } catch (error) { alert(`خطا در حذف محصول: ${getErrorMessage(error)}`); }
         finally { setActionLoading(false); }
     };
 
@@ -255,13 +324,13 @@ export default function ProductManagementPage() {
             setIsBulkUpdateDialogOpen(false);
             setBulkReductionValue('');
         } catch (error) {
-            alert(`خطا در بروزرسانی قیمت‌ها: ${error}`);
+            alert(`خطا در بروزرسانی قیمت‌ها: ${getErrorMessage(error)}`);
         } finally {
             setActionLoading(false);
         }
     };
 
-    const openBulkDialog = (preset?: { direction?: 'increase' | 'decrease'; type?: 'percentage' | 'fixed' }) => {
+    const openBulkDialog = (preset?: { direction?: BulkDirection; type?: BulkReductionType }) => {
         if (preset?.direction) setBulkDirection(preset.direction);
         if (preset?.type) setBulkReductionType(preset.type);
         setIsBulkUpdateDialogOpen(true);
@@ -281,7 +350,7 @@ export default function ProductManagementPage() {
             });
             await fetchProducts(currentPage, debouncedSearchTerm, statusFilter);
         } catch (error) {
-            alert(`خطا در حذف گروهی: ${error}`);
+            alert(`خطا در حذف گروهی: ${getErrorMessage(error)}`);
         } finally {
             setActionLoading(false);
         }
@@ -419,6 +488,7 @@ export default function ProductManagementPage() {
                                                 alt={p.name}
                                                 width={48}
                                                 height={48}
+                                                sizes="48px"
                                                 className="rounded-md object-cover"
                                             />
                                         </TableCell>
@@ -529,7 +599,12 @@ export default function ProductManagementPage() {
                         </p>
                         <div className="flex items-center space-x-2 space-x-reverse">
                             <Label>جهت تغییر:</Label>
-                            <Select value={bulkDirection} onValueChange={(value: 'increase' | 'decrease') => setBulkDirection(value)}>
+                            <Select
+                                value={bulkDirection}
+                                onValueChange={(value) =>
+                                    setBulkDirection(isBulkDirection(value) ? value : "decrease")
+                                }
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -541,7 +616,12 @@ export default function ProductManagementPage() {
                         </div>
                         <div className="flex items-center space-x-2 space-x-reverse">
                             <Label>نوع تغییر:</Label>
-                            <Select value={bulkReductionType} onValueChange={(value: 'percentage' | 'fixed') => setBulkReductionType(value)}>
+                            <Select
+                                value={bulkReductionType}
+                                onValueChange={(value) =>
+                                    setBulkReductionType(isBulkReductionType(value) ? value : "percentage")
+                                }
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>

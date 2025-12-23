@@ -45,16 +45,17 @@ export default function CartValidationModal({ changes, open, onConfirm, onCancel
           ))}
         </div>
 
-        <AlertDialogFooter className="flex-row-reverse gap-2 sm:gap-0">
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-blue-600 hover:bg-blue-700 flex-1"
-          >
-            اعمال تغییرات و ادامه
-          </AlertDialogAction>
-          <div className="w-2"></div>
-          {/* Use a div spacer or margin because Shadcn footer flex-row-reverse behavior can be tricky with gap */}
-        </AlertDialogFooter>
+      <AlertDialogFooter className="flex-row-reverse gap-2 sm:gap-0">
+        <AlertDialogAction
+          onClick={onConfirm}
+          className="bg-blue-600 hover:bg-blue-700 flex-1"
+        >
+          اعمال تغییرات و ادامه
+        </AlertDialogAction>
+        <AlertDialogCancel onClick={onCancel} className="flex-1">
+          انصراف
+        </AlertDialogCancel>
+      </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );

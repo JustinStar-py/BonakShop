@@ -3,6 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { searchProducts } from '@/lib/search';
+import type { SearchOptions } from '@/lib/search';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rateLimit';
 import { cacheKeys, getCached } from '@/lib/redis';
 
@@ -21,7 +22,13 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
 
-        const options = {
+        const sortParam = searchParams.get('sortBy');
+        const sortBy: SearchOptions["sortBy"] =
+            sortParam === 'relevance' || sortParam === 'price_asc' || sortParam === 'price_desc' || sortParam === 'newest'
+                ? sortParam
+                : 'relevance';
+
+        const options: SearchOptions = {
             query: searchParams.get('q') || searchParams.get('query') || '',
             categoryId: searchParams.get('categoryId') || undefined,
             supplierId: searchParams.get('supplierId') || undefined,
@@ -30,7 +37,7 @@ export async function GET(request: Request) {
             available: searchParams.get('available') !== 'false',
             page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
             limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 12,
-            sortBy: (searchParams.get('sortBy') as any) || 'relevance'
+            sortBy
         };
 
         const cacheKey = cacheKeys.search.products(options);

@@ -19,7 +19,7 @@ interface RefreshTokenPayload {
  * @param {Request} req - The incoming request object.
  * @returns {NextResponse} A response object with a new access token or an error message.
  */
-export async function POST(req: Request) {
+export async function POST() {
   try {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get('refreshToken')?.value;

@@ -68,7 +68,7 @@ export async function checkRateLimit(
         }
 
         return { allowed: true };
-    } catch (error) {
+    } catch {
         // Fallback to in-memory store if Redis is unavailable
         if (store[key] && now > store[key].resetTime) {
             delete store[key];

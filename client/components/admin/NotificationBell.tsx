@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { BellLinear, BoxLinear, CartLinear, DangerTriangleLinear, RestartLinear, CheckCircleLinear } from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +22,6 @@ type Notification = {
   urgent: boolean;
 };
 
-// Simple notification sound (short glass ping)
-const NOTIFICATION_SOUND = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"; // Placeholder, will use a real short base64 in implementation or just a simple beep logic if preferred, but for this context a clean short base64 is better. 
-// Actually, to keep it clean and functional without a massive string, I'll use a standard generic sound URL or a very short beep. 
-// Let's use a short predictable beep function instead or a very short base64.
-const BEEP_BASE64 = "data:audio/mp3;base64,SUQzBAAAAAABAFRYWFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFZYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFZYAAAAEAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAFRTU0UAAAAOAAADTGF2ZjU3LjU2LjEwMQAAAAAAAAAAAAAA//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABSAAHGxvf5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn//7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP/7kGRPAAAAGkAAAAAAAABpAAAAAAAAAAAAAAP"; // Truncated for brevity in thought, I will use a real working short ding in the code below.
-
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -39,11 +33,14 @@ export default function NotificationBell() {
   const knownIdsRef = useRef<Set<string>>(new Set());
   const isFirstLoadRef = useRef(true);
 
-  const playNotificationSound = () => {
+  const playNotificationSound = useCallback(() => {
     try {
-      const audio = new Audio("/assets/notification.mp3"); // Assuming we might add this later, but fallback to a generated beep is safer for now.
       // Actually, let's use a simple oscillator beep since we don't want to rely on assets that might not exist.
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextCtor =
+        window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextCtor) return;
+      const ctx = new AudioContextCtor();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -58,9 +55,9 @@ export default function NotificationBell() {
     } catch (e) {
       console.error("Audio play failed", e);
     }
-  };
+  }, []);
 
-  const showBrowserNotification = (newItems: Notification[]) => {
+  const showBrowserNotification = useCallback((newItems: Notification[]) => {
     if (!("Notification" in window)) return;
 
     if (Notification.permission === "granted") {
@@ -73,12 +70,12 @@ export default function NotificationBell() {
         icon: "/logo.png" // Assuming logo exists
       });
     }
-  };
+  }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get('/admin/notifications');
+      const res = await apiClient.get<Notification[]>('/admin/notifications');
       const currentItems: Notification[] = res.data;
 
       setNotifications(currentItems);
@@ -111,7 +108,7 @@ export default function NotificationBell() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [playNotificationSound, showBrowserNotification]);
 
   // Request permission on mount
   useEffect(() => {
@@ -124,9 +121,9 @@ export default function NotificationBell() {
     // Poll every 30 seconds
     const interval = setInterval(fetchNotifications, 30 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchNotifications]);
 
-  const getIcon = (type: string) => {
+  const getIcon = (type: Notification["type"]) => {
     switch (type) {
       case 'order': return <CartLinear className="h-4 w-4 text-blue-500" />;
       case 'stock': return <BoxLinear className="h-4 w-4 text-orange-500" />;

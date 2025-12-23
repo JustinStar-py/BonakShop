@@ -18,7 +18,7 @@ export async function GET() {
       3600
     );
     return NextResponse.json(distributors, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch distributors" }, { status: 500 });
   }
 }
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     await invalidateCache("distributors:*");
 
     return NextResponse.json(newDistributor, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create distributor" }, { status: 500 });
   }
 }

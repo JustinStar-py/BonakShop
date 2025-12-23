@@ -13,7 +13,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.ibb.co" },
       { protocol: "https", hostname: "i.postimg.cc" },
       { protocol: "https", hostname: "studiomani.ir" },
-      { protocol: "https", hostname: "www.digikala.com" }
+      { protocol: "https", hostname: "www.digikala.com" },
+      { protocol: "https", hostname: "trustseal.enamad.ir" }
     ],
 
     // بقیه تنظیمات اختیاری — میتونن بمونن
@@ -30,42 +31,6 @@ const nextConfig: NextConfig = {
 
   // بقیه تنظیمات شما مشابه قبلی...
   compress: true,
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        moduleIds: 'deterministic',
-        runtimeChunk: 'single',
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            vendor: {
-              name: 'vendor',
-              chunks: 'all',
-              test: /node_modules/,
-              priority: 20,
-            },
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 10,
-              reuseExistingChunk: true,
-              enforce: true,
-            },
-            lib: {
-              test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
-              name: 'lib',
-              priority: 30,
-            },
-          },
-        },
-      };
-    }
-    return config;
-  },
 
   experimental: {
     optimizePackageImports,
@@ -90,7 +55,43 @@ const nextConfig: NextConfig = {
       {
         source: '/api/:path*',
         headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+        ],
+      },
+      {
+        source: '/api/products/:path*',
+        headers: [
           { key: 'Cache-Control', value: 'public, max-age=60, stale-while-revalidate=300' },
+        ],
+      },
+      {
+        source: '/api/categories',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=7200' },
+        ],
+      },
+      {
+        source: '/api/banners',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=600, stale-while-revalidate=1800' },
+        ],
+      },
+      {
+        source: '/api/search',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=60, stale-while-revalidate=300' },
+        ],
+      },
+      {
+        source: '/api/suppliers',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=7200' },
+        ],
+      },
+      {
+        source: '/api/distributors',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=7200' },
         ],
       },
       {
