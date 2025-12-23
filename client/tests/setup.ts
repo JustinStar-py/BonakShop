@@ -3,7 +3,7 @@
  * Mocks for Next.js APIs, Redis, and Prisma
  */
 
-import { vi } from 'vitest';
+import { vi, beforeEach } from 'vitest';
 
 // Mock Next.js server-only features
 vi.mock('next/headers', () => ({
