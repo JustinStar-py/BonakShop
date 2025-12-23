@@ -1,12 +1,21 @@
 // FILE: app/api/categories/route.ts (Complete and with Caching)
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCachedCategories } from "@/lib/cache";
 import { revalidateTag } from "next/cache";
+import { cacheKeys, getCached, invalidateCache } from "@/lib/redis";
 
 export async function GET() {
   try {
-    const categories = await getCachedCategories();
+    const cacheKey = cacheKeys.categories.all();
+    const categories = await getCached(
+      cacheKey,
+      () =>
+        prisma.category.findMany({
+          include: { _count: { select: { products: true } } },
+          orderBy: { name: "asc" },
+        }),
+      3600
+    );
     return NextResponse.json(categories);
   } catch (error) {
     return NextResponse.json(
@@ -29,6 +38,7 @@ export async function POST(req: Request) {
 
     // Invalidate the cache
     revalidateTag('categories');
+    await invalidateCache('categories:*');
 
     return NextResponse.json(category, { status: 201 });
   } catch (error) {

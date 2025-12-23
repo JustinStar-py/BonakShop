@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
-import { unstable_cache, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
+import { cacheKeys, getCached, invalidateCache } from "@/lib/redis";
 
 export async function GET(req: Request) {
   try {
@@ -62,8 +63,18 @@ export async function GET(req: Request) {
         orderBy = { createdAt: "desc" };
     }
 
-    // Cache the data fetching logic
-    const getProducts = unstable_cache(
+    const cacheKey = cacheKeys.products.list({
+      page,
+      limit,
+      search,
+      categoryId: categoryId || undefined,
+      supplierId: supplierId || undefined,
+      sort,
+      status
+    });
+
+    const { products, total } = await getCached(
+      cacheKey,
       async () => {
         const [products, total] = await prisma.$transaction([
           prisma.product.findMany({
@@ -81,15 +92,8 @@ export async function GET(req: Request) {
         ]);
         return { products, total };
       },
-      // Unique key for this specific query combination
-      ['products-query', String(page), String(limit), search, categoryId, supplierId, sort, status || 'default'],
-      {
-        revalidate: 60, // Cache search results for 1 minute
-        tags: ['products']
-      }
+      60
     );
-
-    const { products, total } = await getProducts();
 
     return NextResponse.json({
       products,
@@ -134,6 +138,11 @@ export async function POST(req: Request) {
     revalidateTag('products');
     revalidateTag('categories'); // Because category counts might change
     revalidateTag('suppliers'); // Because supplier product counts might change
+    await invalidateCache('products:list:*');
+    await invalidateCache('products:lists:*');
+    await invalidateCache('categories:*');
+    await invalidateCache('suppliers:*');
+    await invalidateCache('search:products:*');
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {

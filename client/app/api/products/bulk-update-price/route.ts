@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from "@/lib/prisma";
+import { invalidateCache } from "@/lib/redis";
 
 export async function POST(request: Request) {
   try {
@@ -84,6 +85,11 @@ export async function POST(request: Request) {
     } else {
       return NextResponse.json({ message: 'Invalid reduction type' }, { status: 400 });
     }
+
+    await invalidateCache('products:list:*');
+    await invalidateCache('products:lists:*');
+    await invalidateCache('products:detail:*');
+    await invalidateCache('search:products:*');
 
     return NextResponse.json({ message: 'Prices updated successfully' });
   } catch (error) {

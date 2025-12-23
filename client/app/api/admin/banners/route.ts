@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { invalidateCache } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -27,6 +28,7 @@ export async function POST(req: Request) {
         priority: priority ? parseInt(priority) : 0,
       },
     });
+    await invalidateCache("banners:*");
     return NextResponse.json(banner);
   } catch (error) {
     console.error("Error creating banner:", error);

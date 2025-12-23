@@ -4,11 +4,12 @@
 import { NextResponse } from 'next/server';
 import { searchProducts } from '@/lib/search';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rateLimit';
+import { cacheKeys, getCached } from '@/lib/redis';
 
 export async function GET(request: Request) {
     // Rate limiting
     const identifier = getClientIdentifier(request);
-    const rateCheck = checkRateLimit(identifier, {
+    const rateCheck = await checkRateLimit(identifier, {
         windowMs: 60 * 1000, // 1 minute
         max: 60, // 60 searches per minute
     });
@@ -32,7 +33,8 @@ export async function GET(request: Request) {
             sortBy: (searchParams.get('sortBy') as any) || 'relevance'
         };
 
-        const results = await searchProducts(options);
+        const cacheKey = cacheKeys.search.products(options);
+        const results = await getCached(cacheKey, () => searchProducts(options), 60);
 
         return NextResponse.json(results);
     } catch (error) {

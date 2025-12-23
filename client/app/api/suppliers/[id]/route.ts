@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
+import { invalidateCache } from "@/lib/redis";
 
 // Handles UPDATING an existing supplier
 export async function PUT(
@@ -29,6 +30,11 @@ export async function PUT(
     });
     
     revalidateTag("suppliers");
+    await invalidateCache("suppliers:*");
+    await invalidateCache("products:list:*");
+    await invalidateCache("products:lists:*");
+    await invalidateCache("products:detail:*");
+    await invalidateCache("search:products:*");
     
     return NextResponse.json(updatedSupplier, { status: 200 });
   } catch (error) {
@@ -54,6 +60,11 @@ export async function DELETE(
     await prisma.supplier.delete({ where: { id: supplierId } });
     
     revalidateTag("suppliers");
+    await invalidateCache("suppliers:*");
+    await invalidateCache("products:list:*");
+    await invalidateCache("products:lists:*");
+    await invalidateCache("products:detail:*");
+    await invalidateCache("search:products:*");
 
     return NextResponse.json({ success: true });
   } catch (error) {

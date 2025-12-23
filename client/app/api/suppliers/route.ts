@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
-import { getCachedSuppliers } from "@/lib/cache";
+import { cacheKeys, getCached, invalidateCache } from "@/lib/redis";
 
 // --- GET suppliers ---
 export async function GET(request: Request) {
@@ -11,23 +11,30 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("categoryId");
 
-    if (categoryId) {
-      // Optimized query: Find suppliers that have at least one product in this category
-      const suppliers = await prisma.supplier.findMany({
-        where: {
-          products: {
-            some: {
-              categoryId: categoryId,
-            },
-          },
-        },
-        orderBy: { name: "asc" },
-      });
-      return NextResponse.json(suppliers);
-    }
+    const cacheKey = categoryId
+      ? cacheKeys.suppliers.byCategory(categoryId)
+      : cacheKeys.suppliers.all();
 
-    const allSuppliers = await getCachedSuppliers();
-    return NextResponse.json(allSuppliers);
+    const suppliers = await getCached(
+      cacheKey,
+      () =>
+        prisma.supplier.findMany({
+          ...(categoryId
+            ? {
+                where: {
+                  products: {
+                    some: {
+                      categoryId: categoryId,
+                    },
+                  },
+                },
+              }
+            : {}),
+          orderBy: { name: "asc" },
+        }),
+      3600
+    );
+    return NextResponse.json(suppliers);
   } catch (error) {
     console.error("Failed to fetch suppliers:", error);
     return NextResponse.json(
@@ -61,6 +68,7 @@ export async function POST(req: Request) {
 
     // Invalidate cache
     revalidateTag("suppliers");
+    await invalidateCache("suppliers:*");
 
     return NextResponse.json(newSupplier, { status: 201 });
   } catch (error) {

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
+import { cacheKeys, getCached, invalidateCache } from "@/lib/redis";
 
 export async function GET(
   req: Request,
@@ -15,13 +16,19 @@ export async function GET(
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
     }
 
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        category: true, // Include related category
-        supplier: true,   // Include related supplier
-      },
-    });
+    const cacheKey = cacheKeys.products.detail(productId);
+    const product = await getCached(
+      cacheKey,
+      () =>
+        prisma.product.findUnique({
+          where: { id: productId },
+          include: {
+            category: true, // Include related category
+            supplier: true,   // Include related supplier
+          },
+        }),
+      300
+    );
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -74,6 +81,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     revalidateTag('products');
+    await invalidateCache(cacheKeys.products.detail(productId));
+    await invalidateCache('products:list:*');
+    await invalidateCache('products:lists:*');
+    await invalidateCache('search:products:*');
+    await invalidateCache('categories:*');
+    await invalidateCache('suppliers:*');
     return NextResponse.json(updatedProduct, { status: 200 });
   } catch (error) {
     console.error("Product update error:", error);
@@ -103,6 +116,12 @@ export async function PATCH(
     });
 
     revalidateTag('products');
+    await invalidateCache(cacheKeys.products.detail(productId));
+    await invalidateCache('products:list:*');
+    await invalidateCache('products:lists:*');
+    await invalidateCache('search:products:*');
+    await invalidateCache('categories:*');
+    await invalidateCache('suppliers:*');
     return NextResponse.json(updatedProduct, { status: 200 });
 
   } catch (error) {
@@ -129,6 +148,12 @@ export async function DELETE(
     revalidateTag('products');
     revalidateTag('categories'); // Update category counts
     revalidateTag('suppliers'); // Update supplier counts (if tracked)
+    await invalidateCache(cacheKeys.products.detail(productId));
+    await invalidateCache('products:list:*');
+    await invalidateCache('products:lists:*');
+    await invalidateCache('search:products:*');
+    await invalidateCache('categories:*');
+    await invalidateCache('suppliers:*');
 
     return NextResponse.json({ success: true });
   } catch (error) {

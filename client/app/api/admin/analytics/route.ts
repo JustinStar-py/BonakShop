@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
     // Rate limiting
     const identifier = getClientIdentifier(request);
-    const rateCheck = checkRateLimit(identifier, {
+    const rateCheck = await checkRateLimit(identifier, {
         windowMs: 60 * 1000,
         max: 20,
     });

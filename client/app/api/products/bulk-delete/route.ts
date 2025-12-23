@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { invalidateCache } from "@/lib/redis";
 
 export async function POST(request: Request) {
   try {
@@ -43,6 +44,12 @@ export async function POST(request: Request) {
     }
 
     const result = await prisma.product.deleteMany({ where });
+    await invalidateCache('products:list:*');
+    await invalidateCache('products:lists:*');
+    await invalidateCache('products:detail:*');
+    await invalidateCache('search:products:*');
+    await invalidateCache('categories:*');
+    await invalidateCache('suppliers:*');
 
     return NextResponse.json({ deleted: result.count });
   } catch (error) {

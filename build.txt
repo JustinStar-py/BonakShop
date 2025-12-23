@@ -1,0 +1,17 @@
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+Failed to compile.
+
+./app/admin/dashboard/page.tsx:152:37
+Type error: Type '(v: number) => [string, "فروش"]' is not assignable to type 'Formatter<number, "فروش">'.
+  Types of parameters 'v' and 'value' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+
+  150 |                                     cursor={{ fill: '#f1f5f9' }}
+  151 |                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+> 152 |                                     formatter={(v: number) => [formatPrice(v), "فروش"]}       
+      |                                     ^
+  153 |                                 />
+  154 |                                 <Bar
+  155 |                                     dataKey="فروش"
+Next.js build worker exited with code: 1 and signal: null
