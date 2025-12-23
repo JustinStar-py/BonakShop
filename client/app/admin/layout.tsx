@@ -17,7 +17,8 @@ import {
     AltArrowLeftLinear as ChevronLeft,
     UsersGroupRoundedLinear as Users,
     SettingsLinear as Settings,
-    ChatDotsLinear as MessageSquare
+    ChatDotsLinear as MessageSquare,
+    BillListLinear as Receipt
 } from "@solar-icons/react-perf";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ import NotificationBell from "@/components/admin/NotificationBell";
 // Define navigation items for cleaner rendering
 const NAV_ITEMS = [
     { href: "/admin/dashboard", label: "داشبورد", icon: LayoutDashboard },
+    { href: "/admin/orders", label: "سفارشات", icon: Receipt },
     { href: "/admin/chat", label: "پشتیبانی", icon: MessageSquare },
     { href: "/admin/users", label: "کاربران", icon: Users },
     { href: "/admin/products", label: "محصولات", icon: Package },

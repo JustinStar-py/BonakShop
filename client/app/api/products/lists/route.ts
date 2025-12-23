@@ -24,7 +24,7 @@ export async function GET(request: Request) {
             // دریافت محصولاتی که به صورت دستی ویژه شده‌اند
             return prisma.product.findMany({
               where: { isFeatured: true },
-              include: { supplier: true },
+              include: { supplier: { select: { id: true, name: true } } },
               take,
             });
 
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
             // دریافت جدیدترین محصولات بر اساس تاریخ ایجاد
             return prisma.product.findMany({
               orderBy: { createdAt: 'desc' },
-              include: { supplier: true },
+              include: { supplier: { select: { id: true, name: true } } },
               take,
             });
 
@@ -51,13 +51,13 @@ export async function GET(request: Request) {
               },
               take,
             });
-            
+
             const productNames = popularItems.map(item => item.productName);
             const list = await prisma.product.findMany({
-                where: {
-                    name: { in: productNames }
-                },
-                include: { supplier: true }
+              where: {
+                name: { in: productNames }
+              },
+              include: { supplier: { select: { id: true, name: true } } }
             });
             // Sort them according to the bestseller list
             list.sort((a, b) => productNames.indexOf(a.name) - productNames.indexOf(b.name));

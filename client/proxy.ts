@@ -1,5 +1,5 @@
-// FILE: middleware.ts
-// DESCRIPTION: Optimized middleware with better performance
+// FILE: proxy.ts
+// DESCRIPTION: Next.js 16 proxy handler (formerly middleware)
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -53,7 +53,8 @@ const deleteCachedToken = async (token: string): Promise<void> => {
   }
 };
 
-export async function middleware(request: NextRequest) {
+// Next.js 16: Renamed from 'middleware' to 'proxy'
+export async function proxy(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const token = authHeader?.split(' ')[1];
 

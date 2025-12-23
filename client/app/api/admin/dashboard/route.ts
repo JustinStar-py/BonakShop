@@ -8,17 +8,17 @@ export async function GET() {
     const payload = await getCached(
       cacheKey,
       async () => {
-        // KPI
-        const totalRevenue = await prisma.order.aggregate({ _sum: { totalPrice: true } });
-        const totalOrders = await prisma.order.count();
-        const totalCustomers = await prisma.user.count();
-
-        // سفارش‌ها (جدیدترین‌ها)
-        const orders = await prisma.order.findMany({
-          orderBy: { createdAt: "desc" },
-          include: { user: true },
-          take: 10,
-        });
+        // KPI and initial data - fetch in parallel
+        const [totalRevenue, totalOrders, totalCustomers, orders] = await Promise.all([
+          prisma.order.aggregate({ _sum: { totalPrice: true } }),
+          prisma.order.count(),
+          prisma.user.count(),
+          prisma.order.findMany({
+            orderBy: { createdAt: "desc" },
+            include: { user: { select: { id: true, name: true, shopName: true } } },
+            take: 10,
+          }),
+        ]);
 
         // مشتریان برتر
         const customerStatsRaw = await prisma.order.groupBy({
@@ -32,7 +32,7 @@ export async function GET() {
         const users = await prisma.user.findMany({
           where: { id: { in: userIds } }
         });
-        
+
         const userMap = new Map(users.map(user => [user.id, user]));
 
         const customerStats = customerStatsRaw.map(stat => {
@@ -63,7 +63,7 @@ export async function GET() {
         });
 
         const dailySalesMap = new Map<string, number>();
-        
+
         // Initialize map with 0 for all 7 days
         const last7Days = Array.from({ length: 7 }).map((_, i) => {
           const d = new Date();

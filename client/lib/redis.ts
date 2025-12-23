@@ -118,12 +118,22 @@ const keyPart = (value: string | number | boolean | undefined | null): string =>
 
 /**
  * Cache wrapper with automatic serialization
+ * Note: Silently bypasses Redis during build phase to avoid dynamic server usage errors
  */
 export async function getCached<T>(
     key: string,
     fetcher: () => Promise<T>,
     ttl: number = 300 // 5 minutes default
 ): Promise<T> {
+    // During static generation, skip Redis entirely - it causes dynamic server usage errors
+    const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
+        process.env.NEXT_PHASE === 'phase-production-export';
+
+    if (isBuildTime) {
+        // During build, just fetch directly without caching
+        return await fetcher();
+    }
+
     // Try to get from cache
     let cached: string | null = null;
     try {

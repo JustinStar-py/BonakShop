@@ -4,8 +4,6 @@ import { cacheKeys, getCached } from "@/lib/redis";
 import HomeClient, { type Banner, type CategoryRowData } from "./HomeClient";
 import type { Category, ProductWithSupplier } from "@/types";
 
-export const revalidate = 60;
-
 const categoryConfigs = [
   { title: "روغن ها", id: "cmi38m6es0000i904lhdyg63o", iconKey: "droplets" },
   { title: "نوشیدنی", id: "cmd2y7w9q0003la4b92oozlad", iconKey: "coffee" },

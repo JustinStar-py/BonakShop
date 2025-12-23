@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RestartLinear as Loader2, AddCircleLinear as PlusCircle, Pen2Linear as Pencil, TrashBinMinimalisticLinear as Trash2 } from "@solar-icons/react-perf";
+import { RestartLinear as Loader2, AddCircleLinear as PlusCircle, Pen2Linear as Pencil, TrashBinMinimalisticLinear as Trash2, MagniferLinear as Search } from "@solar-icons/react-perf";
 
 type CompanyType = "supplier" | "distributor";
 type CompanyItem = Supplier | Distributor;
@@ -43,6 +43,7 @@ function ManageCompanyType({ type }: { type: CompanyType }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<EditableCompany | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; itemId: string | null; itemName: string | null }>({ isOpen: false, itemId: null, itemName: null });
+    const [searchTerm, setSearchTerm] = useState("");
 
     const apiPath = useMemo(() => (type === 'supplier' ? '/suppliers' : '/distributors'), [type]);
     const title = useMemo(() => (type === 'supplier' ? 'تولیدکننده' : 'پخش‌کننده'), [type]);
@@ -102,10 +103,28 @@ function ManageCompanyType({ type }: { type: CompanyType }) {
 
     if (isLoading) return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
+    const filteredItems = items.filter((item) =>
+        item.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
+    );
+
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
-                <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن {title}</Button>
+            <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                <div className="relative w-full md:w-72">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder={`جستجو در ${title}ها...`}
+                        className="pr-9"
+                    />
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="text-xs text-muted-foreground">
+                        نمایش {filteredItems.length.toLocaleString('fa-IR')} از {items.length.toLocaleString('fa-IR')}
+                    </div>
+                    <Button onClick={() => handleOpenDialog()}><PlusCircle className="ml-2 h-4 w-4" />افزودن {title}</Button>
+                </div>
             </div>
             <Card>
                 <CardContent className="pt-6">
@@ -118,28 +137,36 @@ function ManageCompanyType({ type }: { type: CompanyType }) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {items.map(item => (
-                                <TableRow key={item.id}>
-                                    <TableCell className="text-left">
-                                        <div className="flex justify-start gap-2">
-                                            <Button size="sm" variant="outline" onClick={() => handleOpenDialog(item)}><Pencil className="h-4 w-4" /></Button>
-                                            <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({ isOpen: true, itemId: item.id, itemName: item.name })}><Trash2 className="h-4 w-4" /></Button>
-                                        </div>
+                            {filteredItems.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                                        موردی یافت نشد.
                                     </TableCell>
-                                    <TableCell className="grid justify-items-center">
-                                        <Image
-                                            loader={logoLoader}
-                                            unoptimized
-                                            src={item.logo || "/placeholder.svg"}
-                                            alt={item.name}
-                                            width={40}
-                                            height={40}
-                                            className="h-10 w-10 rounded-full object-contain bg-gray-100 p-1 justify-self-center"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="font-medium text-right">{item.name}</TableCell>
                                 </TableRow>
-                            ))}
+                            ) : (
+                                filteredItems.map(item => (
+                                    <TableRow key={item.id}>
+                                        <TableCell className="text-left">
+                                            <div className="flex justify-start gap-2">
+                                                <Button size="sm" variant="outline" onClick={() => handleOpenDialog(item)}><Pencil className="h-4 w-4" /></Button>
+                                                <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({ isOpen: true, itemId: item.id, itemName: item.name })}><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="grid justify-items-center">
+                                            <Image
+                                                loader={logoLoader}
+                                                unoptimized
+                                                src={item.logo || "/placeholder.svg"}
+                                                alt={item.name}
+                                                width={40}
+                                                height={40}
+                                                className="h-10 w-10 rounded-full object-contain bg-gray-100 p-1 justify-self-center"
+                                            />
+                                        </TableCell>
+                                        <TableCell className="font-medium text-right">{item.name}</TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>

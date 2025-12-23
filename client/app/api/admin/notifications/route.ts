@@ -78,7 +78,7 @@ export async function GET() {
         type: "order",
         title: "سفارش جدید",
         message: `سفارش جدید از ${order.user.shopName || order.user.name || "کاربر ناشناس"} ثبت شده است.`,
-        link: `/admin/procurement`, // Or orders page
+        link: `/admin/orders`,
         timestamp: order.createdAt,
         urgent: true,
       })),

@@ -35,15 +35,15 @@ export async function POST(req: Request) {
     const { name, logo } = body;
 
     if (!name) {
-        return NextResponse.json({ error: "Distributor name is required" }, { status: 400 });
+      return NextResponse.json({ error: "Distributor name is required" }, { status: 400 });
     }
 
     const newDistributor = await prisma.distributor.create({
-        data: { name, logo }
+      data: { name, logo }
     });
 
     // Invalidate cache
-    revalidateTag("distributors");
+    revalidateTag("distributors", "max");
     await invalidateCache("distributors:*");
 
     return NextResponse.json(newDistributor, { status: 201 });

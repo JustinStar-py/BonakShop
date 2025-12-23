@@ -16,7 +16,7 @@ export async function PUT(
     if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    
+
     const { id: distributorId } = await params;
     const { name, logo } = await req.json();
 
@@ -28,8 +28,8 @@ export async function PUT(
       where: { id: distributorId },
       data: { name, logo },
     });
-    
-    revalidateTag("distributors");
+
+    revalidateTag("distributors", "max");
     await invalidateCache("distributors:*");
     await invalidateCache("products:list:*");
     await invalidateCache("products:lists:*");
@@ -38,7 +38,7 @@ export async function PUT(
     return NextResponse.json(updatedDistributor, { status: 200 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        return NextResponse.json({ error: "پخش‌کننده مورد نظر برای ویرایش یافت نشد." }, { status: 404 });
+      return NextResponse.json({ error: "پخش‌کننده مورد نظر برای ویرایش یافت نشد." }, { status: 404 });
     }
     return NextResponse.json({ error: "Failed to update distributor" }, { status: 500 });
   }
@@ -57,8 +57,8 @@ export async function DELETE(
     const { id: distributorId } = await params;
 
     await prisma.distributor.delete({ where: { id: distributorId } });
-    
-    revalidateTag("distributors");
+
+    revalidateTag("distributors", "max");
     await invalidateCache("distributors:*");
     await invalidateCache("products:list:*");
     await invalidateCache("products:lists:*");
@@ -67,10 +67,10 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        return NextResponse.json({ error: "پخش‌کننده مورد نظر برای حذف یافت نشد." }, { status: 404 });
+      return NextResponse.json({ error: "پخش‌کننده مورد نظر برای حذف یافت نشد." }, { status: 404 });
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-        return NextResponse.json({ error: "امکان حذف این پخش‌کننده وجود ندارد زیرا محصولاتی به آن متصل هستند." }, { status: 409 });
+      return NextResponse.json({ error: "امکان حذف این پخش‌کننده وجود ندارد زیرا محصولاتی به آن متصل هستند." }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to delete distributor" }, { status: 500 });
   }

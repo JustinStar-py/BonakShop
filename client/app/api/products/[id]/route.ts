@@ -80,7 +80,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       },
     });
 
-    revalidateTag('products');
+    revalidateTag('products', 'max');
     await invalidateCache(cacheKeys.products.detail(productId));
     await invalidateCache('products:list:*');
     await invalidateCache('products:lists:*');
@@ -107,7 +107,7 @@ export async function PATCH(
     if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    
+
     const body = await req.json();
 
     const updatedProduct = await prisma.product.update({
@@ -115,7 +115,7 @@ export async function PATCH(
       data: body,
     });
 
-    revalidateTag('products');
+    revalidateTag('products', 'max');
     await invalidateCache(cacheKeys.products.detail(productId));
     await invalidateCache('products:list:*');
     await invalidateCache('products:lists:*');
@@ -144,10 +144,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     await prisma.product.delete({ where: { id: productId } });
-    
-    revalidateTag('products');
-    revalidateTag('categories'); // Update category counts
-    revalidateTag('suppliers'); // Update supplier counts (if tracked)
+
+    revalidateTag('products', 'max');
+    revalidateTag('categories', 'max');
+    revalidateTag('suppliers', 'max');
     await invalidateCache(cacheKeys.products.detail(productId));
     await invalidateCache('products:list:*');
     await invalidateCache('products:lists:*');

@@ -15,7 +15,7 @@ export async function PUT(
     if (!auth || auth.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    
+
     const { id: categoryId } = await params;
     const body = await req.json();
     const { name, icon, image } = body;
@@ -28,15 +28,15 @@ export async function PUT(
       where: { id: categoryId },
       data: { name, icon, image },
     });
-    
+
     // --- FIX 2: Invalidate the Next.js cache ---
-    revalidateTag('categories');
+    revalidateTag('categories', 'max');
     await invalidateCache('categories:*');
     await invalidateCache('products:list:*');
     await invalidateCache('products:lists:*');
     await invalidateCache('products:detail:*');
     await invalidateCache('search:products:*');
-    
+
     return NextResponse.json(updatedCategory, { status: 200 });
 
   } catch (error) {
@@ -57,9 +57,9 @@ export async function DELETE(
     }
     const { id: categoryId } = await params;
     await prisma.category.delete({ where: { id: categoryId } });
-    
+
     // --- FIX 2: Invalidate the Next.js cache ---
-    revalidateTag('categories');
+    revalidateTag('categories', 'max');
     await invalidateCache('categories:*');
     await invalidateCache('products:list:*');
     await invalidateCache('products:lists:*');

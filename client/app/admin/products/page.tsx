@@ -254,13 +254,11 @@ export default function ProductManagementPage() {
     const handleImageUpload = async (file: File) => {
         if (!file) return;
         setActionLoading(true);
-        const formData = new FormData();
-        formData.append("image", file);
         try {
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=4b2ba5e2eec4847988305b536b6f4a50`, { method: "POST", body: formData });
-            const data = await res.json();
-            if (data.success) { handleFormChange('image', data.data.url); }
-            else { alert("آپلود عکس موفق نبود."); }
+            const { uploadToCloudinary } = await import('@/lib/cloudinary');
+            const result = await uploadToCloudinary(file);
+            if (result.success && result.url) { handleFormChange('image', result.url); }
+            else { alert(result.error || "آپلود عکس موفق نبود."); }
         } catch { alert("خطا در آپلود عکس"); }
         finally { setActionLoading(false); }
     };

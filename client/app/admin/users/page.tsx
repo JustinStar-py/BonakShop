@@ -102,16 +102,21 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-800">مدیریت کاربران</h1>
-        <div className="relative w-64">
-          <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="جستجو نام یا شماره..."
-            className="pr-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="text-xs text-muted-foreground">
+            نمایش {filteredUsers.length.toLocaleString('fa-IR')} از {users.length.toLocaleString('fa-IR')}
+          </div>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="جستجو نام یا شماره..."
+              className="pr-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -128,49 +133,57 @@ export default function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name || "---"}</TableCell>
-                <TableCell>{user.phone}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${user.userType === 'SHOP_OWNER' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                    {user.userType === 'SHOP_OWNER' ? 'فروشگاه‌دار' : 'کاربر عادی'}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'ADMIN' ? 'bg-red-100 text-red-700' :
-                    user.role === 'WORKER' ? 'bg-blue-100 text-blue-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>
-                    {user.role === 'ADMIN' ? 'مدیر' : user.role === 'WORKER' ? 'کارمند' : 'مشتری'}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <TomanPrice value={Number(user.balance)} />
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => { setEditingUser(user); setIsEditOpen(true); }}
-                      className="text-blue-600 hover:bg-blue-50"
-                    >
-                      <Edit size={18} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => { setChargingUser(user); setIsChargeOpen(true); }}
-                      className="text-green-600 hover:bg-green-50"
-                    >
-                      <Wallet size={18} />
-                    </Button>
-                  </div>
+            {filteredUsers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  موردی یافت نشد.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.name || "---"}</TableCell>
+                  <TableCell>{user.phone}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${user.userType === 'SHOP_OWNER' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
+                      }`}>
+                      {user.userType === 'SHOP_OWNER' ? 'فروشگاه‌دار' : 'کاربر عادی'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'ADMIN' ? 'bg-red-100 text-red-700' :
+                      user.role === 'WORKER' ? 'bg-blue-100 text-blue-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                      {user.role === 'ADMIN' ? 'مدیر' : user.role === 'WORKER' ? 'کارمند' : 'مشتری'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <TomanPrice value={Number(user.balance)} />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => { setEditingUser(user); setIsEditOpen(true); }}
+                        className="text-blue-600 hover:bg-blue-50"
+                      >
+                        <Edit size={18} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => { setChargingUser(user); setIsChargeOpen(true); }}
+                        className="text-green-600 hover:bg-green-50"
+                      >
+                        <Wallet size={18} />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

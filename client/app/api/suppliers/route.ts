@@ -21,14 +21,14 @@ export async function GET(request: Request) {
         prisma.supplier.findMany({
           ...(categoryId
             ? {
-                where: {
-                  products: {
-                    some: {
-                      categoryId: categoryId,
-                    },
+              where: {
+                products: {
+                  some: {
+                    categoryId: categoryId,
                   },
                 },
-              }
+              },
+            }
             : {}),
           orderBy: { name: "asc" },
         }),
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     });
 
     // Invalidate cache
-    revalidateTag("suppliers");
+    revalidateTag("suppliers", "max");
     await invalidateCache("suppliers:*");
 
     return NextResponse.json(newSupplier, { status: 201 });

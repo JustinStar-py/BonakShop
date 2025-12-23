@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     });
 
     // Invalidate the cache
-    revalidateTag('categories');
+    revalidateTag('categories', 'max');
     await invalidateCache('categories:*');
 
     return NextResponse.json(category, { status: 201 });

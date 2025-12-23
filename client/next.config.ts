@@ -14,7 +14,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.postimg.cc" },
       { protocol: "https", hostname: "studiomani.ir" },
       { protocol: "https", hostname: "www.digikala.com" },
-      { protocol: "https", hostname: "trustseal.enamad.ir" }
+      { protocol: "https", hostname: "trustseal.enamad.ir" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
     ],
 
     // بقیه تنظیمات اختیاری — میتونن بمونن
@@ -29,7 +30,7 @@ const nextConfig: NextConfig = {
 
   reactStrictMode: true,
   reactCompiler: true,
-  cacheComponents: true,
+  // cacheComponents: true, // TODO: Re-enable after migrating routes for PPR
 
   // بقیه تنظیمات شما مشابه قبلی...
   compress: true,

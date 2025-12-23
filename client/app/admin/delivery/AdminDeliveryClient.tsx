@@ -210,7 +210,7 @@ function OrdersPanel({ orders, isLoading, refreshData }: { orders: OrderWithRela
   return (
     <Tabs defaultValue="shipped" className="w-full">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="shipped">آماده تحویل ({ordersByStatus.shipped.length})</TabsTrigger>
+        <TabsTrigger value="shipped">ارسال شده ({ordersByStatus.shipped.length})</TabsTrigger>
         <TabsTrigger value="delivered">تحویل شده ({ordersByStatus.delivered.length})</TabsTrigger>
         <TabsTrigger value="others">سایر ({ordersByStatus.others.length})</TabsTrigger>
       </TabsList>

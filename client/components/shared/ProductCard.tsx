@@ -15,6 +15,8 @@ interface ProductCardProps {
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onImageClick?: (imageUrl: string) => void;
   onSupplierClick?: (supplierId: string) => void;
+  /** Set to true for above-the-fold products to improve LCP */
+  priority?: boolean;
 }
 
 export default function ProductCard({
@@ -23,6 +25,7 @@ export default function ProductCard({
   onAddToCart,
   onSelectProduct,
   onUpdateQuantity,
+  priority = false,
 }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
 
@@ -74,6 +77,8 @@ export default function ProductCard({
           sizes="(min-width:1024px) 180px, 45vw"
           className="object-contain"
           onError={() => setImageError(true)}
+          priority={priority}
+          loading={priority ? 'eager' : 'lazy'}
         />
 
         {/* Plus Button / Counter */}

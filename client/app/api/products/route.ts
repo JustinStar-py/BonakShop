@@ -81,9 +81,9 @@ export async function GET(req: Request) {
           prisma.product.findMany({
             where,
             include: {
-              category: true,
-              supplier: true,
-              distributor: true,
+              category: { select: { id: true, name: true, icon: true } },
+              supplier: { select: { id: true, name: true } },
+              distributor: { select: { id: true, name: true } },
             },
             orderBy,
             skip,
@@ -136,9 +136,9 @@ export async function POST(req: Request) {
     });
 
     // Invalidate caches
-    revalidateTag('products');
-    revalidateTag('categories'); // Because category counts might change
-    revalidateTag('suppliers'); // Because supplier product counts might change
+    revalidateTag('products', 'max');
+    revalidateTag('categories', 'max'); // Because category counts might change
+    revalidateTag('suppliers', 'max'); // Because supplier product counts might change
     await invalidateCache('products:list:*');
     await invalidateCache('products:lists:*');
     await invalidateCache('categories:*');
