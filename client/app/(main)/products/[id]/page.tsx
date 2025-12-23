@@ -8,10 +8,18 @@ import type { Product, Supplier, Category } from "@prisma/client"; // اطمین
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-    ArrowRight, Plus, Minus, Building2, Layers, 
-    Package, Box, User, ShoppingBag, Share2, ShieldCheck
-} from "lucide-react";
+import {
+    AltArrowRightLinear as ArrowRight,
+    AddCircleLinear as Plus,
+    MinusCircleLinear as Minus,
+    ShopLinear as Building2,
+    LayersLinear as Layers,
+    BoxLinear as Box,
+    UserLinear as User,
+    BagLinear as ShoppingBag,
+    LinkLinear as Share2,
+    VerifiedCheckLinear as ShieldCheck,
+} from "@solar-icons/react-perf";
 import Image from "next/image";
 import toPersianDigits from "@/utils/numberFormatter";
 import TomanPrice from "@/components/shared/TomanPrice";
@@ -150,7 +158,7 @@ export default function ProductDetailPage() {
                             <span className="font-bold text-gray-700 text-sm">{product.category.name}</span>
                         </div>
                         <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">
-                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Package size={12}/> واحد فروش</span>
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Box size={12}/> واحد فروش</span>
                             <span className="font-bold text-gray-700 text-sm">{product.unit}</span>
                         </div>
                         <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col gap-1">

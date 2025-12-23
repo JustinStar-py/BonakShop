@@ -10,7 +10,15 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Package, RefreshCw, FileText, MapPin, Phone, Building, User as UserIconLucide } from "lucide-react";
+import {
+  RestartLinear as Loader2,
+  BoxLinear as Package,
+  BillListLinear as FileText,
+  MapPointLinear as MapPin,
+  PhoneLinear as Phone,
+  ShopLinear as Building,
+  UserLinear as UserIconLucide,
+} from "@solar-icons/react-perf";
 import { Badge } from "@/components/ui/badge";
 import dynamic from 'next/dynamic';
 import TomanPrice from "@/components/shared/TomanPrice";
@@ -75,7 +83,7 @@ function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDeli
         finally { setActionLoading(null); }
     };
     if (isLoading) return <div className="text-center pt-10"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>;
-    if (returns.length === 0) return <div className="text-center pt-10 text-gray-500"><RefreshCw className="mx-auto h-12 w-12" /><p className="mt-4">هیچ درخواست مرجوعی یافت نشد.</p></div>;
+    if (returns.length === 0) return <div className="text-center pt-10 text-gray-500"><Loader2 className="mx-auto h-12 w-12" /><p className="mt-4">هیچ درخواست مرجوعی یافت نشد.</p></div>;
     const ReturnCard = ({ ret }: { ret: ReturnForDelivery }) => (
         <Card><CardHeader><div className="flex justify-between items-start"><CardTitle className="text-base font-bold">{ret.order.user.shopName || ret.order.user.name}</CardTitle><Badge variant={getReturnStatusInfo(ret.status).variant}>{getReturnStatusInfo(ret.status).text}</Badge></div><CardDescription>شماره: ...{ret.id.slice(-6)} | تاریخ: {new Date(ret.createdAt).toLocaleDateString('fa-IR')}</CardDescription></CardHeader><CardContent><div className="text-sm space-y-2"><p className="font-semibold">اقلام مرجوعی:</p><ul className="list-disc list-inside bg-gray-50 p-2 rounded-md">{ret.items.map(item => <li key={item.id}>{item.orderItem.productName} (تعداد: {item.quantity})</li>)}</ul>{ret.reason && <p><span className="font-semibold">دلیل:</span> {ret.reason}</p>}</div><div className="flex items-center gap-2 mt-4"><Select onValueChange={(value) => handleStatusChange(ret.id, value as ReturnStatus)} defaultValue={ret.status} disabled={actionLoading === ret.id}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="REQUESTED">درخواست شده</SelectItem><SelectItem value="APPROVED">تایید شده</SelectItem><SelectItem value="REJECTED">رد شده</SelectItem></SelectContent></Select>{actionLoading === ret.id && <Loader2 className="h-5 w-5 animate-spin" />}</div></CardContent></Card>
     );

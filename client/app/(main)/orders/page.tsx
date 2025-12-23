@@ -24,7 +24,13 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
-import { RefreshCw, XCircle, StickyNote, CalendarCheck, ShoppingBag } from "lucide-react";
+import {
+    RestartLinear as RefreshCw,
+    CloseCircleLinear as XCircle,
+    NotesLinear as StickyNote,
+    CalendarLinear as CalendarCheck,
+    BagLinear as ShoppingBag,
+} from "@solar-icons/react-perf";
 import { ReturnRequestDialog } from "@/components/shared/ReturnRequestDialog";
 import toPersianDigits from "@/utils/numberFormatter";
 import OrderCard from "@/components/shared/OrderCard"; // ایمپورت کارت جدید

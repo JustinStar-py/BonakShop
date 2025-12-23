@@ -4,7 +4,17 @@
 import { useState, useEffect, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
-import { Truck, CheckCircle, Loader2, LogOut, FileText, ArrowRight, MapPin, Phone, Building, User as UserIcon, RefreshCw, Package } from "lucide-react";
+import {
+  RestartLinear as Loader2,
+  LogoutLinear as LogOut,
+  BillListLinear as FileText,
+  AltArrowRightLinear as ArrowRight,
+  MapPointLinear as MapPin,
+  PhoneLinear as Phone,
+  ShopLinear as Building,
+  UserLinear as UserIcon,
+  BoxLinear as Package,
+} from "@solar-icons/react-perf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -221,7 +231,7 @@ function ReturnsPanel({returns, isLoading, refreshData}: {returns: ReturnForDeli
     };
 
     if (isLoading) return <div className="text-center pt-10"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>;
-    if (returns.length === 0) return <div className="text-center pt-10 text-gray-500"><RefreshCw className="mx-auto h-12 w-12" /><p className="mt-4">هیچ درخواست مرجوعی یافت نشد.</p></div>;
+    if (returns.length === 0) return <div className="text-center pt-10 text-gray-500"><Loader2 className="mx-auto h-12 w-12" /><p className="mt-4">هیچ درخواست مرجوعی یافت نشد.</p></div>;
 
     const ReturnCard = ({ ret }: { ret: ReturnForDelivery }) => (
         <Card>
