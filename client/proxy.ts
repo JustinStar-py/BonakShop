@@ -107,7 +107,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/api/((?!auth|products|categories).*)',
+    '/api/((?!auth|products|categories|test).*)',
     '/api/user/:path*',
     '/api/orders/:path*',
     '/api/admin/:path*',
